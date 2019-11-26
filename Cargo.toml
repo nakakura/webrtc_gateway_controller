@@ -1,0 +1,17 @@
+[package]
+name = "webrtc_gateway_controller"
+version = "0.1.0"
+authors = ["Toshiya Nakakura <nakakura@me.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+failure = "0.1.6"
+futures = "0.3"
+lazy_static = "1.4.0"
+reqwest = { version = "0.10.0-alpha.2", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0.103"
+serde_json = "1.0.42"
+tokio = "0.2.0-alpha.6"

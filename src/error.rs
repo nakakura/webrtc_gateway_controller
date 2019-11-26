@@ -86,7 +86,10 @@ impl From<serde_json::Error> for ErrorEnum {
 
 impl ErrorEnum {
     #[allow(dead_code)]
-    pub fn create_myerror(message: String) -> ErrorEnum {
-        ErrorEnum::MyError { error: message }.into()
+    pub fn create_myerror(message: &str) -> ErrorEnum {
+        ErrorEnum::MyError {
+            error: message.to_string(),
+        }
+        .into()
     }
 }

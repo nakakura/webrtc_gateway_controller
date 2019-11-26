@@ -1,10 +1,11 @@
-use lazy_static::*;
-
 mod error;
 mod peer;
 
+use lazy_static::*;
+
 lazy_static! {
-    static ref API_KEY: String = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
+    static ref API_KEY: String =
+        ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
     static ref DOMAIN: String = "localhost".to_string();
     static ref BASE_URL: String = "http://localhost:8000".to_string();
 }

@@ -1,12 +1,15 @@
+mod data;
+
 use reqwest;
 use reqwest::Client;
 use serde_json::json;
 
-use super::error;
+use crate::error;
 
-mod data;
-
-pub async fn create_peer(peer_id: &str, turn: bool) -> Result<data::CreatedResponse, error::ErrorEnum> {
+pub async fn create_peer(
+    peer_id: &str,
+    turn: bool,
+) -> Result<data::CreatedResponse, error::ErrorEnum> {
     let key = &*crate::API_KEY;
     let json = json!({
         "key": key,
@@ -16,9 +19,8 @@ pub async fn create_peer(peer_id: &str, turn: bool) -> Result<data::CreatedRespo
     });
 
     let base_url = format!("{}/peers", &*crate::BASE_URL);
-    let res = Client::new().post(&base_url)
-        .json(&json)
-        .send()
-        .await?;
-    res.json::<data::CreatedResponse>().await.map_err(Into::into)
+    let res = Client::new().post(&base_url).json(&json).send().await?;
+    res.json::<data::CreatedResponse>()
+        .await
+        .map_err(Into::into)
 }

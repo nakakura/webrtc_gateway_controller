@@ -11,30 +11,22 @@ pub struct ReqwestError(pub reqwest::Error);
 #[derive(Debug, Fail)]
 pub enum ErrorEnum {
     #[fail(display = "Some I/O Error: {:?}", error)]
-    IOError {
-        error: ::std::io::ErrorKind,
-    },
+    IOError { error: ::std::io::ErrorKind },
     #[fail(display = "Serde error")]
-    Serde {
-        error: serde_json::Error
-    },
+    Serde { error: serde_json::Error },
     #[fail(display = "Utf8Error: {:?}", error)]
-    Utf8Error {
-        error: ::std::str::Utf8Error
-    },
+    Utf8Error { error: ::std::str::Utf8Error },
     #[fail(display = "ReqwestError: {:?}", error)]
-    ReqwestError {
-        error: ReqwestError
-    },
+    ReqwestError { error: ReqwestError },
     #[fail(display = "Utf8Error: {:?}", error)]
-    MyError {
-        error: String
-    }
+    MyError { error: String },
 }
 
 impl From<std::io::Error> for ErrorEnum {
     fn from(error: std::io::Error) -> Self {
-        ErrorEnum::IOError { error: error.kind() }
+        ErrorEnum::IOError {
+            error: error.kind(),
+        }
     }
 }
 
@@ -46,13 +38,17 @@ impl From<Utf8Error> for ErrorEnum {
 
 impl From<FromUtf8Error> for ErrorEnum {
     fn from(error: FromUtf8Error) -> Self {
-        ErrorEnum::Utf8Error { error: error.utf8_error() }
+        ErrorEnum::Utf8Error {
+            error: error.utf8_error(),
+        }
     }
 }
 
 impl From<&str> for ErrorEnum {
     fn from(error: &str) -> Self {
-        ErrorEnum::MyError { error: error.to_string() }
+        ErrorEnum::MyError {
+            error: error.to_string(),
+        }
     }
 }
 
@@ -64,7 +60,9 @@ impl From<String> for ErrorEnum {
 
 impl From<reqwest::Error> for ErrorEnum {
     fn from(error: reqwest::Error) -> Self {
-        ErrorEnum::ReqwestError { error: ReqwestError(error) }
+        ErrorEnum::ReqwestError {
+            error: ReqwestError(error),
+        }
     }
 }
 
@@ -82,17 +80,13 @@ impl PartialEq for ReqwestError {
 
 impl From<serde_json::Error> for ErrorEnum {
     fn from(error: serde_json::Error) -> ErrorEnum {
-        ErrorEnum::Serde {
-            error: error
-        }
+        ErrorEnum::Serde { error: error }
     }
 }
 
 impl ErrorEnum {
     #[allow(dead_code)]
     pub fn create_myerror(message: String) -> ErrorEnum {
-        ErrorEnum::MyError {
-            error: message
-        }.into()
+        ErrorEnum::MyError { error: message }.into()
     }
 }

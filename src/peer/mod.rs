@@ -16,7 +16,7 @@ use data::*;
 /// Also, if server returns json which command_type is not "PEERS_CREATE", it returns error.
 /// http://35.200.46.204/#/1.peers/peer
 pub async fn create_peer(
-    url: &str,
+    base_url: &str,
     peer_id: &str,
     turn: bool,
 ) -> Result<CreatedResponse, error::ErrorEnum> {
@@ -28,9 +28,9 @@ pub async fn create_peer(
         turn: turn,
     };
 
-    let base_url = format!("{}/peers", url);
+    let api_url = format!("{}/peers", base_url);
     let res = Client::new()
-        .post(&base_url)
+        .post(&api_url)
         .json(&peer_options)
         .send()
         .await?;
@@ -60,16 +60,16 @@ pub async fn create_peer(
 /// Also, if server returns json which command_type is not "PEERS_EVENTS", it returns error.
 /// http://35.200.46.204/#/1.peers/peer_event
 pub async fn listen_event(
-    url: &str,
+    base_url: &str,
     peer_info: &PeerInfo,
 ) -> Result<PeerEventEnum, error::ErrorEnum> {
-    let base_url = format!(
+    let api_url = format!(
         "{}/peers/{}/events?token={}",
-        url, peer_info.peer_id, peer_info.token
+        base_url, peer_info.peer_id, peer_info.token
     );
 
     let res = Client::new()
-        .get(&base_url)
+        .get(&api_url)
         .header(
             reqwest::header::CONTENT_TYPE,
             reqwest::header::HeaderValue::from_static("application/json"),

@@ -34,22 +34,53 @@ pub async fn create_peer(
         .json(&peer_options)
         .send()
         .await?;
-    // FIXME check res.status()
-    res.json::<data::CreatedResponse>()
-        .await
-        .map_err(Into::into)
-        .and_then(|response| match response {
-            CreatedResponse::Success(s) => {
-                if s.command_type == "PEERS_CREATE" {
-                    Ok(CreatedResponse::Success(s))
-                } else {
-                    Err(error::ErrorEnum::create_myerror(
-                        "webrtc gateway might be old version",
-                    ))
+    match res.status() {
+        http::status::StatusCode::CREATED => res
+            .json::<data::CreatedResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response| match response {
+                CreatedResponse::Success(s) => {
+                    if s.command_type == "PEERS_CREATE" {
+                        Ok(CreatedResponse::Success(s))
+                    } else {
+                        Err(error::ErrorEnum::create_myerror(
+                            "webrtc gateway might be old version",
+                        ))
+                    }
                 }
-            }
-            CreatedResponse::Error(e) => Ok(CreatedResponse::Error(e)),
-        })
+                CreatedResponse::Error(e) => Ok(CreatedResponse::Error(e)),
+            }),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        },
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        },
+        _ => {
+            unreachable!();
+        }
+    }
 }
 
 /// It access to the GET /peer/{peer_id}/event?token={token} endpoint, and return its response.
@@ -176,17 +207,7 @@ mod test_create_peer {
         let server = server::http(move |req| {
             async move {
                 if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "PEERS_CREATE",
-                        "params": {
-                            "errors": [
-                               {
-                                   "field": "",
-                                   "message": "internal peer open error."
-                               }
-                           ]
-                       }
-                    });
+                    let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
                         .header("Content-type", "application/json")
@@ -200,9 +221,8 @@ mod test_create_peer {
 
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, peer_id, false);
-        if let CreatedResponse::Error(response) = task.await.expect("CreatedResponse parse error") {
-            assert_eq!(response.command_type, "PEERS_CREATE".to_string());
-            assert_eq!(response.params.errors.len(), 1);
+        let result = task.await.err().unwrap();
+        if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -280,6 +300,136 @@ mod test_create_peer {
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::ErrorEnum::MyError { error: _e }) = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When WebRTC Gateway returns 400, parse error
+    /// http://35.200.46.204/#/1.peers/peer
+    #[tokio::test]
+    async fn create_peer_400() {
+        let peer_id = "hoge";
+
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({
+                        "command_type": "PEERS_CREATE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "key",
+                                    "message": "key field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::create_peer(&addr, peer_id, false);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When WebRTC Gateway returns 405, parse error
+    /// http://35.200.46.204/#/1.peers/peer
+    #[tokio::test]
+    async fn create_peer_405() {
+        let peer_id = "hoge";
+
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::create_peer(&addr, peer_id, false);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When WebRTC Gateway returns 405, parse error
+    /// http://35.200.46.204/#/1.peers/peer
+    #[tokio::test]
+    async fn create_peer_406() {
+        let peer_id = "hoge";
+
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::create_peer(&addr, peer_id, false);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When WebRTC Gateway returns 408, parse error
+    /// http://35.200.46.204/#/1.peers/peer
+    #[tokio::test]
+    async fn create_peer_408() {
+        let peer_id = "hoge";
+
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::create_peer(&addr, peer_id, false);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
             unreachable!();
         }

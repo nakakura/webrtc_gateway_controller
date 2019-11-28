@@ -67,7 +67,7 @@ pub async fn create_peer(
             }),
         http::status::StatusCode::FORBIDDEN => {
             Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        },
+        }
         http::status::StatusCode::METHOD_NOT_ALLOWED => {
             Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
         }
@@ -76,7 +76,7 @@ pub async fn create_peer(
         }
         http::status::StatusCode::REQUEST_TIMEOUT => {
             Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        },
+        }
         _ => {
             unreachable!();
         }
@@ -109,6 +109,54 @@ pub async fn listen_event(
         .await?;
     match res.status() {
         http::status::StatusCode::OK => res.json::<PeerEventEnum>().await.map_err(Into::into),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv NotFound"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
+/// It access to the DELETE /peers/{peer_id} endpoint, and return its response.
+/// If a WebRTC Gateway succeed to delete a Peer Object, it returns 204.
+/// If any error happens, it returns 400, 403, 404, 405, 406, 408.
+/// When it returns 400, it also send a json message.
+/// http://35.200.46.204/#/1.peers/peer_destroy
+pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
+    let api_url = format!(
+        "{}/peers/{}?token={}",
+        base_url, peer_info.peer_id, peer_info.token
+    );
+    let res = Client::new().delete(&api_url).send().await?;
+    match res.status() {
+        http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
             .json::<PeerErrorResponse>()
             .await
@@ -959,6 +1007,243 @@ mod test_listen_event {
         };
 
         let task = super::listen_event(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_delete_peer {
+    use serde_json::json;
+
+    use crate::helper::*;
+    use crate::peer::*;
+
+    /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
+    /// http://35.200.46.204/#/1.peers/peer_destroy
+    #[tokio::test]
+    async fn delete_peer() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            let uri = format!("/peers/{}?token={}", peer_id, token);
+            async move {
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NO_CONTENT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+
+        let task = super::delete_peer(&addr, &peer_info);
+        let result = task.await;
+        assert!(result.is_ok());
+    }
+
+    /// When any error happens, WebRTC Gateway returns 400.
+    /// http://35.200.46.204/#/1.peers/peer_destroy
+    #[tokio::test]
+    async fn delete_peer_400() {
+        let peer_id = "hoge";
+        let token = "test_token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "PEERS_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "key",
+                                    "message": "key field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+
+        let task = super::delete_peer(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, WebRTC Gateway returns 403.
+    /// http://35.200.46.204/#/1.peers/peer_destroy
+    #[tokio::test]
+    async fn delete_peer_403() {
+        let peer_id = "hoge";
+        let token = "test_token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+
+        let task = super::delete_peer(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, WebRTC Gateway returns 404.
+    /// http://35.200.46.204/#/1.peers/peer_destroy
+    #[tokio::test]
+    async fn delete_peer_404() {
+        let peer_id = "hoge";
+        let token = "test_token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+
+        let task = super::delete_peer(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, WebRTC Gateway returns 405.
+    /// http://35.200.46.204/#/1.peers/peer_destroy
+    #[tokio::test]
+    async fn delete_peer_405() {
+        let peer_id = "hoge";
+        let token = "test_token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+
+        let task = super::delete_peer(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Request Timeout
+    /// http://35.200.46.204/#/1.peers/peer_destroy
+    #[tokio::test]
+    async fn delete_peer_408() {
+        let peer_id = "hoge";
+        let token = "test_token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+
+        let task = super::delete_peer(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {

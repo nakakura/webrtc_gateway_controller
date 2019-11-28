@@ -1,10 +1,9 @@
-mod data;
+pub mod data;
 
 use reqwest;
 use reqwest::Client;
 
 use crate::error;
-
 use data::*;
 
 /// It access to the POST /peer endpoint, and return its response.

@@ -51,6 +51,48 @@ pub async fn create_data(base_url: &str) -> Result<CreatedResponse, error::Error
     }
 }
 
+/// This function access to the DELETE /data endpoint.
+/// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
+/// It returns 400, 403, 404, 405, 406, 408 to show errors.
+/// http://35.200.46.204/#/2.data/data_delete
+pub async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::ErrorEnum> {
+    let api_url = format!("{}/data/{}", base_url, data_id);
+    let res = Client::new().delete(&api_url).send().await?;
+
+    match res.status() {
+        http::status::StatusCode::NO_CONTENT => Ok(()),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_create_data {
     use serde_json::json;
@@ -232,6 +274,241 @@ mod test_create_data {
 
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+mod test_delete_data {
+    use serde_json::json;
+
+    use crate::error;
+    use crate::helper::*;
+
+    /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
+    /// http://35.200.46.204/#/2.data/data
+    #[tokio::test]
+    async fn test_delete_data_200() {
+        let data_id = "da-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/{}", data_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NO_CONTENT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data(&addr, data_id);
+        let result = task.await.expect("parse error");
+        assert_eq!(result, ());
+    }
+
+    /// If server returns 400, create_data returns error
+    /// http://35.200.46.204/#/2.data/data
+    #[tokio::test]
+    async fn status_400() {
+        let data_id = "da-test";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/{}", data_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "DATA_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data(&addr, data_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// If server returns 403, delete_data returns error
+    /// http://35.200.46.204/#/2.data/data
+    #[tokio::test]
+    async fn status_403() {
+        let data_id = "da-test";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/{}", data_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "DATA_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data(&addr, data_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// If server returns 405, delete_data returns error
+    /// http://35.200.46.204/#/2.data/data
+    #[tokio::test]
+    async fn status_405() {
+        let data_id = "da-test";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/{}", data_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "DATA_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data(&addr, data_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// If server returns 406, delete_data returns error
+    /// http://35.200.46.204/#/2.data/data
+    #[tokio::test]
+    async fn status_406() {
+        let data_id = "da-test";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/{}", data_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "DATA_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data(&addr, data_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// If server returns 408, delete_data returns error
+    /// http://35.200.46.204/#/2.data/data
+    #[tokio::test]
+    async fn status_408() {
+        let data_id = "da-test";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/{}", data_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "DATA_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data(&addr, data_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {

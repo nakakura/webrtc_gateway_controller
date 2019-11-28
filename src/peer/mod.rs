@@ -192,6 +192,56 @@ pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), err
     }
 }
 
+/// Status function access to the GET /peers/{peer_id}/status endpoint to get status of WebRTC Gateway
+/// The API returns JSON with 200 OK.
+/// If any error happens, it returns 400, 403, 404, 405, 406, 408
+/// http://35.200.46.204/#/1.peers/peer_status
+pub async fn status(
+    base_url: &str,
+    peer_info: &PeerInfo,
+) -> Result<PeerStatusMessage, error::ErrorEnum> {
+    let api_url = format!(
+        "{}/peers/{}/status?token={}",
+        base_url, peer_info.peer_id, peer_info.token
+    );
+    let res = Client::new().get(&api_url).send().await?;
+    match res.status() {
+        http::status::StatusCode::OK => res.json::<PeerStatusMessage>().await.map_err(Into::into),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv NotFound"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_create_peer {
     use serde_json::json;
@@ -1244,6 +1294,278 @@ mod test_delete_peer {
         };
 
         let task = super::delete_peer(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_status {
+    use serde_json::json;
+
+    use crate::helper::*;
+    use crate::peer::data::PeerStatusMessage;
+    use crate::peer::*;
+
+    /// Status API returns json with 200 OK
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({
+                        "peer_id": peer_id,
+                        "disconnected": false
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
+        let status: PeerStatusMessage = task.await.expect("parse error");
+        assert_eq!(status.peer_id, peer_id);
+        assert_eq!(status.disconnected, false);
+    }
+
+    /// When any error happens, status API returns json with 400 BAD_REQUEST
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status_400() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({
+                        "command_type": "PEERS_STATUS",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "peer_id",
+                                    "message": "peer_id field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, status API returns 403
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status_403() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, status API returns 403
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status_404() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, status API returns 403
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status_405() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, status API returns 403
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status_406() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// When any error happens, status API returns 403
+    /// http://35.200.46.204/#/1.peers/peer_status
+    #[tokio::test]
+    async fn status_408() {
+        let peer_id = "hoge";
+        let token = "test-token";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/peers/{}/status?token={}", peer_id, token);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let peer_info = PeerInfo {
+            peer_id: peer_id.to_string(),
+            token: token.to_string(),
+        };
+        let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {

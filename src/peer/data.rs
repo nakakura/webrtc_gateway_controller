@@ -91,3 +91,9 @@ pub struct PeerCallEvent {
 pub struct PeerCallEventMediaParams {
     pub media_connection_id: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct PeerStatusMessage {
+    pub peer_id: String,
+    pub disconnected: bool,
+}

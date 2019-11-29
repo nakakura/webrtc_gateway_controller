@@ -55,9 +55,9 @@ pub async fn create_media(
     }
 }
 
-/// Fn create_media access to the DELETE /media endpoint, and return its response.
+/// Fn delete_media access to the DELETE /media endpoint, and return its response.
 /// If the API returns values with 204 No Content
-/// If server returns 400, 405, 406, 408, create_media returns error
+/// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/streams_delete
 pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/{}", base_url, media_id);
@@ -108,7 +108,7 @@ mod test_create_media {
     use crate::media::data::CreateMediaOptions;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_201_video() {
         let server = server::http(move |mut req| {
@@ -151,7 +151,7 @@ mod test_create_media {
     }
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_201_audio() {
         let server = server::http(move |mut req| {
@@ -194,7 +194,7 @@ mod test_create_media {
     }
 
     /// If server returns 400, create_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_400() {
         let server = server::http(move |req| {
@@ -232,7 +232,7 @@ mod test_create_media {
     }
 
     /// If server returns 403, create_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_403() {
         let server = server::http(move |req| {
@@ -260,7 +260,7 @@ mod test_create_media {
     }
 
     /// If server returns 405, create_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_405() {
         let server = server::http(move |req| {
@@ -288,7 +288,7 @@ mod test_create_media {
     }
 
     /// If server returns 406, create_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_406() {
         let server = server::http(move |req| {
@@ -316,7 +316,7 @@ mod test_create_media {
     }
 
     /// If server returns 408, create_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_408() {
         let server = server::http(move |req| {

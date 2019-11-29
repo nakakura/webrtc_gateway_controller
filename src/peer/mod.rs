@@ -34,7 +34,7 @@ pub async fn create_peer(
         .send()
         .await?;
     match res.status() {
-        http::status::StatusCode::CREATED => res
+        reqwest::StatusCode::CREATED => res
             .json::<data::CreatedResponse>()
             .await
             .map_err(Into::into)
@@ -50,7 +50,7 @@ pub async fn create_peer(
                 }
                 CreatedResponse::Error(e) => Ok(CreatedResponse::Error(e)),
             }),
-        http::status::StatusCode::BAD_REQUEST => res
+        reqwest::StatusCode::BAD_REQUEST => res
             .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
@@ -64,16 +64,16 @@ pub async fn create_peer(
                     });
                 Err(error::ErrorEnum::create_myerror(&message))
             }),
-        http::status::StatusCode::FORBIDDEN => {
+        reqwest::StatusCode::FORBIDDEN => {
             Err(error::ErrorEnum::create_myerror("recv Forbidden"))
         }
-        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
             Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
         }
-        http::status::StatusCode::NOT_ACCEPTABLE => {
+        reqwest::StatusCode::NOT_ACCEPTABLE => {
             Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
         }
-        http::status::StatusCode::REQUEST_TIMEOUT => {
+        reqwest::StatusCode::REQUEST_TIMEOUT => {
             Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
         }
         _ => {
@@ -110,8 +110,8 @@ pub async fn event(
         .send()
         .await?;
     match res.status() {
-        http::status::StatusCode::OK => res.json::<PeerEventEnum>().await.map_err(Into::into),
-        http::status::StatusCode::BAD_REQUEST => res
+        reqwest::StatusCode::OK => res.json::<PeerEventEnum>().await.map_err(Into::into),
+        reqwest::StatusCode::BAD_REQUEST => res
             .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
@@ -125,19 +125,19 @@ pub async fn event(
                     });
                 Err(error::ErrorEnum::create_myerror(&message))
             }),
-        http::status::StatusCode::FORBIDDEN => {
+        reqwest::StatusCode::FORBIDDEN => {
             Err(error::ErrorEnum::create_myerror("recv Forbidden"))
         }
-        http::status::StatusCode::NOT_FOUND => {
+        reqwest::StatusCode::NOT_FOUND => {
             Err(error::ErrorEnum::create_myerror("recv NotFound"))
         }
-        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
             Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
         }
-        http::status::StatusCode::NOT_ACCEPTABLE => {
+        reqwest::StatusCode::NOT_ACCEPTABLE => {
             Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
         }
-        http::status::StatusCode::REQUEST_TIMEOUT => Ok(PeerEventEnum::Timeout),
+        reqwest::StatusCode::REQUEST_TIMEOUT => Ok(PeerEventEnum::Timeout),
         _ => {
             unreachable!();
         }
@@ -156,8 +156,8 @@ pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), err
     );
     let res = Client::new().delete(&api_url).send().await?;
     match res.status() {
-        http::status::StatusCode::NO_CONTENT => Ok(()),
-        http::status::StatusCode::BAD_REQUEST => res
+        reqwest::StatusCode::NO_CONTENT => Ok(()),
+        reqwest::StatusCode::BAD_REQUEST => res
             .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
@@ -171,19 +171,19 @@ pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), err
                     });
                 Err(error::ErrorEnum::create_myerror(&message))
             }),
-        http::status::StatusCode::FORBIDDEN => {
+        reqwest::StatusCode::FORBIDDEN => {
             Err(error::ErrorEnum::create_myerror("recv Forbidden"))
         }
-        http::status::StatusCode::NOT_FOUND => {
+        reqwest::StatusCode::NOT_FOUND => {
             Err(error::ErrorEnum::create_myerror("recv NotFound"))
         }
-        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
             Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
         }
-        http::status::StatusCode::NOT_ACCEPTABLE => {
+        reqwest::StatusCode::NOT_ACCEPTABLE => {
             Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
         }
-        http::status::StatusCode::REQUEST_TIMEOUT => {
+        reqwest::StatusCode::REQUEST_TIMEOUT => {
             Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
         }
         _ => {
@@ -206,8 +206,8 @@ pub async fn status(
     );
     let res = Client::new().get(&api_url).send().await?;
     match res.status() {
-        http::status::StatusCode::OK => res.json::<PeerStatusMessage>().await.map_err(Into::into),
-        http::status::StatusCode::BAD_REQUEST => res
+        reqwest::StatusCode::OK => res.json::<PeerStatusMessage>().await.map_err(Into::into),
+        reqwest::StatusCode::BAD_REQUEST => res
             .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
@@ -221,19 +221,19 @@ pub async fn status(
                     });
                 Err(error::ErrorEnum::create_myerror(&message))
             }),
-        http::status::StatusCode::FORBIDDEN => {
+        reqwest::StatusCode::FORBIDDEN => {
             Err(error::ErrorEnum::create_myerror("recv Forbidden"))
         }
-        http::status::StatusCode::NOT_FOUND => {
+        reqwest::StatusCode::NOT_FOUND => {
             Err(error::ErrorEnum::create_myerror("recv NotFound"))
         }
-        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
             Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
         }
-        http::status::StatusCode::NOT_ACCEPTABLE => {
+        reqwest::StatusCode::NOT_ACCEPTABLE => {
             Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
         }
-        http::status::StatusCode::REQUEST_TIMEOUT => {
+        reqwest::StatusCode::REQUEST_TIMEOUT => {
             Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
         }
         _ => {

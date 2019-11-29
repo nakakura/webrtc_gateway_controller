@@ -1,4 +1,4 @@
-mod data;
+pub mod data;
 
 use reqwest;
 use reqwest::Client;

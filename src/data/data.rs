@@ -84,3 +84,12 @@ pub struct DataConnectionStatus {
     pub serialization: String,
     r#type: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[serde(tag = "event")]
+pub enum DataConnectionEventEnum {
+    OPEN,
+    CLOSE,
+    ERROR { error_message: String },
+    TIMEOUT,
+}

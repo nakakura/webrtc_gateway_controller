@@ -145,7 +145,7 @@ pub async fn create_data_connection(
 }
 
 /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
-/// The API returns 204 No Content, when a WebRTC Gateway succeed to start calling
+/// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Peer Object
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_connection_close
 pub async fn delete_data_connection(
@@ -958,7 +958,7 @@ mod test_delete_data_connection {
     use crate::helper::*;
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
-    /// The API returns 204 No Content, when a WebRTC Gateway succeed to start calling
+    /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Peer Object
     /// It returns 400, 403, 404, 405, 406, 408 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]

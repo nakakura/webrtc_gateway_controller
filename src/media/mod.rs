@@ -317,6 +317,9 @@ pub async fn answer(
         http::status::StatusCode::FORBIDDEN => {
             Err(error::ErrorEnum::create_myerror("recv Forbidden"))
         }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv Not Found"))
+        }
         http::status::StatusCode::METHOD_NOT_ALLOWED => {
             Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
         }
@@ -1885,6 +1888,42 @@ mod test_answer {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let params = AnswerParameters {
+            constraints: None,
+            redirect_params: None,
+        };
+        let task = super::answer(&addr, media_connection_id, &params);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
+    /// If server returns 404, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_answer
+    #[tokio::test]
+    async fn recv_404() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/answer", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
                         .header("Content-type", "application/json")
                         .body(hyper::Body::from(json.to_string()))
                         .unwrap()

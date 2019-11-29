@@ -257,7 +257,7 @@ mod test_create_data {
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_201() {
+    async fn recv_201() {
         let server = server::http(move |req| {
             async move {
                 if req.uri() == "/data" && req.method() == reqwest::Method::POST {
@@ -288,7 +288,7 @@ mod test_create_data {
     /// If server returns 400, create_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_400() {
+    async fn recv_400() {
         let server = server::http(move |req| {
             async move {
                 if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
@@ -326,7 +326,7 @@ mod test_create_data {
     /// If server returns 403, create_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_403() {
+    async fn recv_403() {
         let server = server::http(move |req| {
             async move {
                 if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
@@ -354,7 +354,7 @@ mod test_create_data {
     /// If server returns 405, create_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_405() {
+    async fn recv_405() {
         let server = server::http(move |req| {
             async move {
                 if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
@@ -382,7 +382,7 @@ mod test_create_data {
     /// If server returns 406, create_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_406() {
+    async fn recv_406() {
         let server = server::http(move |req| {
             async move {
                 if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
@@ -410,7 +410,7 @@ mod test_create_data {
     /// If server returns 408, create_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_408() {
+    async fn recv_408() {
         let server = server::http(move |req| {
             async move {
                 if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
@@ -445,7 +445,7 @@ mod test_delete_data {
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_delete_data_204() {
+    async fn recv_204() {
         let data_id = "da-test";
 
         let server = server::http(move |req| {
@@ -473,7 +473,7 @@ mod test_delete_data {
     /// If server returns 400, create_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_delete_data_400() {
+    async fn recv_400() {
         let data_id = "da-test";
         let server = server::http(move |req| {
             async move {
@@ -513,7 +513,7 @@ mod test_delete_data {
     /// If server returns 403, delete_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_delete_data_403() {
+    async fn recv_403() {
         let data_id = "da-test";
         let server = server::http(move |req| {
             async move {
@@ -553,7 +553,7 @@ mod test_delete_data {
     /// If server returns 405, delete_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_delete_data_405() {
+    async fn recv_405() {
         let data_id = "da-test";
         let server = server::http(move |req| {
             async move {
@@ -593,7 +593,7 @@ mod test_delete_data {
     /// If server returns 406, delete_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_delete_data_406() {
+    async fn recv_406() {
         let data_id = "da-test";
         let server = server::http(move |req| {
             async move {
@@ -633,7 +633,7 @@ mod test_delete_data {
     /// If server returns 408, delete_data returns error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_delete_data_408() {
+    async fn recv_408() {
         let data_id = "da-test";
         let server = server::http(move |req| {
             async move {
@@ -681,7 +681,7 @@ mod test_create_data_connection {
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
-    async fn test_create_data_connection_202() {
+    async fn recv_202() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -734,7 +734,7 @@ mod test_create_data_connection {
     /// It returns 400 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
-    async fn test_create_data_connection_400() {
+    async fn recv_400() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -788,7 +788,7 @@ mod test_create_data_connection {
     /// It returns 403 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
-    async fn test_create_data_connection_403() {
+    async fn recv_403() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -832,7 +832,7 @@ mod test_create_data_connection {
     /// It returns 404 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
-    async fn test_create_data_connection_404() {
+    async fn recv_404() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -876,7 +876,7 @@ mod test_create_data_connection {
     /// It returns 405 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
-    async fn test_create_data_connection_405() {
+    async fn recv_405() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -920,7 +920,7 @@ mod test_create_data_connection {
     /// It returns 406 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
-    async fn test_create_data_connection_406() {
+    async fn recv_406() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -964,7 +964,7 @@ mod test_create_data_connection {
     /// It returns 408 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
-    async fn test_create_data_connection_408() {
+    async fn recv_408() {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
@@ -1017,7 +1017,7 @@ mod test_delete_data_connection {
     /// It returns 400, 403, 404, 405, 406, 408 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_202() {
+    async fn recv_202() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1046,7 +1046,7 @@ mod test_delete_data_connection {
     /// It returns 400 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_400() {
+    async fn recv_400() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1088,7 +1088,7 @@ mod test_delete_data_connection {
     /// It returns 403 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_403() {
+    async fn recv_403() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1120,7 +1120,7 @@ mod test_delete_data_connection {
     /// It returns 404 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_404() {
+    async fn recv_404() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1152,7 +1152,7 @@ mod test_delete_data_connection {
     /// It returns 405 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_405() {
+    async fn recv_405() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1184,7 +1184,7 @@ mod test_delete_data_connection {
     /// It returns 406 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_406() {
+    async fn recv_406() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1216,7 +1216,7 @@ mod test_delete_data_connection {
     /// It returns 403 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn test_create_data_connection_408() {
+    async fn recv_408() {
         let data_connection_id = "dc-test";
 
         let server = server::http(move |req| {
@@ -1256,7 +1256,7 @@ mod test_redirect_data_connection {
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to start redirecting data received from neighbours
     /// http://35.200.46.204/#/2.data/data_connection_put
     #[tokio::test]
-    async fn test_redirect_data_connection_202() {
+    async fn recv_202() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
@@ -1321,7 +1321,7 @@ mod test_redirect_data_connection {
     /// It returns 400 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
-    async fn test_create_data_connection_400() {
+    async fn recv_400() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
@@ -1380,7 +1380,7 @@ mod test_redirect_data_connection {
     /// It returns 403 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
-    async fn test_create_data_connection_403() {
+    async fn recv_403() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
@@ -1429,7 +1429,7 @@ mod test_redirect_data_connection {
     /// It returns 404 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
-    async fn test_create_data_connection_404() {
+    async fn recv_404() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
@@ -1478,7 +1478,7 @@ mod test_redirect_data_connection {
     /// It returns 405 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
-    async fn test_create_data_connection_405() {
+    async fn recv_405() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
@@ -1527,7 +1527,7 @@ mod test_redirect_data_connection {
     /// It returns 406 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
-    async fn test_create_data_connection_406() {
+    async fn recv_406() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
@@ -1576,7 +1576,7 @@ mod test_redirect_data_connection {
     /// It returns 408 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
-    async fn test_create_data_connection_408() {
+    async fn recv_408() {
         let data_id = "da-test";
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";

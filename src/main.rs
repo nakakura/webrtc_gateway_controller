@@ -2,6 +2,7 @@ mod data;
 mod error;
 #[cfg(test)]
 mod helper;
+mod media;
 mod peer;
 
 use lazy_static::*;

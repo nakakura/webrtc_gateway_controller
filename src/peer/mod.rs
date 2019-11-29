@@ -83,9 +83,12 @@ pub async fn create_peer(
 }
 
 /// It access to the GET /peer/{peer_id}/event?token={token} endpoint, and return its response.
+/// This function is used for long-polling, so it should be re-called after receiving events or 408 Request Timeout
 /// When a server returns values with 200 Ok,
-/// listen_event returns PeerEventEnum(OPEN, CONNECTION, CALL, STREAM, CLOSE, ERROR)
-/// When a server returns 403, 404, 405, 406, 408
+/// listen_event returns PeerEventEnum::{OPEN, CONNECTION, CALL, STREAM, CLOSE, ERROR}
+/// When a server returns 408 Request Timeout,
+/// listen_event returns PeerEventEnum::Timeout
+/// When a server returns 403, 404, 405, 406
 /// this function returns error
 /// Also, if server returns json which command_type is not "PEERS_EVENTS", it returns error.
 /// http://35.200.46.204/#/1.peers/peer_event
@@ -135,7 +138,7 @@ pub async fn listen_event(
             Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
         }
         http::status::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+            Ok(PeerEventEnum::Timeout)
         }
         _ => {
             unreachable!();
@@ -1025,7 +1028,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns 408, listen_event returns error
+    /// If a WebRTC Gateway returns 408, listen_event returns PeerEventEnum::Timeout
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn test_listen_event_recv_408() {
@@ -1056,11 +1059,8 @@ mod test_listen_event {
         };
 
         let task = super::listen_event(&addr, &peer_info);
-        let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
-        } else {
-            unreachable!();
-        }
+        let result = task.await.expect("parse error");
+        assert_eq!(result, PeerEventEnum::Timeout);
     }
 }
 

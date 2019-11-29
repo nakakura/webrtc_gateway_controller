@@ -144,6 +144,54 @@ pub async fn create_data_connection(
     }
 }
 
+/// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+/// The API returns 204 No Content, when a WebRTC Gateway succeed to start calling
+/// It returns 400, 403, 404, 405, 406, 408 to show errors.
+/// http://35.200.46.204/#/2.data/data_connection_close
+pub async fn delete_data_connection(
+    base_url: &str,
+    data_connection_id: &str,
+) -> Result<(), error::ErrorEnum> {
+    let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
+    let res = Client::new().delete(&api_url).send().await?;
+
+    match res.status() {
+        http::status::StatusCode::NO_CONTENT => Ok(()),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv Not Found"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_create_data {
     use serde_json::json;
@@ -895,6 +943,245 @@ mod test_create_data_connection {
             redirect_params: None,
         };
         let task = super::create_data_connection(&addr, &query);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+mod test_delete_data_connection {
+    use serde_json::json;
+
+    use crate::error;
+    use crate::helper::*;
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// The API returns 204 No Content, when a WebRTC Gateway succeed to start calling
+    /// It returns 400, 403, 404, 405, 406, 408 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_202() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NO_CONTENT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
+        let result = task.await.expect("parse error");
+        assert_eq!(result, ());
+    }
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// It returns 400 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_400() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "DATA_CONNECTION_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "peer_id",
+                                    "message": "peer_id field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// It returns 403 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_403() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// It returns 404 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_404() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// It returns 405 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_405() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// It returns 406 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_406() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
+    /// It returns 403 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_close
+    #[tokio::test]
+    async fn test_create_data_connection_408() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_data_connection(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {

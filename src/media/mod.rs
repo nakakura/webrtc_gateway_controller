@@ -55,6 +55,50 @@ pub async fn create_media(
     }
 }
 
+/// Fn create_media access to the DELETE /media endpoint, and return its response.
+/// If the API returns values with 204 No Content
+/// If server returns 400, 405, 406, 408, create_media returns error
+/// http://35.200.46.204/#/3.media/streams_delete
+pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::ErrorEnum> {
+    let api_url = format!("{}/media/{}", base_url, media_id);
+    let res = Client::new().delete(&api_url).send().await?;
+    match res.status() {
+        http::status::StatusCode::NO_CONTENT => Ok(()),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv Not Found"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_create_media {
     use serde_json::json;
@@ -293,6 +337,238 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_delete_media {
+    use serde_json::json;
+
+    use crate::error;
+    use crate::helper::*;
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If the API returns values with 204 No Content
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_204() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NO_CONTENT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.expect("event parse error");
+        assert_eq!(result, ());
+    }
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If server returns 400, create_media returns error
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_400() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({
+                        "command_type": "MEDIA_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "media_id",
+                                    "message": "media_id field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If server returns 403, create_media returns error
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_403() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If server returns 404, create_media returns error
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_404() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If server returns 405, create_media returns error
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_405() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If server returns 406, create_media returns error
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_406() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn create_media access to the DELETE /media endpoint, and return its response.
+    /// If server returns 408, create_media returns error
+    /// http://35.200.46.204/#/3.media/streams_delete
+    #[tokio::test]
+    async fn recv_408() {
+        let media_id = "test-media_id";
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/{}", media_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::delete_media(&addr, media_id);
+        let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
             unreachable!();

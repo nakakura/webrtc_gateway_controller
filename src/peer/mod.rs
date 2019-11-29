@@ -137,9 +137,7 @@ pub async fn listen_event(
         http::status::StatusCode::NOT_ACCEPTABLE => {
             Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
         }
-        http::status::StatusCode::REQUEST_TIMEOUT => {
-            Ok(PeerEventEnum::Timeout)
-        }
+        http::status::StatusCode::REQUEST_TIMEOUT => Ok(PeerEventEnum::Timeout),
         _ => {
             unreachable!();
         }

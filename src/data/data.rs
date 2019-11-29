@@ -60,3 +60,15 @@ pub struct RedirectParams {
     pub ip_v6: Option<String>,
     pub port: u16,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct RedirectDataParams {
+    pub feed_params: DataId,
+    pub redirect_params: RedirectParams,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct RedirectDataResponse {
+    pub command_type: String,
+    pub data_id: String,
+}

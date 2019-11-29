@@ -85,14 +85,14 @@ pub async fn create_peer(
 /// It access to the GET /peer/{peer_id}/event?token={token} endpoint, and return its response.
 /// This function is used for long-polling, so it should be re-called after receiving events or 408 Request Timeout
 /// When a server returns values with 200 Ok,
-/// listen_event returns PeerEventEnum::{OPEN, CONNECTION, CALL, STREAM, CLOSE, ERROR}
+/// event returns PeerEventEnum::{OPEN, CONNECTION, CALL, STREAM, CLOSE, ERROR}
 /// When a server returns 408 Request Timeout,
-/// listen_event returns PeerEventEnum::Timeout
+/// event returns PeerEventEnum::Timeout
 /// When a server returns 403, 404, 405, 406
 /// this function returns error
 /// Also, if server returns json which command_type is not "PEERS_EVENTS", it returns error.
 /// http://35.200.46.204/#/1.peers/peer_event
-pub async fn listen_event(
+pub async fn event(
     base_url: &str,
     peer_info: &PeerInfo,
 ) -> Result<PeerEventEnum, error::ErrorEnum> {
@@ -549,7 +549,7 @@ mod test_create_peer {
 }
 
 #[cfg(test)]
-mod test_listen_event {
+mod test_event {
     use serde_json::json;
 
     use crate::helper::*;
@@ -591,7 +591,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
         if let PeerEventEnum::OPEN(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
@@ -639,7 +639,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
         if let PeerEventEnum::CONNECTION(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
@@ -688,7 +688,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
         if let PeerEventEnum::CALL(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
@@ -734,7 +734,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
         if let PeerEventEnum::CLOSE(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
@@ -780,7 +780,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
         if let PeerEventEnum::ERROR(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
@@ -791,7 +791,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns invalid json, listen_event returns error
+    /// If a WebRTC Gateway returns invalid json, event returns error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_but_recv_invalid_json() {
@@ -822,7 +822,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await;
         assert!(result.is_err());
     }
@@ -866,7 +866,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -874,7 +874,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns 403, listen_event returns error
+    /// If a WebRTC Gateway returns 403, event returns error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_403() {
@@ -904,7 +904,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -912,7 +912,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns 404, listen_event returns error
+    /// If a WebRTC Gateway returns 404, event returns error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_404() {
@@ -942,7 +942,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -950,7 +950,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns 405, listen_event returns error
+    /// If a WebRTC Gateway returns 405, event returns error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_405() {
@@ -980,7 +980,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -988,7 +988,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns 406, listen_event returns error
+    /// If a WebRTC Gateway returns 406, event returns error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_406() {
@@ -1018,7 +1018,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1026,7 +1026,7 @@ mod test_listen_event {
         }
     }
 
-    /// If a WebRTC Gateway returns 408, listen_event returns PeerEventEnum::Timeout
+    /// If a WebRTC Gateway returns 408, event returns PeerEventEnum::Timeout
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_408() {
@@ -1056,7 +1056,7 @@ mod test_listen_event {
             token: token.to_string(),
         };
 
-        let task = super::listen_event(&addr, &peer_info);
+        let task = super::event(&addr, &peer_info);
         let result = task.await.expect("parse error");
         assert_eq!(result, PeerEventEnum::Timeout);
     }

@@ -250,8 +250,8 @@ pub async fn redirect_data_connection(
 /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
 /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
-/// http://35.200.46.204/#/2.data/data_connection_status
-pub async fn data_connection_status(
+/// http://35.200.46.204/#/2.data/status
+pub async fn status(
     base_url: &str,
     data_connection_id: &str,
 ) -> Result<DataConnectionStatus, error::ErrorEnum> {
@@ -302,10 +302,10 @@ pub async fn data_connection_status(
 
 /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
 /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
-/// Fn data_connection_event returns DataConnectionEventEnum::Timeout to listen event again.
+/// Fn event returns DataConnectionEventEnum::Timeout to listen event again.
 /// When it receives 400, 403, 404, 405, 406, show errors.
-/// http://35.200.46.204/#/2.data/data_connection_events
-pub async fn data_connection_event(
+/// http://35.200.46.204/#/2.data/events
+pub async fn event(
     base_url: &str,
     data_connection_id: &str,
 ) -> Result<DataConnectionEventEnum, error::ErrorEnum> {
@@ -1725,7 +1725,7 @@ mod test_redirect_data_connection {
     }
 }
 
-mod test_data_connection_status {
+mod test_status {
     use serde_json::json;
 
     use crate::error;
@@ -1733,7 +1733,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_200() {
         let data_connection_id = "dc-test";
@@ -1764,7 +1764,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.expect("parse error");
         assert_eq!(result.open, true);
         assert_eq!(result.reliable, true);
@@ -1772,7 +1772,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 400 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_400() {
         let data_connection_id = "dc-test";
@@ -1804,7 +1804,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1814,7 +1814,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 403 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_403() {
         let data_connection_id = "dc-test";
@@ -1846,7 +1846,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1856,7 +1856,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 404 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_404() {
         let data_connection_id = "dc-test";
@@ -1878,7 +1878,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1888,7 +1888,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 405 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_405() {
         let data_connection_id = "dc-test";
@@ -1910,7 +1910,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1920,7 +1920,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 406 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_406() {
         let data_connection_id = "dc-test";
@@ -1942,7 +1942,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1952,7 +1952,7 @@ mod test_data_connection_status {
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 408 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_status
+    /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_408() {
         let data_connection_id = "dc-test";
@@ -1974,7 +1974,7 @@ mod test_data_connection_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1983,7 +1983,7 @@ mod test_data_connection_status {
     }
 }
 
-mod test_data_connection_event {
+mod test_event {
     use serde_json::json;
 
     use crate::data::data::DataConnectionEventEnum;
@@ -1992,7 +1992,7 @@ mod test_data_connection_event {
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_open() {
         let data_connection_id = "dc-test";
@@ -2016,14 +2016,14 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.expect("parse error");
         assert_eq!(result, DataConnectionEventEnum::OPEN);
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_close() {
         let data_connection_id = "dc-test";
@@ -2047,14 +2047,14 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.expect("parse error");
         assert_eq!(result, DataConnectionEventEnum::CLOSE);
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_error() {
         let data_connection_id = "dc-test";
@@ -2079,7 +2079,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.expect("parse error");
         assert_eq!(
             result,
@@ -2091,7 +2091,7 @@ mod test_data_connection_event {
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// When it receives 400, show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_400() {
         let data_connection_id = "dc-test";
@@ -2123,7 +2123,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2133,7 +2133,7 @@ mod test_data_connection_event {
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// When it receives 403, show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_403() {
         let data_connection_id = "dc-test";
@@ -2155,7 +2155,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2165,7 +2165,7 @@ mod test_data_connection_event {
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// When it receives 404, show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_404() {
         let data_connection_id = "dc-test";
@@ -2187,7 +2187,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2197,7 +2197,7 @@ mod test_data_connection_event {
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// When it receives 405, show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_405() {
         let data_connection_id = "dc-test";
@@ -2219,7 +2219,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2229,7 +2229,7 @@ mod test_data_connection_event {
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// When it receives 406, show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_406() {
         let data_connection_id = "dc-test";
@@ -2251,7 +2251,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2260,8 +2260,8 @@ mod test_data_connection_event {
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
-    /// Fn data_connection_event returns DataConnectionEventEnum::Timeout to listen event again.
-    /// http://35.200.46.204/#/2.data/data_connection_events
+    /// Fn event returns DataConnectionEventEnum::Timeout to listen event again.
+    /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_408() {
         let data_connection_id = "dc-test";
@@ -2283,7 +2283,7 @@ mod test_data_connection_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::data_connection_event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id);
         let result = task.await.expect("parse error");
         assert_eq!(result, DataConnectionEventEnum::TIMEOUT);
     }

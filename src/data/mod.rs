@@ -1,10 +1,10 @@
-pub mod data;
+pub mod formats;
 
 use reqwest;
 use reqwest::Client;
 
 use crate::error;
-use data::*;
+use formats::*;
 
 /// It access to the POST /data endpoint, and return its response.
 /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
@@ -15,7 +15,7 @@ pub async fn create_data(base_url: &str) -> Result<CreatedResponse, error::Error
     let res = Client::new().post(&api_url).send().await?;
     match res.status() {
         reqwest::StatusCode::CREATED => res
-            .json::<data::CreatedResponse>()
+            .json::<formats::CreatedResponse>()
             .await
             .map_err(Into::into),
         reqwest::StatusCode::BAD_REQUEST => res
@@ -778,7 +778,7 @@ mod test_delete_data {
 mod test_create_data_connection {
     use serde_json::json;
 
-    use crate::data::data::*;
+    use crate::data::formats::*;
     use crate::error;
     use crate::helper::*;
 
@@ -1354,7 +1354,7 @@ mod test_delete_data_connection {
 mod test_redirect_data_connection {
     use serde_json::json;
 
-    use crate::data::data::*;
+    use crate::data::formats::*;
     use crate::error;
     use crate::helper::*;
 
@@ -1991,7 +1991,7 @@ mod test_status {
 mod test_event {
     use serde_json::json;
 
-    use crate::data::data::DataConnectionEventEnum;
+    use crate::data::formats::DataConnectionEventEnum;
     use crate::error;
     use crate::helper::*;
 

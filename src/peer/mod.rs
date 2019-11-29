@@ -1,10 +1,10 @@
-pub mod data;
+pub mod formats;
 
 use reqwest;
 use reqwest::Client;
 
 use crate::error;
-use data::*;
+use formats::*;
 
 /// It access to the POST /peer endpoint, and return its response.
 /// Server returns values with 201 Created and 403 Forbidden.
@@ -35,7 +35,7 @@ pub async fn create_peer(
         .await?;
     match res.status() {
         reqwest::StatusCode::CREATED => res
-            .json::<data::CreatedResponse>()
+            .json::<formats::CreatedResponse>()
             .await
             .map_err(Into::into)
             .and_then(|response| match response {
@@ -553,7 +553,7 @@ mod test_event {
     use serde_json::json;
 
     use crate::helper::*;
-    use crate::peer::data::{PeerEventEnum, PeerInfo};
+    use crate::peer::formats::{PeerEventEnum, PeerInfo};
     use crate::peer::*;
 
     /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
@@ -1304,7 +1304,7 @@ mod test_status {
     use serde_json::json;
 
     use crate::helper::*;
-    use crate::peer::data::PeerStatusMessage;
+    use crate::peer::formats::PeerStatusMessage;
     use crate::peer::*;
 
     /// Status API returns json with 200 OK

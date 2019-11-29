@@ -1,11 +1,11 @@
-mod data;
+mod formats;
 
 use reqwest;
 use reqwest::Client;
 
-use crate::data::data::RedirectParams;
+use crate::data::formats::RedirectParams;
 use crate::error;
-use data::*;
+use formats::*;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
 /// If the API returns values with 201 Created, create_data returns the information as CreateMediaResponse
@@ -20,7 +20,7 @@ pub async fn create_media(
     let res = Client::new().post(&api_url).json(&option).send().await?;
     match res.status() {
         reqwest::StatusCode::CREATED => res
-            .json::<data::CreateMediaResponse>()
+            .json::<formats::CreateMediaResponse>()
             .await
             .map_err(Into::into),
         reqwest::StatusCode::BAD_REQUEST => res
@@ -494,7 +494,7 @@ mod test_create_media {
 
     use crate::error;
     use crate::helper::*;
-    use crate::media::data::CreateMediaOptions;
+    use crate::media::formats::CreateMediaOptions;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/3.media/media
@@ -1405,7 +1405,7 @@ mod test_create_call {
 
     use crate::error;
     use crate::helper::*;
-    use crate::media::data::CallParameters;
+    use crate::media::formats::CallParameters;
 
     /// Fn create_call access to the POST /media/connections endpoint.
     /// If the API returns values with 202 Accepted, it returns CallResponse
@@ -1887,7 +1887,7 @@ mod test_answer {
 
     use crate::error;
     use crate::helper::*;
-    use crate::media::data::AnswerParameters;
+    use crate::media::formats::AnswerParameters;
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
     /// If the API returns values with 202 Accepted, it returns AnswerResponse
@@ -2164,7 +2164,7 @@ mod test_answer {
 mod test_pli {
     use serde_json::json;
 
-    use crate::data::data::RedirectParams;
+    use crate::data::formats::RedirectParams;
     use crate::error;
     use crate::helper::*;
 
@@ -2448,7 +2448,7 @@ mod test_events {
 
     use crate::error;
     use crate::helper::*;
-    use crate::media::data::MediaConnectionEventEnum;
+    use crate::media::formats::MediaConnectionEventEnum;
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
     /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum

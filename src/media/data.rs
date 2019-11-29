@@ -12,3 +12,11 @@ pub struct CreateMediaResponse {
     pub ip_v4: Option<String>,
     pub ip_v6: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct CreateRtcpResponse {
+    pub rtcp_id: String,
+    pub port: u16,
+    pub ip_v4: Option<String>,
+    pub ip_v6: Option<String>,
+}

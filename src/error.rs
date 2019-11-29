@@ -4,6 +4,24 @@ use std::string::FromUtf8Error;
 
 use failure::Fail;
 use reqwest;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct ErrorResponse {
+    pub command_type: String,
+    pub params: Errors,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct Errors {
+    pub errors: Vec<ErrorItem>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct ErrorItem {
+    pub field: String,
+    pub message: String,
+}
 
 #[derive(Debug)]
 pub struct ReqwestError(pub reqwest::Error);

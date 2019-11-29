@@ -51,10 +51,10 @@ pub async fn create_peer(
                 CreatedResponse::Error(e) => Ok(CreatedResponse::Error(e)),
             }),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -112,10 +112,10 @@ pub async fn event(
     match res.status() {
         http::status::StatusCode::OK => res.json::<PeerEventEnum>().await.map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -158,10 +158,10 @@ pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), err
     match res.status() {
         http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -208,10 +208,10 @@ pub async fn status(
     match res.status() {
         http::status::StatusCode::OK => res.json::<PeerStatusMessage>().await.map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors

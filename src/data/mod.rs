@@ -4,7 +4,6 @@ use reqwest;
 use reqwest::Client;
 
 use crate::error;
-use crate::peer::data::PeerErrorResponse;
 use data::*;
 
 /// It access to the POST /data endpoint, and return its response.
@@ -20,10 +19,10 @@ pub async fn create_data(base_url: &str) -> Result<CreatedResponse, error::Error
             .await
             .map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -62,10 +61,10 @@ pub async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::Err
     match res.status() {
         http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -110,10 +109,10 @@ pub async fn create_data_connection(
             .await
             .map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -158,10 +157,10 @@ pub async fn delete_data_connection(
     match res.status() {
         http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -213,10 +212,10 @@ pub async fn redirect_data_connection(
             res.json::<RedirectDataResponse>().await.map_err(Into::into)
         }
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -266,10 +265,10 @@ pub async fn status(
             res.json::<DataConnectionStatus>().await.map_err(Into::into)
         }
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -318,10 +317,10 @@ pub async fn event(
             .await
             .map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors

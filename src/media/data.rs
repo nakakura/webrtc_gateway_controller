@@ -51,7 +51,12 @@ pub struct MediaParams {
     pub sampling_rate: usize,
 }
 
-use crate::data::data::RedirectParams;
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct RedirectParams {
+    pub ip_v4: Option<String>,
+    pub ip_v6: Option<String>,
+    pub port: u16,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct RedirectParameters {

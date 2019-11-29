@@ -5,7 +5,6 @@ use reqwest::Client;
 
 use crate::data::data::RedirectParams;
 use crate::error;
-use crate::peer::data::PeerErrorResponse;
 use data::*;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
@@ -25,10 +24,10 @@ pub async fn create_media(
             .await
             .map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -66,10 +65,10 @@ pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::E
     match res.status() {
         http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -112,10 +111,10 @@ pub async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::Er
             res.json::<CreateRtcpResponse>().await.map_err(Into::into)
         }
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -153,10 +152,10 @@ pub async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::Err
     match res.status() {
         http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -204,10 +203,10 @@ pub async fn create_call(
     match res.status() {
         http::status::StatusCode::ACCEPTED => res.json::<CallResponse>().await.map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -248,10 +247,10 @@ pub async fn delete_call(
     match res.status() {
         http::status::StatusCode::NO_CONTENT => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -301,10 +300,10 @@ pub async fn answer(
             res.json::<AnswerResponse>().await.map_err(Into::into)
         }
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -349,10 +348,10 @@ pub async fn pli(
     match res.status() {
         http::status::StatusCode::CREATED => Ok(()),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -402,10 +401,10 @@ pub async fn events(
             .await
             .map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors
@@ -455,10 +454,10 @@ pub async fn status(
             .await
             .map_err(Into::into),
         http::status::StatusCode::BAD_REQUEST => res
-            .json::<PeerErrorResponse>()
+            .json::<error::ErrorResponse>()
             .await
             .map_err(Into::into)
-            .and_then(|response: PeerErrorResponse| {
+            .and_then(|response: error::ErrorResponse| {
                 let message = response
                     .params
                     .errors

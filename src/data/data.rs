@@ -72,3 +72,15 @@ pub struct RedirectDataResponse {
     pub command_type: String,
     pub data_id: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct DataConnectionStatus {
+    pub remote_id: String,
+    pub buffersize: usize,
+    pub label: String,
+    pub metadata: String,
+    pub open: bool,
+    pub reliable: bool,
+    pub serialization: String,
+    r#type: String,
+}

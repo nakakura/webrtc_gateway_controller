@@ -295,7 +295,6 @@ mod test_create_peer {
         }
     }
 
-
     /// If this program connects to an another web server,
     /// create_peer returns error
     /// http://35.200.46.204/#/1.peers/peer

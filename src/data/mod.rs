@@ -247,6 +247,59 @@ pub async fn redirect_data_connection(
     }
 }
 
+/// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+/// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
+/// It returns 400, 403, 404, 405, 406, 408 to show errors.
+/// http://35.200.46.204/#/2.data/data_connection_status
+pub async fn data_connection_status(
+    base_url: &str,
+    data_connection_id: &str,
+) -> Result<DataConnectionStatus, error::ErrorEnum> {
+    let api_url = format!(
+        "{}/data/connections/{}/status",
+        base_url, data_connection_id
+    );
+    let res = Client::new().get(&api_url).send().await?;
+
+    match res.status() {
+        http::status::StatusCode::OK => {
+            res.json::<DataConnectionStatus>().await.map_err(Into::into)
+        }
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv Not Found"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_create_data {
     use serde_json::json;
@@ -1614,6 +1667,264 @@ mod test_redirect_data_connection {
         let addr = format!("http://{}", server.addr());
         let task =
             super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+mod test_data_connection_status {
+    use serde_json::json;
+
+    use crate::error;
+    use crate::helper::*;
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_200() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({
+                        "buffersize": 0,
+                        "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
+                        "metadata": "",
+                        "open": true,
+                        "reliable": true,
+                        "remote_id": "data_caller",
+                        "serialization": "BINARY",
+                        "type": "DATA"
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
+        let result = task.await.expect("parse error");
+        assert_eq!(result.open, true);
+        assert_eq!(result.reliable, true);
+    }
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// It returns 400 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_400() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({
+                        "command_type": "DATA_CONNECTION_STATUS",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// It returns 403 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_403() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({
+                        "command_type": "DATA_CONNECTION_STATUS",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "field",
+                                    "message": "something happened"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// It returns 404 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_404() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// It returns 405 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_405() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// It returns 406 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_406() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
+        let result = task.await.err().expect("parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
+    /// It returns 408 to show errors.
+    /// http://35.200.46.204/#/2.data/data_connection_status
+    #[tokio::test]
+    async fn recv_408() {
+        let data_connection_id = "dc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/data/connections/{}/status", data_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::data_connection_status(&addr, data_connection_id);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {

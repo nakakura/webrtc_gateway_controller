@@ -383,6 +383,59 @@ pub async fn pli(
     }
 }
 
+/// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+/// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
+/// If server returns 400, 403, 404, 405, 406, 408, it returns error
+/// http://35.200.46.204/#/3.media/media_connection_event
+pub async fn events(
+    base_url: &str,
+    media_connection_id: &str,
+) -> Result<MediaConnectionEventEnum, error::ErrorEnum> {
+    let api_url = format!(
+        "{}/media/connections/{}/events",
+        base_url, media_connection_id
+    );
+    let res = Client::new().get(&api_url).send().await?;
+    match res.status() {
+        http::status::StatusCode::OK => res
+            .json::<MediaConnectionEventEnum>()
+            .await
+            .map_err(Into::into),
+        http::status::StatusCode::BAD_REQUEST => res
+            .json::<PeerErrorResponse>()
+            .await
+            .map_err(Into::into)
+            .and_then(|response: PeerErrorResponse| {
+                let message = response
+                    .params
+                    .errors
+                    .iter()
+                    .fold("recv message".to_string(), |sum, acc| {
+                        format!("{}\n{}", sum, acc.message)
+                    });
+                Err(error::ErrorEnum::create_myerror(&message))
+            }),
+        http::status::StatusCode::FORBIDDEN => {
+            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
+        }
+        http::status::StatusCode::NOT_FOUND => {
+            Err(error::ErrorEnum::create_myerror("recv Not Found"))
+        }
+        http::status::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+        }
+        http::status::StatusCode::NOT_ACCEPTABLE => {
+            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+        }
+        http::status::StatusCode::REQUEST_TIMEOUT => {
+            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+        }
+        _ => {
+            unreachable!();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_create_media {
     use serde_json::json;
@@ -2329,6 +2382,338 @@ mod test_pli {
         };
 
         let task = super::pli(&addr, media_connection_id, &params);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_events {
+    use serde_json::json;
+
+    use crate::error;
+    use crate::helper::*;
+    use crate::media::data::MediaConnectionEventEnum;
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_202_ready() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({"event": "READY"});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.expect("event parse error");
+        assert_eq!(result, MediaConnectionEventEnum::READY);
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_202_stream() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({"event": "STREAM"});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.expect("event parse error");
+        assert_eq!(result, MediaConnectionEventEnum::STREAM);
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_202_close() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({"event": "CLOSE"});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.expect("event parse error");
+        assert_eq!(result, MediaConnectionEventEnum::CLOSE);
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_202_error() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({"event": "ERROR", "error_message": "hoge"});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.expect("event parse error");
+        assert_eq!(
+            result,
+            MediaConnectionEventEnum::ERROR {
+                error_message: "hoge".to_string()
+            }
+        );
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If server returns 400, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_400() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({
+                        "command_type": "MEDIA_CONNECTION_EVENTS",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "media_id",
+                                    "message": "media_id field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If server returns 403, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_403() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If server returns 404, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_404() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If server returns 405, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_405() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If server returns 406, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_406() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
+        let result = task.await.err().expect("event parse error");
+        if let error::ErrorEnum::MyError { error: _e } = result {
+        } else {
+            unreachable!();
+        }
+    }
+
+    /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
+    /// If server returns 408, it returns error
+    /// http://35.200.46.204/#/3.media/media_connection_event
+    #[tokio::test]
+    async fn recv_408() {
+        let media_connection_id = "mc-test";
+
+        let server = server::http(move |req| {
+            async move {
+                let uri = format!("/media/connections/{}/events", media_connection_id);
+                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
+            }
+        });
+
+        let addr = format!("http://{}", server.addr());
+        let task = super::events(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {

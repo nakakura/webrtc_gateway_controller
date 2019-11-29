@@ -91,3 +91,12 @@ pub struct AnswerResponseParams {
     pub audio_port: Option<u16>,
     pub audio_id: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[serde(tag = "event")]
+pub enum MediaConnectionEventEnum {
+    READY,
+    STREAM,
+    CLOSE,
+    ERROR { error_message: String },
+}

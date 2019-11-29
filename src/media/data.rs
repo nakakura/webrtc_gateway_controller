@@ -100,3 +100,17 @@ pub enum MediaConnectionEventEnum {
     CLOSE,
     ERROR { error_message: String },
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct MediaConnectionStatus {
+    pub metadata: String,
+    pub open: bool,
+    pub remote_id: String,
+    pub ssrc: Vec<SsrcPair>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct SsrcPair {
+    pub media_id: String,
+    pub ssrc: usize,
+}

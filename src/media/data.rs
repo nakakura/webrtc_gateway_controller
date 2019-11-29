@@ -71,3 +71,23 @@ pub struct CallResponse {
 pub struct MediaConnectionId {
     pub media_connection_id: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct AnswerParameters {
+    pub constraints: Option<Constraints>,
+    pub redirect_params: Option<RedirectParameters>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct AnswerResponse {
+    pub command_type: String,
+    pub params: AnswerResponseParams,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct AnswerResponseParams {
+    pub video_port: Option<u16>,
+    pub video_id: Option<String>,
+    pub audio_port: Option<u16>,
+    pub audio_id: Option<String>,
+}

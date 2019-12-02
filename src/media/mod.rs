@@ -1,8 +1,10 @@
 mod formats;
 
+use futures::*;
 use reqwest;
 use reqwest::Client;
 
+use crate::common;
 use crate::data::formats::RedirectParams;
 use crate::error;
 use formats::*;
@@ -17,42 +19,10 @@ pub async fn create_media(
 ) -> Result<CreateMediaResponse, error::ErrorEnum> {
     let api_url = format!("{}/media", base_url);
     let option = CreateMediaOptions { is_video: is_video };
-    let res = Client::new().post(&api_url).json(&option).send().await?;
-    match res.status() {
-        reqwest::StatusCode::CREATED => res
-            .json::<formats::CreateMediaResponse>()
-            .await
-            .map_err(Into::into),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().post(&api_url).json(&option).send();
+    let parser =
+        |r: reqwest::Response| r.json::<formats::CreateMediaResponse>().map_err(Into::into);
+    common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// Fn delete_media access to the DELETE /media endpoint, and return its response.
@@ -61,42 +31,9 @@ pub async fn create_media(
 /// http://35.200.46.204/#/3.media/streams_delete
 pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/{}", base_url, media_id);
-    let res = Client::new().delete(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::NO_CONTENT => Ok(()),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().delete(&api_url).send();
+    let parser = |_| future::ok(());
+    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -105,41 +42,9 @@ pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::E
 /// http://35.200.46.204/#/3.media/media_rtcp_create
 pub async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::ErrorEnum> {
     let api_url = format!("{}/media/rtcp", base_url);
-    let res = Client::new().post(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::CREATED => {
-            res.json::<CreateRtcpResponse>().await.map_err(Into::into)
-        }
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().post(&api_url).send();
+    let parser = |r: reqwest::Response| r.json::<formats::CreateRtcpResponse>().map_err(Into::into);
+    common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -148,42 +53,9 @@ pub async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::Er
 /// http://35.200.46.204/#/3.media/media_rtcp_delete
 pub async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/rtcp/{}", base_url, rtcp_id);
-    let res = Client::new().delete(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::NO_CONTENT => Ok(()),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().delete(&api_url).send();
+    let parser = |_| future::ok(());
+    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Fn create_call access to the POST /media/connections endpoint.
@@ -195,43 +67,9 @@ pub async fn create_call(
     call_params: &CallParameters,
 ) -> Result<CallResponse, error::ErrorEnum> {
     let api_url = format!("{}/media/connections", base_url);
-    let res = Client::new()
-        .post(&api_url)
-        .json(call_params)
-        .send()
-        .await?;
-    match res.status() {
-        reqwest::StatusCode::ACCEPTED => res.json::<CallResponse>().await.map_err(Into::into),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().post(&api_url).json(call_params).send();
+    let parser = |r: reqwest::Response| r.json::<formats::CallResponse>().map_err(Into::into);
+    common::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
 
 /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
@@ -243,42 +81,9 @@ pub async fn delete_call(
     media_connection_id: &str,
 ) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/connections/{}", base_url, media_connection_id);
-    let res = Client::new().delete(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::NO_CONTENT => Ok(()),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().delete(&api_url).send();
+    let parser = |_| future::ok(());
+    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -294,44 +99,9 @@ pub async fn answer(
         "{}/media/connections/{}/answer",
         base_url, media_connection_id
     );
-    let res = Client::new().post(&api_url).json(params).send().await?;
-    match res.status() {
-        reqwest::StatusCode::ACCEPTED => {
-            res.json::<AnswerResponse>().await.map_err(Into::into)
-        }
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().post(&api_url).json(params).send();
+    let parser = |r: reqwest::Response| r.json::<formats::AnswerResponse>().map_err(Into::into);
+    common::api_access(reqwest::StatusCode::ACCEPTED, true, api_call, parser).await
 }
 
 /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -344,42 +114,9 @@ pub async fn pli(
     params: &RedirectParams,
 ) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/connections/{}/pli", base_url, media_connection_id);
-    let res = Client::new().post(&api_url).json(params).send().await?;
-    match res.status() {
-        reqwest::StatusCode::CREATED => Ok(()),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().post(&api_url).json(params).send();
+    let parser = |_| future::ok(());
+    common::api_access(reqwest::StatusCode::CREATED, true, api_call, parser).await
 }
 
 /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -394,44 +131,19 @@ pub async fn events(
         "{}/media/connections/{}/events",
         base_url, media_connection_id
     );
-    let res = Client::new().get(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::OK => res
-            .json::<MediaConnectionEventEnum>()
-            .await
-            .map_err(Into::into),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
+    let api_call = || Client::new().get(&api_url).send();
+    let parser = |r: reqwest::Response| {
+        r.json::<formats::MediaConnectionEventEnum>()
             .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
+    };
+    match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+        Ok(v) => Ok(v),
+        Err(e) => match e {
+            error::ErrorEnum::MyError { error: message } if message == "recv RequestTimeout" => {
+                Ok(formats::MediaConnectionEventEnum::TIMEOUT)
+            }
+            e => Err(e),
+        },
     }
 }
 
@@ -447,45 +159,12 @@ pub async fn status(
         "{}/media/connections/{}/status",
         base_url, media_connection_id
     );
-    let res = Client::new().get(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::OK => res
-            .json::<MediaConnectionStatus>()
-            .await
-            .map_err(Into::into),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
+    let api_call = || Client::new().get(&api_url).send();
+    let parser = |r: reqwest::Response| {
+        r.json::<formats::MediaConnectionStatus>()
             .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    };
+    common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 #[cfg(test)]
@@ -493,8 +172,8 @@ mod test_create_media {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
     use crate::media::formats::CreateMediaOptions;
+    use crate::test_helper::*;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/3.media/media
@@ -704,6 +383,7 @@ mod test_create_media {
         }
     }
 
+    /// FIXME should receive Ok(Enum::Timeout)
     /// If server returns 408, create_data returns error
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
@@ -1404,8 +1084,8 @@ mod test_create_call {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
     use crate::media::formats::CallParameters;
+    use crate::test_helper::*;
 
     /// Fn create_call access to the POST /media/connections endpoint.
     /// If the API returns values with 202 Accepted, it returns CallResponse
@@ -1886,8 +1566,8 @@ mod test_answer {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
     use crate::media::formats::AnswerParameters;
+    use crate::test_helper::*;
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
     /// If the API returns values with 202 Accepted, it returns AnswerResponse
@@ -2447,8 +2127,8 @@ mod test_events {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
     use crate::media::formats::MediaConnectionEventEnum;
+    use crate::test_helper::*;
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
     /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum

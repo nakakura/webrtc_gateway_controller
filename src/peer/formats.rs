@@ -37,7 +37,7 @@ pub enum PeerEventEnum {
     CONNECTION(PeerConnectionEvent),
     CALL(PeerCallEvent),
     ERROR(PeerErrorEvent),
-    Timeout,
+    TIMEOUT,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

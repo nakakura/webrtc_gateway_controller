@@ -1,9 +1,11 @@
+mod common;
 mod data;
 mod error;
-#[cfg(test)]
-mod test_helper;
 mod media;
 mod peer;
+
+#[cfg(test)]
+mod test_helper;
 
 use lazy_static::*;
 

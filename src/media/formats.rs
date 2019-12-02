@@ -104,6 +104,7 @@ pub enum MediaConnectionEventEnum {
     STREAM,
     CLOSE,
     ERROR { error_message: String },
+    TIMEOUT,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

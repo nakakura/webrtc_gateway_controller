@@ -1,8 +1,10 @@
 pub mod formats;
 
+use futures::*;
 use reqwest;
 use reqwest::Client;
 
+use crate::common;
 use crate::error;
 use formats::*;
 
@@ -26,60 +28,10 @@ pub async fn create_peer(
         peer_id: peer_id.to_string(),
         turn: turn,
     };
-
     let api_url = format!("{}/peers", base_url);
-    let res = Client::new()
-        .post(&api_url)
-        .json(&peer_options)
-        .send()
-        .await?;
-    match res.status() {
-        reqwest::StatusCode::CREATED => res
-            .json::<formats::CreatedResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response| match response {
-                CreatedResponse::Success(s) => {
-                    if s.command_type == "PEERS_CREATE" {
-                        Ok(CreatedResponse::Success(s))
-                    } else {
-                        Err(error::ErrorEnum::create_myerror(
-                            "webrtc gateway might be old version",
-                        ))
-                    }
-                }
-                CreatedResponse::Error(e) => Ok(CreatedResponse::Error(e)),
-            }),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().post(&api_url).json(&peer_options).send();
+    let parser = |r: reqwest::Response| r.json::<formats::CreatedResponse>().map_err(Into::into);
+    common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// It access to the GET /peer/{peer_id}/event?token={token} endpoint, and return its response.
@@ -100,47 +52,24 @@ pub async fn event(
         "{}/peers/{}/events?token={}",
         base_url, peer_info.peer_id, peer_info.token
     );
-
-    let res = Client::new()
-        .get(&api_url)
-        .header(
-            reqwest::header::CONTENT_TYPE,
-            reqwest::header::HeaderValue::from_static("application/json"),
-        )
-        .send()
-        .await?;
-    match res.status() {
-        reqwest::StatusCode::OK => res.json::<PeerEventEnum>().await.map_err(Into::into),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv NotFound"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => Ok(PeerEventEnum::Timeout),
-        _ => {
-            unreachable!();
-        }
+    let api_call = || {
+        Client::new()
+            .get(&api_url)
+            .header(
+                reqwest::header::CONTENT_TYPE,
+                reqwest::header::HeaderValue::from_static("application/json"),
+            )
+            .send()
+    };
+    let parser = |r: reqwest::Response| r.json::<formats::PeerEventEnum>().map_err(Into::into);
+    match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+        Ok(v) => Ok(v),
+        Err(e) => match e {
+            error::ErrorEnum::MyError { error: message } if message == "recv RequestTimeout" => {
+                Ok(formats::PeerEventEnum::TIMEOUT)
+            }
+            e => Err(e),
+        },
     }
 }
 
@@ -154,42 +83,9 @@ pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), err
         "{}/peers/{}?token={}",
         base_url, peer_info.peer_id, peer_info.token
     );
-    let res = Client::new().delete(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::NO_CONTENT => Ok(()),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv NotFound"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().delete(&api_url).send();
+    let parser = |_| future::ok(());
+    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Status function access to the GET /peers/{peer_id}/status endpoint to get status of WebRTC Gateway
@@ -204,50 +100,17 @@ pub async fn status(
         "{}/peers/{}/status?token={}",
         base_url, peer_info.peer_id, peer_info.token
     );
-    let res = Client::new().get(&api_url).send().await?;
-    match res.status() {
-        reqwest::StatusCode::OK => res.json::<PeerStatusMessage>().await.map_err(Into::into),
-        reqwest::StatusCode::BAD_REQUEST => res
-            .json::<error::ErrorResponse>()
-            .await
-            .map_err(Into::into)
-            .and_then(|response: error::ErrorResponse| {
-                let message = response
-                    .params
-                    .errors
-                    .iter()
-                    .fold("recv message".to_string(), |sum, acc| {
-                        format!("{}\n{}", sum, acc.message)
-                    });
-                Err(error::ErrorEnum::create_myerror(&message))
-            }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::ErrorEnum::create_myerror("recv Forbidden"))
-        }
-        reqwest::StatusCode::NOT_FOUND => {
-            Err(error::ErrorEnum::create_myerror("recv NotFound"))
-        }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
-        }
-        reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
-        }
-        reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
-        }
-        _ => {
-            unreachable!();
-        }
-    }
+    let api_call = || Client::new().get(&api_url).send();
+    let parser = |r: reqwest::Response| r.json::<formats::PeerStatusMessage>().map_err(Into::into);
+    common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 #[cfg(test)]
 mod test_create_peer {
     use serde_json::json;
 
-    use crate::test_helper::*;
     use crate::peer::*;
+    use crate::test_helper::*;
 
     /// A WebRTC Gateway returns 201 Created and a PeerResponse struct, if it succeeds to create a Peer Object
     /// http://35.200.46.204/#/1.peers/peer
@@ -327,6 +190,7 @@ mod test_create_peer {
         }
     }
 
+    /// FIXME not needed
     /// If this program connects to an another web server,
     /// create_peer returns error
     /// http://35.200.46.204/#/1.peers/peer
@@ -552,9 +416,9 @@ mod test_create_peer {
 mod test_event {
     use serde_json::json;
 
-    use crate::test_helper::*;
     use crate::peer::formats::{PeerEventEnum, PeerInfo};
     use crate::peer::*;
+    use crate::test_helper::*;
 
     /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
     /// http://35.200.46.204/#/1.peers/peer
@@ -1058,7 +922,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("parse error");
-        assert_eq!(result, PeerEventEnum::Timeout);
+        assert_eq!(result, PeerEventEnum::TIMEOUT);
     }
 }
 
@@ -1066,8 +930,8 @@ mod test_event {
 mod test_delete_peer {
     use serde_json::json;
 
-    use crate::test_helper::*;
     use crate::peer::*;
+    use crate::test_helper::*;
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
     /// http://35.200.46.204/#/1.peers/peer_destroy
@@ -1303,9 +1167,9 @@ mod test_delete_peer {
 mod test_status {
     use serde_json::json;
 
-    use crate::test_helper::*;
     use crate::peer::formats::PeerStatusMessage;
     use crate::peer::*;
+    use crate::test_helper::*;
 
     /// Status API returns json with 200 OK
     /// http://35.200.46.204/#/1.peers/peer_status

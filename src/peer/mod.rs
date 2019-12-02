@@ -190,52 +190,6 @@ mod test_create_peer {
         }
     }
 
-    /// FIXME not needed
-    /// If this program connects to an another web server,
-    /// create_peer returns error
-    /// http://35.200.46.204/#/1.peers/peer
-    #[tokio::test]
-    async fn recv_201_from_another_version() {
-        let peer_id = "hoge";
-        let token = "test-token";
-
-        let server = server::http(move |mut req| {
-            async move {
-                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                    let mut full: Vec<u8> = Vec::new();
-                    while let Some(item) = req.body_mut().next().await {
-                        full.extend(&*item.unwrap());
-                    }
-                    let peer_options: PeerOptions =
-                        serde_json::from_slice(&full).expect("PeerOptions parse error");
-                    let json = json!({
-                        "command_type": "PEERS_CREATE_v2",
-                        "params": {
-                            "peer_id": peer_options.peer_id,
-                            "token": token,
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::CREATED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
-        let result = task.await;
-        assert!(result.is_err());
-        if let Err(error::ErrorEnum::MyError { error: _e }) = result {
-        } else {
-            unreachable!();
-        }
-    }
-
     /// When WebRTC Gateway returns 400, parse error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]

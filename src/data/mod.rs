@@ -714,51 +714,6 @@ mod test_create_data_connection {
         }
     }
 
-    /// FIXME create_data not respond 404
-    /// It returns 404 to show errors
-    /// http://35.200.46.204/#/2.data/data_connections_create
-    #[tokio::test]
-    async fn recv_404() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
-        let data_id = "da-test";
-
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
-        let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
-            options: None,
-            target_id: target_id.to_string(),
-            params: data_id,
-            redirect_params: None,
-        };
-        let task = super::create_data_connection(&addr, &query);
-        let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
-        } else {
-            unreachable!();
-        }
-    }
-
     /// It returns 405 to show errors
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]

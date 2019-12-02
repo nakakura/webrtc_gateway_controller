@@ -383,7 +383,6 @@ mod test_create_media {
         }
     }
 
-    /// FIXME should receive Ok(Enum::Timeout)
     /// If server returns 408, create_data returns error
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
@@ -2446,11 +2445,8 @@ mod test_events {
 
         let addr = format!("http://{}", server.addr());
         let task = super::events(&addr, media_connection_id);
-        let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
-        } else {
-            unreachable!();
-        }
+        let result = task.await.expect("event parse error");
+        assert_eq!(result, MediaConnectionEventEnum::TIMEOUT);
     }
 }
 

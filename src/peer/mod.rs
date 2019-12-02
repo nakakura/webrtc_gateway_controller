@@ -246,7 +246,7 @@ pub async fn status(
 mod test_create_peer {
     use serde_json::json;
 
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::peer::*;
 
     /// A WebRTC Gateway returns 201 Created and a PeerResponse struct, if it succeeds to create a Peer Object
@@ -552,7 +552,7 @@ mod test_create_peer {
 mod test_event {
     use serde_json::json;
 
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::peer::formats::{PeerEventEnum, PeerInfo};
     use crate::peer::*;
 
@@ -1066,7 +1066,7 @@ mod test_event {
 mod test_delete_peer {
     use serde_json::json;
 
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::peer::*;
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
@@ -1303,7 +1303,7 @@ mod test_delete_peer {
 mod test_status {
     use serde_json::json;
 
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::peer::formats::PeerStatusMessage;
     use crate::peer::*;
 

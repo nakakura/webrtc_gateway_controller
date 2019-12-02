@@ -1,7 +1,7 @@
 mod data;
 mod error;
 #[cfg(test)]
-mod helper;
+mod test_helper;
 mod media;
 mod peer;
 

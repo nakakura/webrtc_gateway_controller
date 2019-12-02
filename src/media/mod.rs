@@ -493,7 +493,7 @@ mod test_create_media {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::media::formats::CreateMediaOptions;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
@@ -738,7 +738,7 @@ mod test_delete_media {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
     /// If the API returns values with 204 No Content
@@ -970,7 +970,7 @@ mod test_create_rtcp {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
     /// If the API returns values with 201 Created, it returns CreateRtcpResponse
@@ -1165,7 +1165,7 @@ mod test_delete_rtcp {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
     /// If the API returns values with 204 No Content
@@ -1404,7 +1404,7 @@ mod test_create_call {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::media::formats::CallParameters;
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1647,7 +1647,7 @@ mod test_delete_call {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If the API returns values with 204 No Content
@@ -1886,7 +1886,7 @@ mod test_answer {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::media::formats::AnswerParameters;
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -2166,7 +2166,7 @@ mod test_pli {
 
     use crate::data::formats::RedirectParams;
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
     /// If the API returns values with 201 Accepted, it returns ()
@@ -2447,7 +2447,7 @@ mod test_events {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
     use crate::media::formats::MediaConnectionEventEnum;
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2779,7 +2779,7 @@ mod test_status {
     use serde_json::json;
 
     use crate::error;
-    use crate::helper::*;
+    use crate::test_helper::*;
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
     /// If the API returns values with 200 Ok, it returns MediaConnectionStatus

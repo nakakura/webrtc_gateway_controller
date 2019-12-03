@@ -19,3 +19,8 @@ tokio = "0.2.0-alpha.6"
 [dev-dependencies]
 http = "0.1.19"
 hyper = { version = "=0.13.0-alpha.4", features = ["unstable-stream"] }
+
+
+[[bin]]
+name = "main"
+path = "src/bin/main.rs"

@@ -1,3 +1,6 @@
+//FIXME
+#![allow(dead_code)]
+
 use futures::*;
 use reqwest;
 use reqwest::Client;

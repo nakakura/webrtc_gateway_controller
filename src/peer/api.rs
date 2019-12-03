@@ -146,14 +146,10 @@ mod test_create_peer {
 
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, peer_id, false);
-        if let CreatedResponse::Success(response) = task.await.expect("CreatedResponse parse error")
-        {
-            assert_eq!(response.command_type, "PEERS_CREATE".to_string());
-            assert_eq!(response.params.peer_id, peer_id);
-            assert_eq!(response.params.token, token);
-        } else {
-            unreachable!();
-        }
+        let result = task.await.expect("CreatedResponse parse error");
+        assert_eq!(result.command_type, "PEERS_CREATE".to_string());
+        assert_eq!(result.params.peer_id, peer_id);
+        assert_eq!(result.params.token, token);
     }
 
     /// If this program connects to an another web server,

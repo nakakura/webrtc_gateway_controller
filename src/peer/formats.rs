@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::error;
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerOptions {
     pub key: String,
@@ -17,14 +15,7 @@ pub struct PeerInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-#[serde(untagged)]
-pub enum CreatedResponse {
-    Success(CreatedResponseSuccess),
-    Error(error::ErrorResponse),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-pub struct CreatedResponseSuccess {
+pub struct CreatedResponse {
     pub command_type: String,
     pub params: PeerInfo,
 }

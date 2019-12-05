@@ -13,9 +13,9 @@ lazy_static! {
     pub static ref BASE_URL: String =
         ::std::env::var("BASE_URL").unwrap_or("http://localhost:8000".to_string());
     pub static ref DOMAIN: String =
-        ::std::env::var("DOMAIN").expect("API_KEY is not set in environment variables");
+        ::std::env::var("DOMAIN").expect("DOMAIN is not set in environment variables");
     pub static ref PEER_ID: String =
-        ::std::env::var("PEER_ID").expect("API_KEY is not set in environment variables");
+        ::std::env::var("PEER_ID").expect("PEER_ID is not set in environment variables");
 }
 
 #[cfg(test)]

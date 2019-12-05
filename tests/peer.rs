@@ -175,4 +175,3 @@ async fn test_listen_events() {
         future::ready(())
     }
 }
-

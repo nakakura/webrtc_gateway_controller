@@ -1,7 +1,7 @@
 mod common;
-mod data;
-mod error;
-mod media;
+pub mod data;
+pub mod error;
+pub mod media;
 pub mod peer;
 
 use lazy_static::*;

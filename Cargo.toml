@@ -24,4 +24,4 @@ hyper = { version = "=0.13.0-alpha.4", features = ["unstable-stream"] }
 
 [[bin]]
 name = "main"
-path = "src/bin/main.rs"
+path = "src/main.rs"

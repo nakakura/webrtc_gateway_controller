@@ -53,7 +53,23 @@ async fn main() {
 // FIXME
 // FIRES when GET /peer/{peer_id}/events returns OPEN event
 async fn on_open(event: peer::formats::PeerOpenEvent) {
-    println!("{:?}", event);
+    let base_url = &*BASE_URL;
+    let created_response = data::api::create_data(base_url)
+        .await
+        .unwrap_or_else(|e| panic!("err in on_open: {}", e));
+    let data_id = data::formats::DataId {
+        data_id: created_response.data_id,
+    };
+    let query = data::formats::CreateDataConnectionQuery {
+        peer_id: event.params.peer_id,
+        token: event.params.token,
+        options: None,                        //FIXME
+        target_id: "data_callee".to_string(), //FIXME
+        params: data_id,
+        redirect_params: None, //FIXME
+    };
+    let created_data_connection = data::api::create_data_connection(base_url, &query).await;
+    println!("created data connection {:?}", created_data_connection);
     ()
 }
 

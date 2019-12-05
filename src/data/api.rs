@@ -4,6 +4,7 @@
 use futures::*;
 use reqwest;
 use reqwest::Client;
+use serde_json::json;
 
 use super::formats::*;
 use crate::common;
@@ -15,7 +16,8 @@ use crate::error;
 /// http://35.200.46.204/#/2.data/data
 pub async fn create_data(base_url: &str) -> Result<CreatedResponse, error::ErrorEnum> {
     let api_url = format!("{}/data", base_url);
-    let api_call = || Client::new().post(&api_url).send();
+    let json = json!({});
+    let api_call = || Client::new().post(&api_url).json(&json).send();
     let parser = |r: reqwest::Response| r.json::<CreatedResponse>().map_err(Into::into);
     common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }

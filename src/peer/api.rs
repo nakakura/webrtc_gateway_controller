@@ -111,7 +111,7 @@ mod test_create_peer {
     use serde_json::json;
 
     use crate::peer::api::*;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// A WebRTC Gateway returns 201 Created and a PeerResponse struct, if it succeeds to create a Peer Object
     /// http://35.200.46.204/#/1.peers/peer
@@ -369,7 +369,7 @@ mod test_event {
 
     use crate::error;
     use crate::peer::formats::*;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
     /// http://35.200.46.204/#/1.peers/peer
@@ -883,7 +883,7 @@ mod test_delete_peer {
 
     use crate::error;
     use crate::peer::api::*;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
     /// http://35.200.46.204/#/1.peers/peer_destroy
@@ -1121,7 +1121,7 @@ mod test_status {
 
     use crate::error;
     use crate::peer::formats::*;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// Status API returns json with 200 OK
     /// http://35.200.46.204/#/1.peers/peer_status

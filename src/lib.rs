@@ -4,9 +4,6 @@ mod error;
 mod media;
 pub mod peer;
 
-#[cfg(test)]
-pub mod test_helper;
-
 use lazy_static::*;
 
 #[cfg(not(test))]

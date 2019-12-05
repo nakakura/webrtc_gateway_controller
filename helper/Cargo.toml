@@ -1,0 +1,10 @@
+[package]
+name = "helper"
+version = "0.1.0"
+authors = ["Toshiya Nakakura <nakakura@me.com>"]
+edition = "2018"
+
+[dependencies]
+http = "0.1.19"
+hyper = { version = "=0.13.0-alpha.4", features = ["unstable-stream"] }
+tokio = "0.2.0-alpha.6"

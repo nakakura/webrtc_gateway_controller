@@ -125,7 +125,7 @@ mod test_create_data {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/2.data/data
@@ -314,7 +314,7 @@ mod test_delete_data {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data
@@ -551,7 +551,7 @@ mod test_create_data_connection {
 
     use crate::data::formats::*;
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data
@@ -842,7 +842,7 @@ mod test_delete_data_connection {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Peer Object
@@ -1083,7 +1083,7 @@ mod test_redirect_data_connection {
 
     use crate::data::formats::*;
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to start redirecting data received from neighbours
@@ -1460,7 +1460,7 @@ mod test_status {
     use serde_json::json;
 
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
@@ -1720,7 +1720,7 @@ mod test_event {
 
     use crate::data::formats::DataConnectionEventEnum;
     use crate::error;
-    use crate::test_helper::*;
+    use helper::server;
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.

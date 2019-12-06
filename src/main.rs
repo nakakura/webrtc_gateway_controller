@@ -92,11 +92,6 @@ async fn main() {
     // DataObject can be created without PeerObject,
     // so start creating here
     let created_response = data::api::create_data(base_url);
-    /*
-    After peer is open and data is created, start connection
-    FIXME
-    In this flow, GET /data/connections/{data_connection_id}/events should be also polled.
-    */
     let data_ready_future = future::join(created_response, sub_on_open_rx_1.next()).then(|d| {
         async move {
             {

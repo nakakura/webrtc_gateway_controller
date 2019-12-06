@@ -1733,7 +1733,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({
                         "event": "OPEN"
@@ -1764,7 +1764,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({
                         "event": "CLOSE"
@@ -1795,7 +1795,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({
                         "event": "ERROR",
@@ -1832,7 +1832,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_EVENTS",
@@ -1874,7 +1874,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({});
                     http::Response::builder()
@@ -1906,7 +1906,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({});
                     http::Response::builder()
@@ -1938,7 +1938,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({});
                     http::Response::builder()
@@ -1970,7 +1970,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({});
                     http::Response::builder()
@@ -2002,7 +2002,7 @@ mod test_event {
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/event", data_connection_id);
+                let uri = format!("/data/connections/{}/events", data_connection_id);
                 if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
                     let json = json!({});
                     http::Response::builder()

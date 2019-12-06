@@ -108,7 +108,7 @@ pub async fn event(
     base_url: &str,
     data_connection_id: &str,
 ) -> Result<DataConnectionEventEnum, error::ErrorEnum> {
-    let api_url = format!("{}/data/connections/{}/event", base_url, data_connection_id);
+    let api_url = format!("{}/data/connections/{}/events", base_url, data_connection_id);
     let api_call = || Client::new().get(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<DataConnectionEventEnum>().map_err(Into::into);
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {

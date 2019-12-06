@@ -34,7 +34,10 @@ async fn peer_open_and_listen_events(
 #[cfg(not(test))]
 #[tokio::main]
 async fn main() {
+    // setup variables
     let base_url = &*BASE_URL;
+
+    // setup callback functions for PeerObject
     // FIRES when GET /peer/{peer_id}/events returns OPEN event
     let (on_open_tx, on_open_rx) = channel::<peer::formats::PeerOpenEvent>(0);
     // On Open Event is used in some flows, so redirect it
@@ -52,42 +55,68 @@ async fn main() {
             sum
         }
     });
+    // FIRES when GET /peer/{peer_id}/events returns CALL event
+    let (on_call_tx, on_call_rx) = channel::<peer::formats::PeerCallEvent>(0);
+    let on_call_future = on_call_rx.for_each(on_peer_call);
+    // FIRES when GET /peer/{peer_id}/events returns CONNECT event
+    let (on_connect_tx, on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
+    let on_connect_future = on_connect_rx.for_each(on_peer_onnect);
+    // FIRES when GET /peer/{peer_id}/events returns CLOSE event
+    let (on_close_tx, on_close_rx) = channel::<peer::formats::PeerCloseEvent>(0);
+    let on_close_future = on_close_rx.for_each(on_peer_close);
+    // FIRES when GET /peer/{peer_id}/events returns ERROR event
+    let (on_error_tx, on_error_rx) = channel::<peer::formats::PeerErrorEvent>(0);
+    let on_error_future = on_error_rx.for_each(on_peer_error);
+    // Start subscribing each events
+    tokio::spawn(on_open_future.map(|_| ()));
+    tokio::spawn(on_call_future);
+    tokio::spawn(on_connect_future);
+    tokio::spawn(on_close_future);
+    tokio::spawn(on_error_future);
 
-    // DataObject can be created without PeerObject
+    // setup callback functions for DataConnection
+    // FIRES when GET /data/connections/{data_connection_id}/events returns OPEN event
+    let (on_data_open_tx, on_data_open_rx) = channel::<String>(0);
+    let on_data_open_future = on_data_open_rx.for_each(on_data_open);
+    // FIRES when GET /data/connections/{data_connection_id}/events returns CLOSE event
+    let (on_data_close_tx, on_data_close_rx) = channel::<String>(0);
+    let on_data_close_future = on_data_close_rx.for_each(on_data_close);
+    // FIRES when GET /data/connections/{data_connection_id}/events returns ERROR event
+    let (on_data_error_tx, on_data_error_rx) = channel::<(String, String)>(0);
+    let on_data_error_future = on_data_error_rx.for_each(on_data_error);
+    // Start subscribing each events
+    tokio::spawn(on_data_open_future);
+    tokio::spawn(on_data_close_future);
+    tokio::spawn(on_data_error_future);
+
+    // DataObject can be created without PeerObject,
+    // so start creating here
     let created_response = data::api::create_data(base_url);
     /*
     After peer is open and data is created, start connection
     FIXME
     In this flow, GET /data/connections/{data_connection_id}/events should be also polled.
     */
-    let data_flow_future = future::join(created_response, sub_on_open_rx_1.next()).then(|d| {
+    let data_ready_future = future::join(created_response, sub_on_open_rx_1.next()).then(|d| {
         async move {
-            if let (Ok(response), Some(event)) = d {
-                let _ = connect(base_url, response, event).await;
-                future::ok(())
-            } else {
-                future::err::<(), error::ErrorEnum>(error::ErrorEnum::create_myerror(
-                    "not ready for connect",
-                ))
+            {
+                if let (Ok(response), Some(event)) = d {
+                    let result = connect(base_url, response, event).await?;
+                    let result = data::listen_events(
+                        base_url,
+                        &result.params.data_connection_id,
+                        on_data_open_tx,
+                        on_data_close_tx,
+                        on_data_error_tx,
+                    )
+                    .await;
+                    Ok(result)
+                } else {
+                    Err(error::ErrorEnum::create_myerror("not ready for connect"))
+                }
             }
         }
     });
-
-    // FIRES when GET /peer/{peer_id}/events returns CALL event
-    let (on_call_tx, on_call_rx) = channel::<peer::formats::PeerCallEvent>(0);
-    let on_call_future = on_call_rx.for_each(on_call);
-
-    // FIRES when GET /peer/{peer_id}/events returns CONNECT event
-    let (on_connect_tx, on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
-    let on_connect_future = on_connect_rx.for_each(on_connect);
-
-    // FIRES when GET /peer/{peer_id}/events returns CLOSE event
-    let (on_close_tx, on_close_rx) = channel::<peer::formats::PeerCloseEvent>(0);
-    let on_close_future = on_close_rx.for_each(on_close);
-
-    // FIRES when GET /peer/{peer_id}/events returns ERROR event
-    let (on_error_tx, on_error_rx) = channel::<peer::formats::PeerErrorEvent>(0);
-    let on_error_future = on_error_rx.for_each(on_error);
 
     let peer_future = peer_open_and_listen_events(
         base_url,
@@ -99,17 +128,17 @@ async fn main() {
         on_error_tx,
     );
     // Start each futures
-    tokio::spawn(on_open_future.map(|_| ()));
-    tokio::spawn(on_call_future);
-    tokio::spawn(on_connect_future);
-    tokio::spawn(on_close_future);
-    tokio::spawn(on_error_future);
-    let _ = future::join(data_flow_future, peer_future).await;
+
+    let _ = future::join(data_ready_future, peer_future).await;
 }
 
 // FIXME
 // FIRES when GET /peer/{peer_id}/events returns OPEN event
-async fn connect(base_url: &str, response: CreatedResponse, event: PeerOpenEvent) {
+async fn connect(
+    base_url: &str,
+    response: CreatedResponse,
+    event: PeerOpenEvent,
+) -> Result<data::formats::CreateDataConnectionResponse, error::ErrorEnum> {
     let data_id = data::formats::DataId {
         data_id: response.data_id,
     };
@@ -121,27 +150,45 @@ async fn connect(base_url: &str, response: CreatedResponse, event: PeerOpenEvent
         params: data_id,
         redirect_params: None, //FIXME
     };
-    let created_data_connection = data::api::create_data_connection(base_url, &query).await;
-    println!("created data connection {:?}", created_data_connection);
-    ()
+    data::api::create_data_connection(base_url, &query).await
 }
 
+// Peer Event Callbacks
+
 // FIXME
-fn on_call(_event: peer::formats::PeerCallEvent) -> impl Future<Output = ()> {
+fn on_peer_call(_event: peer::formats::PeerCallEvent) -> impl Future<Output = ()> {
     future::ready(())
 }
 
 // FIXME
-fn on_connect(_event: peer::formats::PeerConnectionEvent) -> impl Future<Output = ()> {
+fn on_peer_onnect(_event: peer::formats::PeerConnectionEvent) -> impl Future<Output = ()> {
     future::ready(())
 }
 
 // FIXME
-fn on_close(_event: peer::formats::PeerCloseEvent) -> impl Future<Output = ()> {
+fn on_peer_close(_event: peer::formats::PeerCloseEvent) -> impl Future<Output = ()> {
     future::ready(())
 }
 
 // FIXME
-fn on_error(_event: peer::formats::PeerErrorEvent) -> impl Future<Output = ()> {
+fn on_peer_error(_event: peer::formats::PeerErrorEvent) -> impl Future<Output = ()> {
+    future::ready(())
+}
+
+// DataConnection Event Callbacks
+// FIXME
+fn on_data_open(data_connection_id: String) -> impl Future<Output = ()> {
+    future::ready(())
+}
+
+// FIXME
+fn on_data_close(_data_connection_id: String) -> impl Future<Output = ()> {
+    future::ready(())
+}
+
+// FIXME
+fn on_data_error(
+    (_data_connection_id, _error_message): (String, String),
+) -> impl Future<Output = ()> {
     future::ready(())
 }

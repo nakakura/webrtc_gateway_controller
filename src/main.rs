@@ -62,8 +62,8 @@ async fn main() {
     let (on_call_tx, on_call_rx) = channel::<peer::formats::PeerCallEvent>(0);
     let on_call_future = on_call_rx.for_each(on_peer_call);
     // FIRES when GET /peer/{peer_id}/events returns CONNECT event
-    let (on_connect_tx, on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
-    let on_connect_future = on_connect_rx.for_each(on_peer_connect);
+    let (on_connect_tx, mut on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
+    //let on_connect_future = on_connect_rx.for_each(on_peer_connect);
     // FIRES when GET /peer/{peer_id}/events returns CLOSE event
     let (on_close_tx, on_close_rx) = channel::<peer::formats::PeerCloseEvent>(0);
     let on_close_future = on_close_rx.for_each(on_peer_close);
@@ -73,7 +73,7 @@ async fn main() {
     // Start subscribing each events
     tokio::spawn(on_open_future.map(|_| ()));
     tokio::spawn(on_call_future);
-    tokio::spawn(on_connect_future);
+    //tokio::spawn(on_connect_future);
     tokio::spawn(on_close_future);
     tokio::spawn(on_error_future);
 
@@ -128,7 +128,33 @@ async fn main() {
         });
         let _ = future::join(peer_future, data_ready_future).await;
     } else {
-        let _ = peer_future.await;
+        let wait_connect_future = future::join3(created_response, sub_on_open_rx_1.next(), on_connect_rx.next()).then(|tuple| {
+            async move {
+                if let (Ok(response), Some(open_event), Some(connect_event)) = tuple {
+                    let data_id_obj = data::formats::DataId {
+                        data_id: response.data_id,
+                    };
+                    let redirect_params = data::formats::RedirectParams {
+                        ip_v4: Some("127.0.0.1".to_string()), //FIXME
+                        ip_v6: None,
+                        port: 10000, //FIXME
+                    };
+                    let redirect_data_params = data::formats::RedirectDataParams {
+                        feed_params: data_id_obj,
+                        redirect_params: redirect_params,
+                    };
+                    let data_connection_id = connect_event.data_params.data_connection_id;
+                    let task =
+                        data::api::redirect_data_connection(base_url, &data_connection_id, &redirect_data_params);
+                    let result = task.await.expect("parse error");
+                    println!("{:?}", result);
+                    Ok(())
+                } else {
+                    Err(error::ErrorEnum::create_myerror("not ready for connect"))
+                }
+            }
+        });
+        let _ = future::join(peer_future, wait_connect_future).await;
     };
 
     // Start each futures

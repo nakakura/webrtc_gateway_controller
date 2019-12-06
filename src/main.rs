@@ -92,30 +92,6 @@ async fn main() {
     tokio::spawn(on_data_close_future);
     tokio::spawn(on_data_error_future);
 
-    // DataObject can be created without PeerObject,
-    // so start creating here
-    let created_response = data::api::create_data(base_url);
-    let data_ready_future = future::join(created_response, sub_on_open_rx_1.next()).then(|d| {
-        async move {
-            {
-                if let (Ok(response), Some(event)) = d {
-                    let result = connect(base_url, response, event).await?;
-                    let result = data::listen_events(
-                        base_url,
-                        &result.params.data_connection_id,
-                        on_data_open_tx,
-                        on_data_close_tx,
-                        on_data_error_tx,
-                    )
-                    .await;
-                    Ok(result)
-                } else {
-                    Err(error::ErrorEnum::create_myerror("not ready for connect"))
-                }
-            }
-        }
-    });
-
     let peer_future = peer_open_and_listen_events(
         base_url,
         &*PEER_ID,
@@ -125,8 +101,38 @@ async fn main() {
         on_close_tx,
         on_error_tx,
     );
+
+    // DataObject can be created without PeerObject,
+    // so start creating here
+    let created_response = data::api::create_data(base_url);
+    if *CONNECT_FLAG {
+        let data_ready_future = future::join(created_response, sub_on_open_rx_1.next()).then(|d| {
+            async move {
+                {
+                    if let (Ok(response), Some(event)) = d {
+                        let result = connect(base_url, response, event).await?;
+                        let result = data::listen_events(
+                            base_url,
+                            &result.params.data_connection_id,
+                            on_data_open_tx,
+                            on_data_close_tx,
+                            on_data_error_tx,
+                        )
+                        .await;
+                        Ok(result)
+                    } else {
+                        Err(error::ErrorEnum::create_myerror("not ready for connect"))
+                    }
+                }
+            }
+        });
+        let _ = future::join(peer_future, data_ready_future).await;
+    } else {
+        let _ = peer_future.await;
+    };
+
+
     // Start each futures
-    let _ = future::join(data_ready_future, peer_future).await;
 }
 
 // FIXME

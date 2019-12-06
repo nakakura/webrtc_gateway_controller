@@ -16,6 +16,9 @@ lazy_static! {
         ::std::env::var("DOMAIN").expect("DOMAIN is not set in environment variables");
     pub static ref PEER_ID: String =
         ::std::env::var("PEER_ID").expect("PEER_ID is not set in environment variables");
+    pub static ref CONNECT_FLAG: bool = ::std::env::var("CONNECT_FLAG")
+        .expect("CONNECT_FLAG is not set in environment variables")
+        == "true";
 }
 
 #[cfg(test)]

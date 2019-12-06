@@ -12,7 +12,6 @@ pub async fn listen_events(
     mut on_error_tx: Sender<(String, String)>,
 ) {
     loop {
-        println!("base url{} connection_id {}", base_url, data_connection_id);
         match api::event(base_url, data_connection_id).await {
             Ok(formats::DataConnectionEventEnum::OPEN) => {
                 if on_open_tx

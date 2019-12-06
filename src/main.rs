@@ -1,5 +1,6 @@
 use futures::channel::mpsc::*;
 use futures::*;
+use log::{debug, warn};
 
 use webrtc_gateway_controller::data::formats::CreatedResponse;
 use webrtc_gateway_controller::peer::formats::*;
@@ -34,6 +35,8 @@ async fn peer_open_and_listen_events(
 #[cfg(not(test))]
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     // setup variables
     let base_url = &*BASE_URL;
 
@@ -60,7 +63,7 @@ async fn main() {
     let on_call_future = on_call_rx.for_each(on_peer_call);
     // FIRES when GET /peer/{peer_id}/events returns CONNECT event
     let (on_connect_tx, on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
-    let on_connect_future = on_connect_rx.for_each(on_peer_onnect);
+    let on_connect_future = on_connect_rx.for_each(on_peer_connect);
     // FIRES when GET /peer/{peer_id}/events returns CLOSE event
     let (on_close_tx, on_close_rx) = channel::<peer::formats::PeerCloseEvent>(0);
     let on_close_future = on_close_rx.for_each(on_peer_close);
@@ -123,7 +126,6 @@ async fn main() {
         on_error_tx,
     );
     // Start each futures
-
     let _ = future::join(data_ready_future, peer_future).await;
 }
 
@@ -151,39 +153,49 @@ async fn connect(
 // Peer Event Callbacks
 
 // FIXME
-fn on_peer_call(_event: peer::formats::PeerCallEvent) -> impl Future<Output = ()> {
+fn on_peer_call(event: peer::formats::PeerCallEvent) -> impl Future<Output = ()> {
+    debug!("on_peer_call: {:?}", event);
     future::ready(())
 }
 
 // FIXME
-fn on_peer_onnect(_event: peer::formats::PeerConnectionEvent) -> impl Future<Output = ()> {
+fn on_peer_connect(event: peer::formats::PeerConnectionEvent) -> impl Future<Output = ()> {
+    debug!("on_peer_connect: {:?}", event);
     future::ready(())
 }
 
 // FIXME
-fn on_peer_close(_event: peer::formats::PeerCloseEvent) -> impl Future<Output = ()> {
+fn on_peer_close(event: peer::formats::PeerCloseEvent) -> impl Future<Output = ()> {
+    debug!("on_peer_close: {:?}", event);
     future::ready(())
 }
 
 // FIXME
-fn on_peer_error(_event: peer::formats::PeerErrorEvent) -> impl Future<Output = ()> {
+fn on_peer_error(event: peer::formats::PeerErrorEvent) -> impl Future<Output = ()> {
+    warn!("on_peer_error: {:?}", event);
     future::ready(())
 }
 
 // DataConnection Event Callbacks
 // FIXME
 fn on_data_open(data_connection_id: String) -> impl Future<Output = ()> {
+    debug!("on_data_open: {:?}", data_connection_id);
     future::ready(())
 }
 
 // FIXME
-fn on_data_close(_data_connection_id: String) -> impl Future<Output = ()> {
+fn on_data_close(data_connection_id: String) -> impl Future<Output = ()> {
+    debug!("on_data_close: {:?}", data_connection_id);
     future::ready(())
 }
 
 // FIXME
 fn on_data_error(
-    (_data_connection_id, _error_message): (String, String),
+    (data_connection_id, error_message): (String, String),
 ) -> impl Future<Output = ()> {
+    warn!(
+        "on_data_error: {:?} {:?}",
+        data_connection_id, error_message
+    );
     future::ready(())
 }

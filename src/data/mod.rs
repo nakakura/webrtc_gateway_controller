@@ -23,13 +23,8 @@ pub async fn listen_events(
                 }
             }
             Ok(formats::DataConnectionEventEnum::CLOSE) => {
-                if on_close_tx
-                    .send(data_connection_id.to_string())
-                    .await
-                    .is_err()
-                {
-                    break;
-                }
+                let _ = on_close_tx.send(data_connection_id.to_string()).await;
+                break;
             }
             Ok(formats::DataConnectionEventEnum::ERROR {
                 error_message: message,

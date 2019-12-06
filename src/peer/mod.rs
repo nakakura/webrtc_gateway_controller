@@ -32,9 +32,8 @@ pub async fn listen_events(
                 };
             }
             Ok(PeerEventEnum::CLOSE(event)) => {
-                if on_close_tx.send(event).await.is_err() {
-                    break;
-                };
+                let _ = on_close_tx.send(event).await;
+                break;
             }
             Ok(PeerEventEnum::TIMEOUT) => {}
             Ok(PeerEventEnum::ERROR(e)) => {

@@ -131,7 +131,6 @@ async fn main() {
         let _ = peer_future.await;
     };
 
-
     // Start each futures
 }
 

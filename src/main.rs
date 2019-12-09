@@ -6,6 +6,8 @@ use webrtc_gateway_controller::data::formats::CreatedResponse;
 use webrtc_gateway_controller::peer::formats::*;
 use webrtc_gateway_controller::*;
 
+//FIXME
+#[allow(dead_code)]
 async fn peer_open_and_listen_events(
     base_url: &str,
     peer_id: &str,
@@ -32,7 +34,7 @@ async fn peer_open_and_listen_events(
     let _ = listen_event_future.await;
 }
 
-#[cfg(not(test))]
+#[allow(dead_code)]
 #[tokio::main]
 async fn main() {
     env_logger::init();
@@ -128,9 +130,14 @@ async fn main() {
         });
         let _ = future::join(peer_future, data_ready_future).await;
     } else {
-        let wait_connect_future = future::join3(created_response, sub_on_open_rx_1.next(), on_connect_rx.next()).then(|tuple| {
+        let wait_connect_future = future::join3(
+            created_response,
+            sub_on_open_rx_1.next(),
+            on_connect_rx.next(),
+        )
+        .then(|tuple| {
             async move {
-                if let (Ok(response), Some(open_event), Some(connect_event)) = tuple {
+                if let (Ok(response), Some(_open_event), Some(connect_event)) = tuple {
                     let data_id_obj = data::formats::DataId {
                         data_id: response.data_id,
                     };
@@ -144,8 +151,11 @@ async fn main() {
                         redirect_params: redirect_params,
                     };
                     let data_connection_id = connect_event.data_params.data_connection_id;
-                    let task =
-                        data::api::redirect_data_connection(base_url, &data_connection_id, &redirect_data_params);
+                    let task = data::api::redirect_data_connection(
+                        base_url,
+                        &data_connection_id,
+                        &redirect_data_params,
+                    );
                     let result = task.await.expect("parse error");
                     println!("{:?}", result);
                     Ok(())
@@ -162,6 +172,7 @@ async fn main() {
 
 // FIXME
 // FIRES when GET /peer/{peer_id}/events returns OPEN event
+#[allow(dead_code)]
 async fn connect(
     base_url: &str,
     response: CreatedResponse,
@@ -184,24 +195,28 @@ async fn connect(
 // Peer Event Callbacks
 
 // FIXME
+#[allow(dead_code)]
 fn on_peer_call(event: peer::formats::PeerCallEvent) -> impl Future<Output = ()> {
     debug!("on_peer_call: {:?}", event);
     future::ready(())
 }
 
 // FIXME
+#[allow(dead_code)]
 fn on_peer_connect(event: peer::formats::PeerConnectionEvent) -> impl Future<Output = ()> {
     debug!("on_peer_connect: {:?}", event);
     future::ready(())
 }
 
 // FIXME
+#[allow(dead_code)]
 fn on_peer_close(event: peer::formats::PeerCloseEvent) -> impl Future<Output = ()> {
     debug!("on_peer_close: {:?}", event);
     future::ready(())
 }
 
 // FIXME
+#[allow(dead_code)]
 fn on_peer_error(event: peer::formats::PeerErrorEvent) -> impl Future<Output = ()> {
     warn!("on_peer_error: {:?}", event);
     future::ready(())
@@ -209,18 +224,21 @@ fn on_peer_error(event: peer::formats::PeerErrorEvent) -> impl Future<Output = (
 
 // DataConnection Event Callbacks
 // FIXME
+#[allow(dead_code)]
 fn on_data_open(data_connection_id: String) -> impl Future<Output = ()> {
     debug!("on_data_open: {:?}", data_connection_id);
     future::ready(())
 }
 
 // FIXME
+#[allow(dead_code)]
 fn on_data_close(data_connection_id: String) -> impl Future<Output = ()> {
     debug!("on_data_close: {:?}", data_connection_id);
     future::ready(())
 }
 
 // FIXME
+#[allow(dead_code)]
 fn on_data_error(
     (data_connection_id, error_message): (String, String),
 ) -> impl Future<Output = ()> {

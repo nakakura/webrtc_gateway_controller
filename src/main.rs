@@ -36,6 +36,7 @@ async fn peer_open_and_listen_events(
 }
 */
 
+#[cfg(not(test))]
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() {
@@ -70,17 +71,62 @@ async fn main() {
     });
 
     let on_call_future = on_call_rx.for_each(on_peer_call);
-    let on_connect_future = on_connect_rx.for_each(on_peer_connect);
     let on_close_future = on_close_rx.for_each(on_peer_close);
     let on_error_future = on_error_rx.for_each(on_peer_error);
     // Start subscribing each events
     tokio::spawn(on_open_future.map(|_| ()));
     tokio::spawn(on_call_future);
-    tokio::spawn(on_connect_future);
     tokio::spawn(on_close_future);
     tokio::spawn(on_error_future);
 
-    let peer_future = peer::peer_create_and_listen_events(
+    if *CONNECT_FLAG {
+        let connect_future = sub_on_open_rx_1.for_each(|event: PeerOpenEvent| {
+            async move {
+                let (on_connection_open_tx, on_connection_open_rx) = channel::<String>(0);
+                let on_connection_open_rx = on_connection_open_rx.for_each(|message| {
+                    async move {
+                        println!("on connect {:?}", message);
+                        ()
+                    }
+                });
+                tokio::spawn(on_connection_open_rx);
+
+                let _ = data::connect_flow(
+                    &*BASE_URL,
+                    event.params,
+                    Some(on_connection_open_tx),
+                    None,
+                    None,
+                )
+                .await;
+            }
+        });
+        tokio::spawn(connect_future);
+    } else {
+        let on_connect_future = on_connect_rx.for_each(|event: PeerConnectionEvent| {
+            async move {
+                let (on_connection_open_tx, on_connection_open_rx) = channel::<String>(0);
+                let on_connection_open_rx = on_connection_open_rx.for_each(|message| {
+                    async move {
+                        println!("on connect {:?}", message);
+                        ()
+                    }
+                });
+                tokio::spawn(on_connection_open_rx);
+                let _ = data::redirect_flow(
+                    &*BASE_URL,
+                    &event.data_params.data_connection_id,
+                    Some(on_connection_open_tx),
+                    None,
+                    None,
+                )
+                .await;
+            }
+        });
+        tokio::spawn(on_connect_future);
+    }
+
+    let _ = peer::peer_create_and_listen_events(
         &*BASE_URL,
         &*PEER_ID,
         true,

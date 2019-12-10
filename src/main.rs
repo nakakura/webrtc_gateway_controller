@@ -53,7 +53,6 @@ async fn main() {
     // FIRES when GET /peer/{peer_id}/events returns ERROR event
     let (on_error_tx, on_error_rx) = channel::<peer::formats::PeerErrorEvent>(0);
 
-
     // On Open Event is used in some flows, so redirect it
     // For data connection
     let (sub_on_open_tx_1, mut sub_on_open_rx_1) = channel::<peer::formats::PeerOpenEvent>(0);
@@ -69,7 +68,6 @@ async fn main() {
             sum
         }
     });
-
 
     let on_call_future = on_call_rx.for_each(on_peer_call);
     let on_connect_future = on_connect_rx.for_each(on_peer_connect);
@@ -91,7 +89,8 @@ async fn main() {
         Some(on_connect_tx),
         Some(on_close_tx),
         Some(on_error_tx),
-    ).await;
+    )
+    .await;
 
     /*
         // setup callback functions for DataConnection

@@ -47,7 +47,7 @@ async fn main() {
     // FIRES when GET /peer/{peer_id}/events returns CALL event
     let (on_call_tx, on_call_rx) = channel::<peer::formats::PeerCallEvent>(0);
     // FIRES when GET /peer/{peer_id}/events returns CONNECT event
-    let (on_connect_tx, mut on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
+    let (on_connect_tx, on_connect_rx) = channel::<peer::formats::PeerConnectionEvent>(0);
     // FIRES when GET /peer/{peer_id}/events returns CLOSE event
     let (on_close_tx, on_close_rx) = channel::<peer::formats::PeerCloseEvent>(0);
     // FIRES when GET /peer/{peer_id}/events returns ERROR event
@@ -55,7 +55,7 @@ async fn main() {
 
     // On Open Event is used in some flows, so redirect it
     // For data connection
-    let (sub_on_open_tx_1, mut sub_on_open_rx_1) = channel::<peer::formats::PeerOpenEvent>(0);
+    let (sub_on_open_tx_1, sub_on_open_rx_1) = channel::<peer::formats::PeerOpenEvent>(0);
     // For media connection
     let (sub_on_open_tx_2, _sub_on_open_rx_2) = channel::<peer::formats::PeerOpenEvent>(0);
     let tx_array = vec![sub_on_open_tx_1, sub_on_open_tx_2];

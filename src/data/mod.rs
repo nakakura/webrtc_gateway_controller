@@ -4,8 +4,8 @@ pub mod formats;
 use futures::channel::mpsc::*;
 use futures::*;
 
-use crate::error;
 use crate::data::formats::*;
+use crate::error;
 
 pub async fn connect_flow<'a>(
     base_url: &str,
@@ -176,7 +176,6 @@ mod test_connect_flow {
     use futures::channel::mpsc::*;
     use futures::*;
 
-    use super::formats::*;
     use super::*;
     use crate::error;
     use crate::peer::formats::PeerInfo;
@@ -373,7 +372,6 @@ mod test_connect_flow {
 
 #[cfg(test)]
 mod test_redirect_flow {
-    use super::formats::*;
     use super::*;
     use crate::error;
 

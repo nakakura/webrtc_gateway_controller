@@ -31,20 +31,34 @@ pub async fn peer_create_and_listen_events<'a>(
         return result.map(|_| ());
     }
     let result = result.unwrap();
+    let peer_info = result.params;
+
+    #[cfg(test)]
+    let result = inject_api_events(base_url, &peer_info);
+    #[cfg(not(test))]
+    let result = api::event(base_url, &peer_info).await;
+
+    if let Ok(PeerEventEnum::OPEN(event)) = result {
+        if let Some(ref mut tx) = on_open_tx {
+            if tx.send(event).await.is_err() {
+                return Err(error::ErrorEnum::create_myerror("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+            };
+        }
+    } else {
+        return Err(error::ErrorEnum::create_myerror(
+            "create peer success, but WebRTC Gateway doesn't return OPEN event",
+        ));
+    }
 
     loop {
         #[cfg(test)]
-        let result = inject_api_events(base_url, &result.params);
+        let result = inject_api_events(base_url, &peer_info);
         #[cfg(not(test))]
-        let result = api::event(base_url, &result.params).await;
+        let result = api::event(base_url, &peer_info).await;
 
         match result {
-            Ok(PeerEventEnum::OPEN(event)) => {
-                if let Some(ref mut tx) = on_open_tx {
-                    if tx.send(event).await.is_err() {
-                        break;
-                    };
-                }
+            Ok(PeerEventEnum::OPEN(_event)) => {
+                unreachable!();
             }
             Ok(PeerEventEnum::CALL(event)) => {
                 if let Some(ref mut tx) = on_call_tx {
@@ -73,7 +87,7 @@ pub async fn peer_create_and_listen_events<'a>(
                 }
                 break;
             }
-            Err(e) => panic!("{:?}", e),
+            Err(e) => return Err(e),
         }
     }
     println!("break");
@@ -120,7 +134,7 @@ mod test_peer_create_and_listen_events {
     }
 
     #[tokio::test]
-    async fn create_success_and_recv_error_event() {
+    async fn create_success_and_not_recv_on_open_but_error() {
         // create_peer api mock, returns 404 error
         let inject_api_create_peer = move |_base_url: &str,
                                            peer_id: &str,
@@ -181,11 +195,11 @@ mod test_peer_create_and_listen_events {
             Box::new(inject_api_event),
         )
         .await;
-        assert_eq!(result.ok(), Some(()));
+        assert!(result.is_err());
     }
 
     #[tokio::test]
-    async fn create_success_and_recv_timeout_and_close_event() {
+    async fn create_success_and_not_recv_on_open_but_timeout() {
         // create_peer api mock, returns 404 error
         let inject_api_create_peer = move |_base_url: &str,
                                            peer_id: &str,
@@ -251,89 +265,26 @@ mod test_peer_create_and_listen_events {
             Box::new(inject_api_event),
         )
         .await;
-        assert_eq!(result.ok(), Some(()));
+        assert!(result.is_err());
     }
-}
-
-/*
-pub async fn listen_events(base_url: &str, peer_info: PeerInfo) -> impl Future<Output = ()> {
-    loop {
-        #[cfg(test)]
-        let result = inject_api(base_url, &peer_info);
-        #[cfg(not(test))]
-        let result = api::event(base_url, &peer_info).await;
-
-        match result {
-            Ok(PeerEventEnum::OPEN(event)) => {
-                if on_open_tx.send(event).await.is_err() {
-                    break;
-                };
-            }
-            Ok(PeerEventEnum::CALL(event)) => {
-                if on_call_tx.send(event).await.is_err() {
-                    break;
-                };
-            }
-            Ok(PeerEventEnum::CONNECTION(event)) => {
-                if on_connect_tx.send(event).await.is_err() {
-                    break;
-                };
-            }
-            Ok(PeerEventEnum::CLOSE(event)) => {
-                let _ = on_close_tx.send(event).await;
-                break;
-            }
-            Ok(PeerEventEnum::TIMEOUT) => {}
-            Ok(PeerEventEnum::ERROR(e)) => {
-                let _ = on_error_tx.send(e).await;
-                break;
-            }
-            Err(e) => panic!("{:?}", e),
-        }
-    }
-
-    future::ready(())
-}
-
-#[cfg(test)]
-mod test_listen_peer {
-    use futures::*;
-
-    use super::*;
-    use crate::error;
 
     #[tokio::test]
-    async fn ten_timeout_and_open() {
-        //set up callbacks
-        let (on_open_tx, on_open_rx) = futures::channel::mpsc::channel::<formats::PeerOpenEvent>(0);
-        let on_open_future = on_open_rx.for_each(on_open);
-        let (on_call_tx, on_call_rx) = futures::channel::mpsc::channel::<formats::PeerCallEvent>(0);
-        let on_call_future = on_call_rx.for_each(on_call);
-        let (on_connect_tx, on_connect_rx) =
-            futures::channel::mpsc::channel::<formats::PeerConnectionEvent>(0);
-        let on_connect_future = on_connect_rx.for_each(on_connect);
-        let (on_close_tx, on_close_rx) =
-            futures::channel::mpsc::channel::<formats::PeerCloseEvent>(0);
-        let on_close_future = on_close_rx.for_each(on_close);
-        let (on_error_tx, on_error_rx) =
-            futures::channel::mpsc::channel::<formats::PeerErrorEvent>(0);
-        let on_error_future = on_error_rx.for_each(on_error);
-        tokio::spawn(on_open_future.map(|_| ()));
-        tokio::spawn(on_call_future.map(|_| ()));
-        tokio::spawn(on_connect_future.map(|_| ()));
-        tokio::spawn(on_close_future.map(|_| ()));
-        tokio::spawn(on_error_future.map(|_| ()));
-
-        //set up parameters
-        let base_url = "http://localhost:8000".to_string();
-        let peer_info = PeerInfo {
-            peer_id: "hoge".to_string(),
-            token: "hoge".to_string(),
+    async fn create_success_and_recv_on_open_timeout_close() {
+        // create_peer api mock, returns 404 error
+        let inject_api_create_peer = move |_base_url: &str,
+                                           peer_id: &str,
+                                           _turn: bool|
+              -> Result<CreatedResponse, error::ErrorEnum> {
+            Ok(CreatedResponse {
+                command_type: "PEERS_CREATE".to_string(),
+                params: PeerInfo {
+                    peer_id: peer_id.to_string(),
+                    token: "token".to_string(),
+                },
+            })
         };
-
-        //set up an inject function
-        //this function returns TIMEOUT 10 times, after that it returns CLOSE
-        let inject_api = {
+        //this function returns TIMEOUT in 1st call, and CLOSE 2nd call
+        let inject_api_event = {
             || {
                 let mut counter = 0u16;
                 move |_base_url: &str,
@@ -344,9 +295,11 @@ mod test_listen_peer {
                         token: "hoge".to_string(),
                     };
                     counter += 1;
-                    if counter < 10 {
+                    if counter == 1 {
+                        Ok(PeerEventEnum::OPEN(PeerOpenEvent { params: peer_info }))
+                    } else if counter == 2 {
                         Ok(PeerEventEnum::TIMEOUT)
-                    } else if counter == 10 {
+                    } else if counter == 3 {
                         Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info }))
                     } else {
                         unreachable!();
@@ -354,43 +307,36 @@ mod test_listen_peer {
                 }
             }
         }();
-        let listen_event_future = listen_events(
-            &base_url,
-            peer_info,
-            on_open_tx,
-            on_call_tx,
-            on_connect_tx,
-            on_close_tx,
-            on_error_tx,
-            Box::new(inject_api),
-        );
-
-        let _ = listen_event_future.await;
-    }
-
-    // dummy functions
-    fn on_open(_event: formats::PeerOpenEvent) -> impl Future<Output = ()> {
-        future::ready(())
-    }
-
-    // dummy functions
-    fn on_call(_event: formats::PeerCallEvent) -> impl Future<Output = ()> {
-        future::ready(())
-    }
-
-    // dummy functions
-    fn on_connect(_event: formats::PeerConnectionEvent) -> impl Future<Output = ()> {
-        future::ready(())
-    }
-
-    // dummy functions
-    fn on_close(_event: formats::PeerCloseEvent) -> impl Future<Output = ()> {
-        future::ready(())
-    }
-
-    // dummy functions
-    fn on_error(_event: formats::PeerErrorEvent) -> impl Future<Output = ()> {
-        future::ready(())
+        let (on_close_tx, mut on_close_rx) = channel::<PeerCloseEvent>(0);
+        tokio::spawn(async move {
+            let _ = on_close_rx
+                .next()
+                .map(|result| {
+                    assert_eq!(
+                        result,
+                        Some(PeerCloseEvent {
+                            params: PeerInfo {
+                                peer_id: "hoge".to_string(),
+                                token: "hoge".to_string(),
+                            }
+                        })
+                    );
+                })
+                .await;
+        });
+        let result = super::peer_create_and_listen_events(
+            "base_url",
+            "peer_id",
+            true,
+            None,
+            None,
+            None,
+            Some(on_close_tx),
+            None,
+            Box::new(inject_api_create_peer),
+            Box::new(inject_api_event),
+        )
+        .await;
+        assert_eq!(result.ok(), Some(()));
     }
 }
-*/

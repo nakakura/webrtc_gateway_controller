@@ -93,3 +93,10 @@ pub enum DataConnectionEventEnum {
     ERROR { error_message: String },
     TIMEOUT,
 }
+
+#[derive(Debug, PartialOrd, PartialEq)]
+pub struct OnOpenTxParameters(pub String);
+#[derive(Debug, PartialOrd, PartialEq)]
+pub struct OnCloseTxParameters(pub String);
+#[derive(Debug, PartialOrd, PartialEq)]
+pub struct OnErrorTxParameters(pub String, pub String);

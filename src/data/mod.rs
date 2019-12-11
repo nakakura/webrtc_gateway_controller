@@ -10,9 +10,9 @@ use crate::error;
 pub async fn connect_flow<'a>(
     base_url: &str,
     peer_info: super::peer::formats::PeerInfo,
-    on_open_tx: Option<Sender<String>>,
-    on_close_tx: Option<Sender<String>>,
-    on_error_tx: Option<Sender<(String, String)>>,
+    on_open_tx: Option<Sender<OnOpenTxParameters>>,
+    on_close_tx: Option<Sender<OnCloseTxParameters>>,
+    on_error_tx: Option<Sender<OnErrorTxParameters>>,
     #[cfg(test)] mut inject_api_create_data: Box<
         dyn FnMut(&str) -> Result<CreatedResponse, error::ErrorEnum> + 'a,
     >,
@@ -70,9 +70,9 @@ pub async fn connect_flow<'a>(
 pub async fn redirect_flow<'a>(
     base_url: &str,
     data_connection_id: &str,
-    on_open_tx: Option<Sender<String>>,
-    on_close_tx: Option<Sender<String>>,
-    on_error_tx: Option<Sender<(String, String)>>,
+    on_open_tx: Option<Sender<OnOpenTxParameters>>,
+    on_close_tx: Option<Sender<OnCloseTxParameters>>,
+    on_error_tx: Option<Sender<OnErrorTxParameters>>,
     #[cfg(test)] mut inject_api_create_data: Box<
         dyn FnMut(&str) -> Result<CreatedResponse, error::ErrorEnum> + 'a,
     >,
@@ -129,9 +129,9 @@ pub async fn redirect_flow<'a>(
 async fn listen_events<'a>(
     base_url: &str,
     data_connection_id: &str,
-    mut on_open_tx: Option<Sender<String>>,
-    mut on_close_tx: Option<Sender<String>>,
-    mut on_error_tx: Option<Sender<(String, String)>>,
+    mut on_open_tx: Option<Sender<OnOpenTxParameters>>,
+    mut on_close_tx: Option<Sender<OnCloseTxParameters>>,
+    mut on_error_tx: Option<Sender<OnErrorTxParameters>>,
     #[cfg(test)] mut inject_api_events: Box<
         dyn FnMut(&str, &str) -> Result<DataConnectionEventEnum, error::ErrorEnum> + 'a,
     >,
@@ -144,14 +144,14 @@ async fn listen_events<'a>(
         match result {
             Ok(formats::DataConnectionEventEnum::OPEN) => {
                 if let Some(ref mut tx) = on_open_tx {
-                    if tx.send(data_connection_id.to_string()).await.is_err() {
+                    if tx.send(OnOpenTxParameters(data_connection_id.to_string())).await.is_err() {
                         break;
                     }
                 }
             }
             Ok(formats::DataConnectionEventEnum::CLOSE) => {
                 if let Some(ref mut tx) = on_close_tx {
-                    let _ = tx.send(data_connection_id.to_string()).await;
+                    let _ = tx.send(OnCloseTxParameters(data_connection_id.to_string())).await;
                 }
                 break;
             }
@@ -159,7 +159,7 @@ async fn listen_events<'a>(
                 error_message: message,
             }) => {
                 if let Some(ref mut tx) = on_error_tx {
-                    let _ = tx.send((data_connection_id.to_string(), message)).await;
+                    let _ = tx.send(OnErrorTxParameters(data_connection_id.to_string(), message)).await;
                 }
                 break;
             }
@@ -346,12 +346,12 @@ mod test_connect_flow {
             peer_id: "peer_id".to_string(),
             token: "token".to_string(),
         };
-        let (on_close_tx, mut on_close_rx) = channel::<String>(0);
+        let (on_close_tx, mut on_close_rx) = channel::<OnCloseTxParameters>(0);
         tokio::spawn(async move {
             let _ = on_close_rx
                 .next()
                 .map(|result| {
-                    assert_eq!(result, Some("data_connection_id".to_string()));
+                    assert_eq!(result, Some(OnCloseTxParameters("data_connection_id".to_string())));
                 })
                 .await;
         });

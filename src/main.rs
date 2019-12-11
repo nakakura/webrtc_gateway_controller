@@ -108,7 +108,8 @@ async fn main() {
     if *CONNECT_FLAG {
         let connect_future = on_open_rx.for_each(|event: PeerOpenEvent| {
             async move {
-                let (on_connection_open_tx, on_connection_open_rx) = channel::<data::formats::OnOpenTxParameters>(0);
+                let (on_connection_open_tx, on_connection_open_rx) =
+                    channel::<data::formats::OnOpenTxParameters>(0);
                 let on_connection_open_rx = on_connection_open_rx.for_each(|message| {
                     async move {
                         println!("on connect {:?}", message);
@@ -131,7 +132,8 @@ async fn main() {
     } else {
         let on_connect_future = on_connect_rx.for_each(|event: PeerConnectionEvent| {
             async move {
-                let (on_connection_open_tx, on_connection_open_rx) = channel::<data::formats::OnOpenTxParameters>(0);
+                let (on_connection_open_tx, on_connection_open_rx) =
+                    channel::<data::formats::OnOpenTxParameters>(0);
                 let on_connection_open_rx = on_connection_open_rx.for_each(|message| {
                     async move {
                         println!("on connect {:?}", message);

@@ -129,6 +129,7 @@ pub async fn event(
 mod test_create_data {
     use serde_json::json;
 
+    use crate::data::formats::DataId;
     use crate::error;
     use helper::server;
 
@@ -158,7 +159,7 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.data_id, "da-test".to_string());
+        assert_eq!(result.data_id, DataId("da-test".to_string()));
         assert_eq!(result.port, 50000);
         assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
     }
@@ -318,6 +319,7 @@ mod test_create_data {
 mod test_delete_data {
     use serde_json::json;
 
+    use crate::data::formats::DataId;
     use crate::error;
     use helper::server;
 
@@ -325,12 +327,11 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_204() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/{}", data_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NO_CONTENT)
@@ -344,7 +345,7 @@ mod test_delete_data {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id);
+        let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, ());
     }
@@ -353,11 +354,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_400() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/{}", data_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({
                         "command_type": "DATA_DELETE",
                         "params": {
@@ -381,7 +381,7 @@ mod test_delete_data {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id);
+        let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -393,11 +393,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_403() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/{}", data_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({
                         "command_type": "DATA_DELETE",
                         "params": {
@@ -421,7 +420,7 @@ mod test_delete_data {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id);
+        let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -433,11 +432,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_405() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/{}", data_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({
                         "command_type": "DATA_DELETE",
                         "params": {
@@ -461,7 +459,7 @@ mod test_delete_data {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id);
+        let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -473,11 +471,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_406() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/{}", data_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({
                         "command_type": "DATA_DELETE",
                         "params": {
@@ -501,7 +498,7 @@ mod test_delete_data {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id);
+        let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -513,11 +510,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_408() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/{}", data_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({
                         "command_type": "DATA_DELETE",
                         "params": {
@@ -541,7 +537,7 @@ mod test_delete_data {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id);
+        let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -565,7 +561,7 @@ mod test_create_data_connection {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |mut req| {
             async move {
@@ -593,9 +589,7 @@ mod test_create_data_connection {
             }
         });
 
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
             peer_id: peer_id.to_string(),
             token: token.to_string(),
@@ -618,7 +612,7 @@ mod test_create_data_connection {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -646,9 +640,7 @@ mod test_create_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
             peer_id: peer_id.to_string(),
             token: token.to_string(),
@@ -672,7 +664,7 @@ mod test_create_data_connection {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -690,9 +682,7 @@ mod test_create_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
             peer_id: peer_id.to_string(),
             token: token.to_string(),
@@ -716,7 +706,7 @@ mod test_create_data_connection {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -734,9 +724,7 @@ mod test_create_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
             peer_id: peer_id.to_string(),
             token: token.to_string(),
@@ -760,7 +748,7 @@ mod test_create_data_connection {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -778,9 +766,7 @@ mod test_create_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
             peer_id: peer_id.to_string(),
             token: token.to_string(),
@@ -804,7 +790,7 @@ mod test_create_data_connection {
         let peer_id = "peer_id";
         let token = "test-token";
         let target_id = "target_id";
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -822,9 +808,7 @@ mod test_create_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let data_id = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
             peer_id: peer_id.to_string(),
             token: token.to_string(),
@@ -1095,7 +1079,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_put
     #[tokio::test]
     async fn recv_202() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1110,7 +1094,7 @@ mod test_redirect_data_connection {
                     }
                     let redirect_data_params: RedirectDataParams =
                         serde_json::from_slice(&full).expect("PeerOptions parse error");
-                    assert_eq!(redirect_data_params.feed_params.data_id, data_id);
+                    assert_eq!(redirect_data_params.feed_params.data_id, DataId("da-test".to_string()));
                     assert_eq!(
                         redirect_data_params.redirect_params.ip_v4,
                         Some(ip_v4.to_string())
@@ -1132,9 +1116,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
@@ -1151,7 +1133,7 @@ mod test_redirect_data_connection {
         let result = task.await.expect("parse error");
         assert_eq!(
             result.data_id,
-            "da-50a32bab-b3d9-4913-8e20-f79c90a6a211".to_string()
+            DataId("da-50a32bab-b3d9-4913-8e20-f79c90a6a211".to_string())
         );
     }
 
@@ -1160,7 +1142,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_400() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1191,9 +1173,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
@@ -1219,7 +1199,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_403() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1240,9 +1220,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
@@ -1268,7 +1246,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_404() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1289,9 +1267,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
@@ -1317,7 +1293,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_405() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1338,9 +1314,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
@@ -1366,7 +1340,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_406() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1387,9 +1361,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
@@ -1415,7 +1387,7 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_408() {
-        let data_id = "da-test";
+        let data_id = DataId("da-test".to_string());
         let data_connection_id = "dc-test";
         let ip_v4 = "127.0.0.1";
         let port = 10001;
@@ -1436,9 +1408,7 @@ mod test_redirect_data_connection {
             }
         });
 
-        let data_id_obj = DataId {
-            data_id: data_id.to_string(),
-        };
+        let data_id_obj = DataIdWrapper { data_id: data_id };
         let redirect_params = RedirectParams {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,

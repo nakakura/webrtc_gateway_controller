@@ -36,7 +36,7 @@ pub async fn connect_flow<'a>(
     }
     let result = result.unwrap();
 
-    let data_id = formats::DataId {
+    let data_id = formats::DataIdWrapper {
         data_id: result.data_id,
     };
     let query = formats::CreateDataConnectionQuery {
@@ -92,7 +92,7 @@ pub async fn redirect_flow<'a>(
         return result.map(|_| ());
     }
     let result = result.unwrap();
-    let data_id_obj = formats::DataId {
+    let data_id_obj = formats::DataIdWrapper {
         data_id: result.data_id,
     };
     let redirect_params = formats::RedirectParams {
@@ -144,14 +144,20 @@ async fn listen_events<'a>(
         match result {
             Ok(formats::DataConnectionEventEnum::OPEN) => {
                 if let Some(ref mut tx) = on_open_tx {
-                    if tx.send(OnOpenTxParameters(data_connection_id.to_string())).await.is_err() {
+                    if tx
+                        .send(OnOpenTxParameters(data_connection_id.to_string()))
+                        .await
+                        .is_err()
+                    {
                         break;
                     }
                 }
             }
             Ok(formats::DataConnectionEventEnum::CLOSE) => {
                 if let Some(ref mut tx) = on_close_tx {
-                    let _ = tx.send(OnCloseTxParameters(data_connection_id.to_string())).await;
+                    let _ = tx
+                        .send(OnCloseTxParameters(data_connection_id.to_string()))
+                        .await;
                 }
                 break;
             }
@@ -159,7 +165,9 @@ async fn listen_events<'a>(
                 error_message: message,
             }) => {
                 if let Some(ref mut tx) = on_error_tx {
-                    let _ = tx.send(OnErrorTxParameters(data_connection_id.to_string(), message)).await;
+                    let _ = tx
+                        .send(OnErrorTxParameters(data_connection_id.to_string(), message))
+                        .await;
                 }
                 break;
             }
@@ -225,7 +233,7 @@ mod test_connect_flow {
         let inject_api_create_data =
             move |_base_url: &str| -> Result<CreatedResponse, error::ErrorEnum> {
                 Ok(CreatedResponse {
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                     port: 10000,
                     ip_v4: Some("127.0.0.1".to_string()),
                     ip_v6: None,
@@ -269,7 +277,7 @@ mod test_connect_flow {
         let inject_api_create_data =
             move |_base_url: &str| -> Result<CreatedResponse, error::ErrorEnum> {
                 Ok(CreatedResponse {
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                     port: 10000,
                     ip_v4: Some("127.0.0.1".to_string()),
                     ip_v6: None,
@@ -318,7 +326,7 @@ mod test_connect_flow {
         let inject_api_create_data =
             move |_base_url: &str| -> Result<CreatedResponse, error::ErrorEnum> {
                 Ok(CreatedResponse {
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                     port: 10000,
                     ip_v4: Some("127.0.0.1".to_string()),
                     ip_v6: None,
@@ -351,7 +359,10 @@ mod test_connect_flow {
             let _ = on_close_rx
                 .next()
                 .map(|result| {
-                    assert_eq!(result, Some(OnCloseTxParameters("data_connection_id".to_string())));
+                    assert_eq!(
+                        result,
+                        Some(OnCloseTxParameters("data_connection_id".to_string()))
+                    );
                 })
                 .await;
         });
@@ -416,7 +427,7 @@ mod test_redirect_flow {
         let inject_api_create_data =
             move |_base_url: &str| -> Result<CreatedResponse, error::ErrorEnum> {
                 Ok(CreatedResponse {
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                     port: 10000,
                     ip_v4: Some("127.0.0.1".to_string()),
                     ip_v6: None,
@@ -456,7 +467,7 @@ mod test_redirect_flow {
         let inject_api_create_data =
             move |_base_url: &str| -> Result<CreatedResponse, error::ErrorEnum> {
                 Ok(CreatedResponse {
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                     port: 10000,
                     ip_v4: Some("127.0.0.1".to_string()),
                     ip_v6: None,
@@ -470,7 +481,7 @@ mod test_redirect_flow {
                   -> Result<RedirectDataResponse, error::ErrorEnum> {
                 Ok(RedirectDataResponse {
                     command_type: "DATA_CONNECTION_PUT".to_string(),
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                 })
             };
         // event api mock, returns 404 error
@@ -499,7 +510,7 @@ mod test_redirect_flow {
         let inject_api_create_data =
             move |_base_url: &str| -> Result<CreatedResponse, error::ErrorEnum> {
                 Ok(CreatedResponse {
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                     port: 10000,
                     ip_v4: Some("127.0.0.1".to_string()),
                     ip_v6: None,
@@ -513,7 +524,7 @@ mod test_redirect_flow {
                   -> Result<RedirectDataResponse, error::ErrorEnum> {
                 Ok(RedirectDataResponse {
                     command_type: "DATA_CONNECTION_PUT".to_string(),
-                    data_id: "data_id".to_string(),
+                    data_id: DataId("data_id".to_string()),
                 })
             };
         // event api mock, returns success

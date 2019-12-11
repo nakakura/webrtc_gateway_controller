@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreatedResponse {
-    pub data_id: String,
+    pub data_id: DataId,
     pub port: u16,
     pub ip_v4: Option<String>,
     pub ip_v6: Option<String>,
@@ -14,7 +14,7 @@ pub struct CreateDataConnectionQuery {
     pub token: String,
     pub options: Option<DataConnectionParameters>,
     pub target_id: String,
-    pub params: DataId,
+    pub params: DataIdWrapper,
     pub redirect_params: Option<RedirectParams>,
 }
 
@@ -39,8 +39,17 @@ pub struct DcInit {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-pub struct DataId {
-    pub data_id: String,
+pub struct DataId(pub String);
+
+impl DataId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct DataIdWrapper {
+    pub data_id: DataId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
@@ -63,14 +72,14 @@ pub struct RedirectParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct RedirectDataParams {
-    pub feed_params: DataId,
+    pub feed_params: DataIdWrapper,
     pub redirect_params: RedirectParams,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct RedirectDataResponse {
     pub command_type: String,
-    pub data_id: String,
+    pub data_id: DataId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

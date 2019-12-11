@@ -602,7 +602,7 @@ mod test_create_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data_connection(&addr, &query);
         let result = task.await.expect("parse error");
-        assert_eq!(result.params.data_connection_id, "dc-test");
+        assert_eq!(result.params.data_connection_id.as_str(), "dc-test");
     }
 
     /// It returns 400 to show errors
@@ -830,6 +830,7 @@ mod test_create_data_connection {
 mod test_delete_data_connection {
     use serde_json::json;
 
+    use crate::data::formats::DataConnectionId;
     use crate::error;
     use helper::server;
 
@@ -839,12 +840,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_202() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NO_CONTENT)
@@ -858,7 +858,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, ());
     }
@@ -868,12 +868,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_400() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_DELETE",
                         "params": {
@@ -897,7 +896,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -910,12 +909,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_403() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
@@ -929,7 +927,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -942,12 +940,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_404() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -961,7 +958,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -974,12 +971,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_405() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -993,7 +989,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1006,12 +1002,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_406() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_ACCEPTABLE)
@@ -1025,7 +1020,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1038,12 +1033,11 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_408() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)
@@ -1057,7 +1051,7 @@ mod test_delete_data_connection {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id);
+        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1080,21 +1074,24 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_202() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |mut req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let mut full: Vec<u8> = Vec::new();
                     while let Some(item) = req.body_mut().next().await {
                         full.extend(&*item.unwrap());
                     }
                     let redirect_data_params: RedirectDataParams =
                         serde_json::from_slice(&full).expect("PeerOptions parse error");
-                    assert_eq!(redirect_data_params.feed_params.data_id, DataId("da-test".to_string()));
+                    assert_eq!(
+                        redirect_data_params.feed_params.data_id,
+                        DataId("da-test".to_string())
+                    );
                     assert_eq!(
                         redirect_data_params.redirect_params.ip_v4,
                         Some(ip_v4.to_string())
@@ -1128,8 +1125,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.expect("parse error");
         assert_eq!(
             result.data_id,
@@ -1143,14 +1143,14 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_400() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_PUT",
                         "params": {
@@ -1185,8 +1185,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1200,14 +1203,14 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_403() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
@@ -1232,8 +1235,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1247,14 +1253,14 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_404() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -1279,8 +1285,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1294,14 +1303,14 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_405() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -1326,8 +1335,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1341,14 +1353,14 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_406() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_ACCEPTABLE)
@@ -1373,8 +1385,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1388,14 +1403,15 @@ mod test_redirect_data_connection {
     #[tokio::test]
     async fn recv_408() {
         let data_id = DataId("da-test".to_string());
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::PUT {
+                println!("req.uri {:?}", req.uri());
+                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)
@@ -1420,8 +1436,11 @@ mod test_redirect_data_connection {
         };
 
         let addr = format!("http://{}", server.addr());
-        let task =
-            super::redirect_data_connection(&addr, &data_connection_id, &redirect_data_params);
+        let task = super::redirect_data_connection(
+            &addr,
+            data_connection_id.as_str(),
+            &redirect_data_params,
+        );
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1434,6 +1453,7 @@ mod test_redirect_data_connection {
 mod test_status {
     use serde_json::json;
 
+    use crate::data::formats::DataConnectionId;
     use crate::error;
     use helper::server;
 
@@ -1442,12 +1462,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_200() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "buffersize": 0,
                         "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
@@ -1470,7 +1491,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result.open, true);
         assert_eq!(result.reliable, true);
@@ -1481,12 +1502,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_400() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_STATUS",
                         "params": {
@@ -1510,7 +1532,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1523,12 +1545,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_403() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_STATUS",
                         "params": {
@@ -1552,7 +1575,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1565,12 +1588,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_404() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -1584,7 +1608,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1597,12 +1621,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_405() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -1616,7 +1641,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1629,12 +1654,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_406() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_ACCEPTABLE)
@@ -1648,7 +1674,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1661,12 +1687,13 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_408() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/status", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/status"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)
@@ -1680,7 +1707,7 @@ mod test_status {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id);
+        let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1693,7 +1720,7 @@ mod test_status {
 mod test_event {
     use serde_json::json;
 
-    use crate::data::formats::DataConnectionEventEnum;
+    use crate::data::formats::{DataConnectionEventEnum, DataConnectionId};
     use crate::error;
     use helper::server;
 
@@ -1702,12 +1729,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_open() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "OPEN"
                     });
@@ -1723,7 +1751,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, DataConnectionEventEnum::OPEN);
     }
@@ -1733,12 +1761,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_close() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "CLOSE"
                     });
@@ -1754,7 +1783,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, DataConnectionEventEnum::CLOSE);
     }
@@ -1764,12 +1793,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_error() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "ERROR",
                         "error_message": "error"
@@ -1786,7 +1816,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(
             result,
@@ -1801,12 +1831,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_400() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_EVENTS",
                         "params": {
@@ -1830,7 +1861,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1843,12 +1874,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_403() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
@@ -1862,7 +1894,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1875,12 +1907,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_404() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -1894,7 +1927,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1907,12 +1940,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_405() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -1926,7 +1960,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1939,12 +1973,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_406() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_ACCEPTABLE)
@@ -1958,7 +1993,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -1971,12 +2006,13 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_408() {
-        let data_connection_id = "dc-test";
+        let data_connection_id = DataConnectionId("dc-test".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/data/connections/{}/events", data_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/data/connections/dc-test/events"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)
@@ -1990,7 +2026,7 @@ mod test_event {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id);
+        let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, DataConnectionEventEnum::TIMEOUT);
     }

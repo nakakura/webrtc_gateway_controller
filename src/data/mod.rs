@@ -57,7 +57,7 @@ pub async fn connect_flow<'a>(
     let result = result.unwrap();
     listen_events(
         base_url,
-        &result.params.data_connection_id,
+        result.params.data_connection_id.as_str(),
         on_open_tx,
         on_close_tx,
         on_error_tx,
@@ -290,8 +290,8 @@ mod test_connect_flow {
                   -> Result<CreateDataConnectionResponse, error::ErrorEnum> {
                 Ok(CreateDataConnectionResponse {
                     command_type: "PEERS_CONNECT".to_string(),
-                    params: DataConnectionId {
-                        data_connection_id: "data_connection_id".to_string(),
+                    params: DataConnectionIdWrapper {
+                        data_connection_id: DataConnectionId("data_connection_id".to_string()),
                     },
                 })
             };
@@ -339,8 +339,8 @@ mod test_connect_flow {
                   -> Result<CreateDataConnectionResponse, error::ErrorEnum> {
                 Ok(CreateDataConnectionResponse {
                     command_type: "PEERS_CONNECT".to_string(),
-                    params: DataConnectionId {
-                        data_connection_id: "data_connection_id".to_string(),
+                    params: DataConnectionIdWrapper {
+                        data_connection_id: DataConnectionId("data_connection_id".to_string()),
                     },
                 })
             };

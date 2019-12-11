@@ -55,12 +55,21 @@ pub struct DataIdWrapper {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreateDataConnectionResponse {
     pub command_type: String,
-    pub params: DataConnectionId,
+    pub params: DataConnectionIdWrapper,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-pub struct DataConnectionId {
-    pub data_connection_id: String,
+pub struct DataConnectionId(pub String);
+
+impl DataConnectionId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct DataConnectionIdWrapper {
+    pub data_connection_id: DataConnectionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

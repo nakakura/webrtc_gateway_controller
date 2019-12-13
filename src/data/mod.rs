@@ -29,13 +29,9 @@ pub async fn connect_flow<'a>(
     >,
 ) -> Result<(), error::ErrorEnum> {
     #[cfg(test)]
-    let result = inject_api_create_data(base_url);
+    let result = inject_api_create_data(base_url)?;
     #[cfg(not(test))]
-    let result = api::create_data(base_url).await;
-    if result.is_err() {
-        return result.map(|_| ());
-    }
-    let result = result.unwrap();
+    let result = api::create_data(base_url).await?;
 
     let data_id = formats::DataIdWrapper {
         data_id: result.data_id,
@@ -49,13 +45,9 @@ pub async fn connect_flow<'a>(
         redirect_params: None, //FIXME
     };
     #[cfg(test)]
-    let result = inject_api_create_data_connection(base_url, &query);
+    let result = inject_api_create_data_connection(base_url, &query)?;
     #[cfg(not(test))]
-    let result = api::create_data_connection(base_url, &query).await;
-    if result.is_err() {
-        return result.map(|_| ());
-    }
-    let result = result.unwrap();
+    let result = api::create_data_connection(base_url, &query).await?;
     listen_events(
         base_url,
         result.params.data_connection_id.as_str(),
@@ -86,13 +78,9 @@ pub async fn redirect_flow<'a>(
     >,
 ) -> Result<(), error::ErrorEnum> {
     #[cfg(test)]
-    let result = inject_api_create_data(base_url);
+    let result = inject_api_create_data(base_url)?;
     #[cfg(not(test))]
-    let result = api::create_data(base_url).await;
-    if result.is_err() {
-        return result.map(|_| ());
-    }
-    let result = result.unwrap();
+    let result = api::create_data(base_url).await?;
     let data_id_obj = formats::DataIdWrapper {
         data_id: result.data_id,
     };
@@ -107,14 +95,10 @@ pub async fn redirect_flow<'a>(
     };
 
     #[cfg(test)]
-    let result = inject_api_redirect_data(base_url, data_connection_id, &redirect_data_params);
+    let _ = inject_api_redirect_data(base_url, data_connection_id, &redirect_data_params)?;
     #[cfg(not(test))]
-    let result =
-        api::redirect_data_connection(base_url, data_connection_id, &redirect_data_params).await;
-    if result.is_err() {
-        return result.map(|_| ());
-    }
-    let _ = result.unwrap();
+    let _ =
+        api::redirect_data_connection(base_url, data_connection_id, &redirect_data_params).await?;
     listen_events(
         base_url,
         data_connection_id,

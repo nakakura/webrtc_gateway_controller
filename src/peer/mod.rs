@@ -25,13 +25,9 @@ pub async fn peer_create_and_listen_events<'a>(
     >,
 ) -> Result<(), error::ErrorEnum> {
     #[cfg(test)]
-    let result = inject_api_create_peer(base_url, peer_id, turn);
+    let result = inject_api_create_peer(base_url, peer_id, turn)?;
     #[cfg(not(test))]
-    let result = api::create_peer(base_url, peer_id, turn).await;
-    if result.is_err() {
-        return result.map(|_| ());
-    }
-    let result = result.unwrap();
+    let result = api::create_peer(base_url, peer_id, turn).await?;
     let peer_info = result.params;
 
     #[cfg(test)]

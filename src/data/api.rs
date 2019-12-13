@@ -552,15 +552,16 @@ mod test_create_data_connection {
 
     use crate::data::formats::*;
     use crate::error;
+    use crate::peer::formats::{PeerId, Token};
     use helper::server;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_202() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
+        let peer_id = PeerId("peer_id".to_string());
+        let token = Token("test-token".to_string());
+        let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |mut req| {
@@ -591,10 +592,10 @@ mod test_create_data_connection {
 
         let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
             options: None,
-            target_id: target_id.to_string(),
+            target_id: target_id,
             params: data_id,
             redirect_params: None,
         };
@@ -609,9 +610,9 @@ mod test_create_data_connection {
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
+        let peer_id = PeerId("peer_id".to_string());
+        let token = Token("test-token".to_string());
+        let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
@@ -642,10 +643,10 @@ mod test_create_data_connection {
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
             options: None,
-            target_id: target_id.to_string(),
+            target_id: target_id,
             params: data_id,
             redirect_params: None,
         };
@@ -661,9 +662,9 @@ mod test_create_data_connection {
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
+        let peer_id = PeerId("peer_id".to_string());
+        let token = Token("test-token".to_string());
+        let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
@@ -684,10 +685,10 @@ mod test_create_data_connection {
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
             options: None,
-            target_id: target_id.to_string(),
+            target_id: target_id,
             params: data_id,
             redirect_params: None,
         };
@@ -703,9 +704,9 @@ mod test_create_data_connection {
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
+        let peer_id = PeerId("peer_id".to_string());
+        let token = Token("test-token".to_string());
+        let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
@@ -726,10 +727,10 @@ mod test_create_data_connection {
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
             options: None,
-            target_id: target_id.to_string(),
+            target_id: target_id,
             params: data_id,
             redirect_params: None,
         };
@@ -745,9 +746,9 @@ mod test_create_data_connection {
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
+        let peer_id = PeerId("peer_id".to_string());
+        let token = Token("test-token".to_string());
+        let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
@@ -768,10 +769,10 @@ mod test_create_data_connection {
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
             options: None,
-            target_id: target_id.to_string(),
+            target_id: target_id,
             params: data_id,
             redirect_params: None,
         };
@@ -787,9 +788,9 @@ mod test_create_data_connection {
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = "peer_id";
-        let token = "test-token";
-        let target_id = "target_id";
+        let peer_id = PeerId("peer_id".to_string());
+        let token = Token("test-token".to_string());
+        let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
         let server = server::http(move |req| {
@@ -810,10 +811,10 @@ mod test_create_data_connection {
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
         let query = CreateDataConnectionQuery {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
             options: None,
-            target_id: target_id.to_string(),
+            target_id: target_id,
             params: data_id,
             redirect_params: None,
         };
@@ -844,7 +845,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NO_CONTENT)
@@ -872,7 +875,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({
                         "command_type": "DATA_CONNECTION_DELETE",
                         "params": {
@@ -913,7 +918,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
@@ -944,7 +951,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -975,7 +984,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -1006,7 +1017,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_ACCEPTABLE)
@@ -1037,7 +1050,9 @@ mod test_delete_data_connection {
 
         let server = server::http(move |req| {
             async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/data/connections/dc-test"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)

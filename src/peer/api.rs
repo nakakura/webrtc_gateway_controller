@@ -27,7 +27,7 @@ pub async fn create_peer(
     let peer_options = PeerOptions {
         key: key.to_string(),
         domain: (*crate::DOMAIN).clone(),
-        peer_id: peer_id.to_string(),
+        peer_id: PeerId(peer_id.to_string()),
         turn: turn,
     };
     let api_url = format!("{}/peers", base_url);
@@ -52,7 +52,9 @@ pub async fn event(
 ) -> Result<PeerEventEnum, error::ErrorEnum> {
     let api_url = format!(
         "{}/peers/{}/events?token={}",
-        base_url, peer_info.peer_id, peer_info.token
+        base_url,
+        peer_info.peer_id.as_str(),
+        peer_info.token.as_str()
     );
     let api_call = || {
         Client::new()
@@ -83,7 +85,9 @@ pub async fn event(
 pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
     let api_url = format!(
         "{}/peers/{}?token={}",
-        base_url, peer_info.peer_id, peer_info.token
+        base_url,
+        peer_info.peer_id.as_str(),
+        peer_info.token.as_str()
     );
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -100,7 +104,9 @@ pub async fn status(
 ) -> Result<PeerStatusMessage, error::ErrorEnum> {
     let api_url = format!(
         "{}/peers/{}/status?token={}",
-        base_url, peer_info.peer_id, peer_info.token
+        base_url,
+        peer_info.peer_id.as_str(),
+        peer_info.token.as_str()
     );
     let api_call = || Client::new().get(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<PeerStatusMessage>().map_err(Into::into);
@@ -118,8 +124,8 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_201() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |mut req| {
             async move {
@@ -134,7 +140,7 @@ mod test_create_peer {
                         "command_type": "PEERS_CREATE",
                         "params": {
                             "peer_id": peer_options.peer_id,
-                            "token": token,
+                            "token": Token("test-token".to_string()),
                         }
                     });
                     http::Response::builder()
@@ -149,7 +155,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await.expect("CreatedResponse parse error");
         assert_eq!(result.command_type, "PEERS_CREATE".to_string());
         assert_eq!(result.params.peer_id, peer_id);
@@ -161,7 +167,7 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_201_but_from_another_webserver() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -179,7 +185,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::ErrorEnum::ReqwestError { error: _e }) = result {
@@ -192,7 +198,7 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -220,7 +226,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -233,7 +239,7 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -251,7 +257,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await.err().unwrap();
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -263,7 +269,7 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -281,7 +287,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -293,7 +299,7 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -311,7 +317,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -323,7 +329,7 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
         let server = server::http(move |req| {
             async move {
@@ -341,7 +347,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id, false);
+        let task = super::create_peer(&addr, peer_id.as_str(), false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -352,9 +358,9 @@ mod test_create_peer {
     /// If WebRTC Gateway itself is not found, create_peer function returns error
     #[tokio::test]
     async fn no_server() {
-        let peer_id = "hoge";
+        let peer_id = PeerId("hoge".to_string());
 
-        let task = super::create_peer("http://localhost:0", peer_id, false);
+        let task = super::create_peer("http://localhost:0", peer_id.as_str(), false);
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::ErrorEnum::ReqwestError { error: _e }) = result {
@@ -376,18 +382,19 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_open() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "OPEN",
                         "params": {
-                            "peer_id": peer_id,
-                            "token": token
+                            "peer_id": PeerId("hoge".to_string()),
+                            "token": Token("test-token".to_string()),
                         }
                     });
                     http::Response::builder()
@@ -403,8 +410,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id.clone(),
+            token: token.clone(),
         };
 
         let task = super::event(&addr, &peer_info);
@@ -421,21 +428,22 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_connection() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "CONNECTION",
                         "data_params": {
                             "data_connection_id": "dc-test"
                         },
                         "params": {
-                            "peer_id": peer_id,
-                            "token": token
+                            "peer_id": PeerId("hoge".to_string()),
+                            "token": Token("test-token".to_string()),
                         }
                     });
                     http::Response::builder()
@@ -451,8 +459,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id.clone(),
+            token: token.clone(),
         };
 
         let task = super::event(&addr, &peer_info);
@@ -470,21 +478,22 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_call() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "CALL",
                         "call_params": {
                             "media_connection_id": "mc-test"
                         },
                         "params": {
-                            "peer_id": peer_id,
-                            "token": token
+                            "peer_id": PeerId("hoge".to_string()),
+                            "token": Token("test-token".to_string()),
                         }
                     });
                     http::Response::builder()
@@ -500,8 +509,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id.clone(),
+            token: token.clone(),
         };
 
         let task = super::event(&addr, &peer_info);
@@ -519,18 +528,19 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_close() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "CLOSE",
                         "params": {
-                            "peer_id": peer_id,
-                            "token": token
+                            "peer_id": PeerId("hoge".to_string()),
+                            "token": Token("test-token".to_string()),
                         }
                     });
                     http::Response::builder()
@@ -546,8 +556,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id.clone(),
+            token: token.clone(),
         };
 
         let task = super::event(&addr, &peer_info);
@@ -564,18 +574,19 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_error() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "ERROR",
                         "params": {
-                            "peer_id": peer_id,
-                            "token": token
+                            "peer_id": PeerId("hoge".to_string()),
+                            "token": Token("test-token".to_string()),
                         },
                         "error_message": "error"
                     });
@@ -592,8 +603,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id.clone(),
+            token: token.clone(),
         };
 
         let task = super::event(&addr, &peer_info);
@@ -611,13 +622,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_but_recv_invalid_json() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "event": "OPEN",
                     });
@@ -634,8 +646,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -647,13 +659,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "command_type": "PEERS_EVENTS",
                         "params": {
@@ -678,8 +691,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -694,13 +707,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
 
                     http::Response::builder()
@@ -716,8 +730,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -732,13 +746,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
 
                     http::Response::builder()
@@ -754,8 +769,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -770,13 +785,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
 
                     http::Response::builder()
@@ -792,8 +808,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -808,13 +824,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
 
                     http::Response::builder()
@@ -830,8 +847,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -846,13 +863,14 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}/events?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
 
                     http::Response::builder()
@@ -868,8 +886,8 @@ mod test_event {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::event(&addr, &peer_info);
@@ -884,19 +902,21 @@ mod test_delete_peer {
 
     use crate::error;
     use crate::peer::api::*;
+    use crate::peer::formats::*;
     use helper::server;
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_204() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
-            let uri = format!("/peers/{}?token={}", peer_id, token);
             async move {
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NO_CONTENT)
@@ -911,8 +931,8 @@ mod test_delete_peer {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::delete_peer(&addr, &peer_info);
@@ -924,13 +944,14 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = "hoge";
-        let token = "test_token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({
                         "command_type": "PEERS_DELETE",
                         "params": {
@@ -955,8 +976,8 @@ mod test_delete_peer {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::delete_peer(&addr, &peer_info);
@@ -971,13 +992,14 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = "hoge";
-        let token = "test_token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
@@ -992,8 +1014,8 @@ mod test_delete_peer {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::delete_peer(&addr, &peer_info);
@@ -1008,13 +1030,14 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = "hoge";
-        let token = "test_token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -1029,8 +1052,8 @@ mod test_delete_peer {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::delete_peer(&addr, &peer_info);
@@ -1045,13 +1068,14 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = "hoge";
-        let token = "test_token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -1066,8 +1090,8 @@ mod test_delete_peer {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::delete_peer(&addr, &peer_info);
@@ -1082,13 +1106,14 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = "hoge";
-        let token = "test_token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)
@@ -1103,8 +1128,8 @@ mod test_delete_peer {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
 
         let task = super::delete_peer(&addr, &peer_info);
@@ -1128,15 +1153,16 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_200() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
-                        "peer_id": peer_id,
+                        "peer_id": PeerId("hoge".to_string()),
                         "disconnected": false
                     });
                     http::Response::builder()
@@ -1152,8 +1178,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id.clone(),
+            token: token.clone(),
         };
         let task = super::status(&addr, &peer_info);
         let status: PeerStatusMessage = task.await.expect("parse error");
@@ -1165,13 +1191,14 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({
                         "command_type": "PEERS_STATUS",
                         "params": {
@@ -1196,8 +1223,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
@@ -1211,13 +1238,14 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::FORBIDDEN)
@@ -1232,8 +1260,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
@@ -1247,13 +1275,14 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_FOUND)
@@ -1268,8 +1297,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
@@ -1283,13 +1312,14 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
@@ -1304,8 +1334,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
@@ -1319,13 +1349,14 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::NOT_ACCEPTABLE)
@@ -1340,8 +1371,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
@@ -1355,13 +1386,14 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = "hoge";
-        let token = "test-token";
+        let peer_id = PeerId("hoge".to_string());
+        let token = Token("test-token".to_string());
 
         let server = server::http(move |req| {
             async move {
-                let uri = format!("/peers/{}/status?token={}", peer_id, token);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
                     let json = json!({});
                     http::Response::builder()
                         .status(hyper::StatusCode::REQUEST_TIMEOUT)
@@ -1376,8 +1408,8 @@ mod test_status {
 
         let addr = format!("http://{}", server.addr());
         let peer_info = PeerInfo {
-            peer_id: peer_id.to_string(),
-            token: token.to_string(),
+            peer_id: peer_id,
+            token: token,
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");

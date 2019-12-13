@@ -6,6 +6,7 @@ use futures::*;
 
 use crate::data::formats::*;
 use crate::error;
+use crate::peer::formats::{PeerId, Token};
 
 pub async fn connect_flow<'a>(
     base_url: &str,
@@ -42,8 +43,8 @@ pub async fn connect_flow<'a>(
     let query = formats::CreateDataConnectionQuery {
         peer_id: peer_info.peer_id,
         token: peer_info.token,
-        options: None,                        //FIXME
-        target_id: "data_callee".to_string(), //FIXME
+        options: None,                                 //FIXME
+        target_id: PeerId("data_callee".to_string()), //FIXME
         params: data_id,
         redirect_params: None, //FIXME
     };
@@ -186,7 +187,7 @@ mod test_connect_flow {
 
     use super::*;
     use crate::error;
-    use crate::peer::formats::PeerInfo;
+    use crate::peer::formats::{PeerId, PeerInfo, Token};
 
     #[tokio::test]
     async fn create_data_error() {
@@ -209,8 +210,8 @@ mod test_connect_flow {
             Err(error::ErrorEnum::create_myerror("recv Not Found"))
         };
         let peer_info = PeerInfo {
-            peer_id: "peer_id".to_string(),
-            token: "token".to_string(),
+            peer_id: PeerId("peer_id".to_string()),
+            token: Token("token".to_string()),
         };
 
         let result = super::connect_flow(
@@ -253,8 +254,8 @@ mod test_connect_flow {
             Err(error::ErrorEnum::create_myerror("recv Not Found"))
         };
         let peer_info = PeerInfo {
-            peer_id: "peer_id".to_string(),
-            token: "token".to_string(),
+            peer_id: PeerId("peer_id".to_string()),
+            token: Token("token".to_string()),
         };
 
         let result = super::connect_flow(
@@ -302,8 +303,8 @@ mod test_connect_flow {
             Err(error::ErrorEnum::create_myerror("recv Not Found"))
         };
         let peer_info = PeerInfo {
-            peer_id: "peer_id".to_string(),
-            token: "token".to_string(),
+            peer_id: PeerId("peer_id".to_string()),
+            token: Token("token".to_string()),
         };
 
         let result = super::connect_flow(
@@ -351,8 +352,8 @@ mod test_connect_flow {
             Ok(DataConnectionEventEnum::CLOSE)
         };
         let peer_info = PeerInfo {
-            peer_id: "peer_id".to_string(),
-            token: "token".to_string(),
+            peer_id: PeerId("peer_id".to_string()),
+            token: Token("token".to_string()),
         };
         let (on_close_tx, mut on_close_rx) = channel::<OnCloseTxParameters>(0);
         tokio::spawn(async move {

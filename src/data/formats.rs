@@ -1,3 +1,4 @@
+use crate::peer::formats::{PeerId, Token};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
@@ -10,10 +11,10 @@ pub struct CreatedResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreateDataConnectionQuery {
-    pub peer_id: String,
-    pub token: String,
+    pub peer_id: PeerId,
+    pub token: Token,
     pub options: Option<DataConnectionParameters>,
-    pub target_id: String,
+    pub target_id: PeerId,
     pub params: DataIdWrapper,
     pub redirect_params: Option<RedirectParams>,
 }

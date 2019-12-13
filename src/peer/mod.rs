@@ -143,8 +143,8 @@ mod test_peer_create_and_listen_events {
             Ok(CreatedResponse {
                 command_type: "PEERS_CREATE".to_string(),
                 params: PeerInfo {
-                    peer_id: peer_id.to_string(),
-                    token: "token".to_string(),
+                    peer_id: PeerId(peer_id.to_string()),
+                    token: Token("token".to_string()),
                 },
             })
         };
@@ -155,8 +155,8 @@ mod test_peer_create_and_listen_events {
             assert_eq!(
                 peer_info,
                 &PeerInfo {
-                    peer_id: "peer_id".to_string(),
-                    token: "token".to_string(),
+                    peer_id: PeerId("peer_id".to_string()),
+                    token: Token("token".to_string()),
                 }
             );
             Ok(PeerEventEnum::ERROR(PeerErrorEvent {
@@ -173,8 +173,8 @@ mod test_peer_create_and_listen_events {
                         result,
                         Some(PeerErrorEvent {
                             params: PeerInfo {
-                                peer_id: "peer_id".to_string(),
-                                token: "token".to_string(),
+                                peer_id: PeerId("peer_id".to_string()),
+                                token: Token("token".to_string()),
                             },
                             error_message: "error".to_string()
                         })
@@ -208,8 +208,8 @@ mod test_peer_create_and_listen_events {
             Ok(CreatedResponse {
                 command_type: "PEERS_CREATE".to_string(),
                 params: PeerInfo {
-                    peer_id: peer_id.to_string(),
-                    token: "token".to_string(),
+                    peer_id: PeerId(peer_id.to_string()),
+                    token: Token("token".to_string()),
                 },
             })
         };
@@ -221,8 +221,8 @@ mod test_peer_create_and_listen_events {
                       _peer_info: &PeerInfo|
                       -> Result<PeerEventEnum, error::ErrorEnum> {
                     let peer_info = PeerInfo {
-                        peer_id: "hoge".to_string(),
-                        token: "hoge".to_string(),
+                        peer_id: PeerId("hoge".to_string()),
+                        token: Token("token".to_string()),
                     };
                     counter += 1;
                     if counter == 1 {
@@ -244,8 +244,8 @@ mod test_peer_create_and_listen_events {
                         result,
                         Some(PeerCloseEvent {
                             params: PeerInfo {
-                                peer_id: "hoge".to_string(),
-                                token: "hoge".to_string(),
+                                peer_id: PeerId("hoge".to_string()),
+                                token: Token("token".to_string()),
                             }
                         })
                     );
@@ -278,8 +278,8 @@ mod test_peer_create_and_listen_events {
             Ok(CreatedResponse {
                 command_type: "PEERS_CREATE".to_string(),
                 params: PeerInfo {
-                    peer_id: peer_id.to_string(),
-                    token: "token".to_string(),
+                    peer_id: PeerId(peer_id.to_string()),
+                    token: Token("token".to_string()),
                 },
             })
         };
@@ -291,8 +291,8 @@ mod test_peer_create_and_listen_events {
                       _peer_info: &PeerInfo|
                       -> Result<PeerEventEnum, error::ErrorEnum> {
                     let peer_info = PeerInfo {
-                        peer_id: "hoge".to_string(),
-                        token: "hoge".to_string(),
+                        peer_id: PeerId("hoge".to_string()),
+                        token: Token("token".to_string()),
                     };
                     counter += 1;
                     if counter == 1 {
@@ -316,8 +316,8 @@ mod test_peer_create_and_listen_events {
                         result,
                         Some(PeerCloseEvent {
                             params: PeerInfo {
-                                peer_id: "hoge".to_string(),
-                                token: "hoge".to_string(),
+                                peer_id: PeerId("hoge".to_string()),
+                                token: Token("token".to_string()),
                             }
                         })
                     );

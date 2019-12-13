@@ -1,17 +1,35 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct PeerId(pub String);
+
+impl PeerId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct Token(pub String);
+
+impl Token {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerOptions {
     pub key: String,
     pub domain: String,
-    pub peer_id: String,
+    pub peer_id: PeerId,
     pub turn: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerInfo {
-    pub peer_id: String,
-    pub token: String,
+    pub peer_id: PeerId,
+    pub token: Token,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
@@ -71,6 +89,6 @@ pub struct PeerCallEventMediaParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerStatusMessage {
-    pub peer_id: String,
+    pub peer_id: PeerId,
     pub disconnected: bool,
 }

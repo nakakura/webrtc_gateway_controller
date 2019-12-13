@@ -7,7 +7,7 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common;
+use crate::common::{self, PeerId, PeerInfo};
 use crate::error;
 
 /// It access to the POST /peer endpoint, and return its response.
@@ -117,7 +117,9 @@ pub async fn status(
 mod test_create_peer {
     use serde_json::json;
 
-    use crate::peer::api::*;
+    use crate::common::{PeerId, Token};
+    use crate::error;
+    use crate::peer::formats::PeerOptions;
     use helper::server;
 
     /// A WebRTC Gateway returns 201 Created and a PeerResponse struct, if it succeeds to create a Peer Object
@@ -374,6 +376,7 @@ mod test_create_peer {
 mod test_event {
     use serde_json::json;
 
+    use crate::common::{PeerId, PeerInfo, Token};
     use crate::error;
     use crate::peer::formats::*;
     use helper::server;
@@ -900,9 +903,9 @@ mod test_event {
 mod test_delete_peer {
     use serde_json::json;
 
+    use crate::common::{PeerId, PeerInfo, Token};
     use crate::error;
     use crate::peer::api::*;
-    use crate::peer::formats::*;
     use helper::server;
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
@@ -1145,6 +1148,7 @@ mod test_delete_peer {
 mod test_status {
     use serde_json::json;
 
+    use crate::common::{PeerId, PeerInfo, Token};
     use crate::error;
     use crate::peer::formats::*;
     use helper::server;

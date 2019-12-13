@@ -550,9 +550,9 @@ mod test_delete_data {
 mod test_create_data_connection {
     use serde_json::json;
 
+    use crate::common::{PeerId, Token};
     use crate::data::formats::*;
     use crate::error;
-    use crate::peer::formats::{PeerId, Token};
     use helper::server;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.

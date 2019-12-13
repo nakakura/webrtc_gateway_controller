@@ -1,5 +1,6 @@
-use crate::peer::formats::{PeerId, Token};
 use serde::{Deserialize, Serialize};
+
+use crate::common::{PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreatedResponse {

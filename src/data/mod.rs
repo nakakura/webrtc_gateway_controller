@@ -4,13 +4,13 @@ pub mod formats;
 use futures::channel::mpsc::*;
 use futures::*;
 
+use crate::common::{PeerId, PeerInfo};
 use crate::data::formats::*;
 use crate::error;
-use crate::peer::formats::{PeerId, Token};
 
 pub async fn connect_flow<'a>(
     base_url: &str,
-    peer_info: super::peer::formats::PeerInfo,
+    peer_info: PeerInfo,
     on_open_tx: Option<Sender<OnOpenTxParameters>>,
     on_close_tx: Option<Sender<OnCloseTxParameters>>,
     on_error_tx: Option<Sender<OnErrorTxParameters>>,
@@ -43,7 +43,7 @@ pub async fn connect_flow<'a>(
     let query = formats::CreateDataConnectionQuery {
         peer_id: peer_info.peer_id,
         token: peer_info.token,
-        options: None,                                 //FIXME
+        options: None,                                //FIXME
         target_id: PeerId("data_callee".to_string()), //FIXME
         params: data_id,
         redirect_params: None, //FIXME
@@ -186,8 +186,8 @@ mod test_connect_flow {
     use futures::*;
 
     use super::*;
+    use crate::common::{PeerId, PeerInfo, Token};
     use crate::error;
-    use crate::peer::formats::{PeerId, PeerInfo, Token};
 
     #[tokio::test]
     async fn create_data_error() {

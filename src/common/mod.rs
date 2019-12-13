@@ -1,6 +1,32 @@
-use crate::error;
 use futures::*;
 use reqwest;
+use serde::{Deserialize, Serialize};
+
+use crate::error;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct PeerId(pub String);
+
+impl PeerId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct Token(pub String);
+
+impl Token {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct PeerInfo {
+    pub peer_id: PeerId,
+    pub token: Token,
+}
 
 pub async fn api_access<A: Sized, T: Sized, R: Sized>(
     success_code: reqwest::StatusCode,

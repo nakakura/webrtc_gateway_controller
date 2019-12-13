@@ -4,6 +4,7 @@ pub mod formats;
 
 use futures::*;
 
+use crate::common::PeerInfo;
 use crate::error;
 use formats::*;
 
@@ -100,6 +101,7 @@ mod test_peer_create_and_listen_events {
     use futures::*;
 
     use super::*;
+    use crate::common::{PeerId, Token};
     use crate::error;
 
     #[tokio::test]

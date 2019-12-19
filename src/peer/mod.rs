@@ -97,7 +97,7 @@ mod test_peer_create_and_listen_events {
     use futures::*;
 
     use super::*;
-    use crate::common::{PeerId, Token};
+    use crate::common::{PeerId, PeerInfo, Token};
     use crate::error;
 
     #[tokio::test]

@@ -2,7 +2,7 @@ use futures::channel::mpsc::*;
 use futures::*;
 use log::{debug, warn};
 
-use webrtc_gateway_controller::data::formats::CreatedResponse;
+use webrtc_gateway_controller::data::formats::{CreatedResponse, OnCloseTxParameters};
 use webrtc_gateway_controller::peer::formats::*;
 use webrtc_gateway_controller::*;
 
@@ -108,11 +108,17 @@ async fn main() {
             });
             tokio::spawn(on_connection_open_rx);
 
+            let (on_connection_close_tx, on_connection_close_rx) =
+                channel::<data::formats::OnCloseTxParameters>(0);
+            let on_connection_close_rx = on_connection_close_rx.for_each(on_close_data_connection);
+            tokio::spawn(on_connection_close_rx);
+
+
             let _ = data::connect_flow(
                 &*BASE_URL,
                 event.params,
                 Some(on_connection_open_tx),
-                None,
+                Some(on_connection_close_tx),
                 None,
             )
             .await;
@@ -127,11 +133,17 @@ async fn main() {
                 ()
             });
             tokio::spawn(on_connection_open_rx);
+
+            let (on_connection_close_tx, on_connection_close_rx) =
+                channel::<data::formats::OnCloseTxParameters>(0);
+            let on_connection_close_rx = on_connection_close_rx.for_each(on_close_data_connection);
+            tokio::spawn(on_connection_close_rx);
+
             let _ = data::redirect_flow(
                 &*BASE_URL,
                 event.data_params.data_connection_id,
                 Some(on_connection_open_tx),
-                None,
+                Some(on_connection_close_tx),
                 None,
             )
             .await;
@@ -141,3 +153,11 @@ async fn main() {
 
     let _ = peer_runner(observers).await;
 }
+
+pub async fn on_close_data_connection(data_connection_id: OnCloseTxParameters) -> () {
+    // Delete DataConnection
+    // When DataConnection object is deleted, WebRTC Gateway release Data object used by DataConnection.
+    // So this code don't have to call delete_data API here.
+    let _ = data::delete_data_connection(&*BASE_URL, data_connection_id.0).await;
+}
+

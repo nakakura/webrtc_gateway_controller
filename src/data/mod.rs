@@ -163,6 +163,10 @@ async fn listen_events<'a>(
     Ok(())
 }
 
+pub async fn delete_data_connection(base_url: &str, data_connection_id: DataConnectionId) -> Result<(), error::ErrorEnum> {
+    api::delete_data_connection(base_url, data_connection_id.as_str()).await
+}
+
 #[cfg(test)]
 mod test_connect_flow {
     use futures::channel::mpsc::*;

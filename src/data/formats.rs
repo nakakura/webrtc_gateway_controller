@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{PeerId, Token};
+use crate::common::{DataConnectionId, PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreatedResponse {
@@ -61,15 +61,6 @@ pub struct CreateDataConnectionResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-pub struct DataConnectionId(pub String);
-
-impl DataConnectionId {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct DataConnectionIdWrapper {
     pub data_connection_id: DataConnectionId,
 }
@@ -115,8 +106,8 @@ pub enum DataConnectionEventEnum {
 }
 
 #[derive(Debug, PartialOrd, PartialEq)]
-pub struct OnOpenTxParameters(pub String);
+pub struct OnOpenTxParameters(pub DataConnectionId);
 #[derive(Debug, PartialOrd, PartialEq)]
-pub struct OnCloseTxParameters(pub String);
+pub struct OnCloseTxParameters(pub DataConnectionId);
 #[derive(Debug, PartialOrd, PartialEq)]
-pub struct OnErrorTxParameters(pub String, pub String);
+pub struct OnErrorTxParameters(pub DataConnectionId, pub String);

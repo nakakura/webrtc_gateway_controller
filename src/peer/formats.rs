@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{PeerId, PeerInfo};
+use crate::common::{DataConnectionId, PeerId, PeerInfo};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerOptions {
@@ -51,7 +51,7 @@ pub struct PeerConnectionEvent {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerConnectionEventDataParams {
-    pub data_connection_id: String,
+    pub data_connection_id: DataConnectionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

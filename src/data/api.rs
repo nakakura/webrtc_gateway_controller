@@ -137,22 +137,20 @@ mod test_create_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_201() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "data_id": "da-test",
-                        "port": 50000,
-                        "ip_v4": "127.0.0.1",
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::CREATED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "data_id": "da-test",
+                    "port": 50000,
+                    "ip_v4": "127.0.0.1",
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::CREATED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -168,28 +166,26 @@ mod test_create_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "DATA_CREATE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "peer_id",
-                                    "message": "peer_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "DATA_CREATE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "peer_id",
+                                "message": "peer_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -206,18 +202,16 @@ mod test_create_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -234,18 +228,16 @@ mod test_create_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -262,18 +254,16 @@ mod test_create_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -290,18 +280,16 @@ mod test_create_data {
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -329,18 +317,16 @@ mod test_delete_data {
     async fn recv_204() {
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NO_CONTENT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NO_CONTENT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -355,28 +341,26 @@ mod test_delete_data {
     #[tokio::test]
     async fn recv_400() {
         let data_id = DataId("da-test".to_string());
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "DATA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "DATA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -394,28 +378,26 @@ mod test_delete_data {
     #[tokio::test]
     async fn recv_403() {
         let data_id = DataId("da-test".to_string());
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "DATA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "DATA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -433,28 +415,26 @@ mod test_delete_data {
     #[tokio::test]
     async fn recv_405() {
         let data_id = DataId("da-test".to_string());
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "DATA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "DATA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -472,28 +452,26 @@ mod test_delete_data {
     #[tokio::test]
     async fn recv_406() {
         let data_id = DataId("da-test".to_string());
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "DATA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "DATA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -511,28 +489,26 @@ mod test_delete_data {
     #[tokio::test]
     async fn recv_408() {
         let data_id = DataId("da-test".to_string());
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "DATA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "DATA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -564,29 +540,27 @@ mod test_create_data_connection {
         let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |mut req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let mut full: Vec<u8> = Vec::new();
-                    while let Some(item) = req.body_mut().next().await {
-                        full.extend(&*item.unwrap());
-                    }
-                    let _peer_options: CreateDataConnectionQuery =
-                        serde_json::from_slice(&full).expect("PeerOptions parse error");
-                    let json = json!({
-                        "command_type": "PEERS_CONNECT",
-                        "params": {
-                            "data_connection_id": "dc-test"
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::ACCEPTED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
+        let server = server::http(move |mut req| async move {
+            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
+                let mut full: Vec<u8> = Vec::new();
+                while let Some(item) = req.body_mut().next().await {
+                    full.extend(&*item.unwrap());
                 }
+                let _peer_options: CreateDataConnectionQuery =
+                    serde_json::from_slice(&full).expect("PeerOptions parse error");
+                let json = json!({
+                    "command_type": "PEERS_CONNECT",
+                    "params": {
+                        "data_connection_id": "dc-test"
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::ACCEPTED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -615,28 +589,26 @@ mod test_create_data_connection {
         let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_CREATE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_CREATE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -667,18 +639,16 @@ mod test_create_data_connection {
         let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -709,18 +679,16 @@ mod test_create_data_connection {
         let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -751,18 +719,16 @@ mod test_create_data_connection {
         let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -793,18 +759,16 @@ mod test_create_data_connection {
         let target_id = PeerId("target_id".to_string());
         let data_id = DataId("da-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -831,7 +795,7 @@ mod test_create_data_connection {
 mod test_delete_data_connection {
     use serde_json::json;
 
-    use crate::data::formats::DataConnectionId;
+    use crate::common::DataConnectionId;
     use crate::error;
     use helper::server;
 
@@ -843,20 +807,16 @@ mod test_delete_data_connection {
     async fn recv_202() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NO_CONTENT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NO_CONTENT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -873,30 +833,26 @@ mod test_delete_data_connection {
     async fn recv_400() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "peer_id",
-                                    "message": "peer_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "peer_id",
+                                "message": "peer_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -916,20 +872,16 @@ mod test_delete_data_connection {
     async fn recv_403() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -949,20 +901,16 @@ mod test_delete_data_connection {
     async fn recv_404() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -982,20 +930,16 @@ mod test_delete_data_connection {
     async fn recv_405() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1015,20 +959,16 @@ mod test_delete_data_connection {
     async fn recv_406() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1048,20 +988,16 @@ mod test_delete_data_connection {
     async fn recv_408() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test"
-                    && req.method() == reqwest::Method::DELETE
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1079,6 +1015,7 @@ mod test_delete_data_connection {
 mod test_redirect_data_connection {
     use serde_json::json;
 
+    use crate::common::DataConnectionId;
     use crate::data::formats::*;
     use crate::error;
     use helper::server;
@@ -1093,38 +1030,35 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |mut req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let mut full: Vec<u8> = Vec::new();
-                    while let Some(item) = req.body_mut().next().await {
-                        full.extend(&*item.unwrap());
-                    }
-                    let redirect_data_params: RedirectDataParams =
-                        serde_json::from_slice(&full).expect("PeerOptions parse error");
-                    assert_eq!(
-                        redirect_data_params.feed_params.data_id,
-                        DataId("da-test".to_string())
-                    );
-                    assert_eq!(
-                        redirect_data_params.redirect_params.ip_v4,
-                        Some(ip_v4.to_string())
-                    );
-                    assert_eq!(redirect_data_params.redirect_params.port, port);
-
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_PUT",
-                        "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
+        let server = server::http(move |mut req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let mut full: Vec<u8> = Vec::new();
+                while let Some(item) = req.body_mut().next().await {
+                    full.extend(&*item.unwrap());
                 }
+                let redirect_data_params: RedirectDataParams =
+                    serde_json::from_slice(&full).expect("PeerOptions parse error");
+                assert_eq!(
+                    redirect_data_params.feed_params.data_id,
+                    DataId("da-test".to_string())
+                );
+                assert_eq!(
+                    redirect_data_params.redirect_params.ip_v4,
+                    Some(ip_v4.to_string())
+                );
+                assert_eq!(redirect_data_params.redirect_params.port, port);
+
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_PUT",
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1162,29 +1096,26 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_PUT",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_PUT",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1222,19 +1153,16 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1272,19 +1200,16 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1322,19 +1247,16 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1372,19 +1294,16 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1422,20 +1341,17 @@ mod test_redirect_data_connection {
         let ip_v4 = "127.0.0.1";
         let port = 10001;
 
-        let server = server::http(move |req| {
-            async move {
-                println!("req.uri {:?}", req.uri());
-                if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            println!("req.uri {:?}", req.uri());
+            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1468,7 +1384,7 @@ mod test_redirect_data_connection {
 mod test_status {
     use serde_json::json;
 
-    use crate::data::formats::DataConnectionId;
+    use crate::common::DataConnectionId;
     use crate::error;
     use helper::server;
 
@@ -1479,29 +1395,27 @@ mod test_status {
     async fn recv_200() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "buffersize": 0,
-                        "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
-                        "metadata": "",
-                        "open": true,
-                        "reliable": true,
-                        "remote_id": "data_caller",
-                        "serialization": "BINARY",
-                        "type": "DATA"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "buffersize": 0,
+                    "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
+                    "metadata": "",
+                    "open": true,
+                    "reliable": true,
+                    "remote_id": "data_caller",
+                    "serialization": "BINARY",
+                    "type": "DATA"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1519,30 +1433,28 @@ mod test_status {
     async fn recv_400() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_STATUS",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_STATUS",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1562,30 +1474,28 @@ mod test_status {
     async fn recv_403() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_STATUS",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "field",
-                                    "message": "something happened"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_STATUS",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "field",
+                                "message": "something happened"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1605,20 +1515,18 @@ mod test_status {
     async fn recv_404() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1638,20 +1546,18 @@ mod test_status {
     async fn recv_405() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1671,20 +1577,18 @@ mod test_status {
     async fn recv_406() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1704,20 +1608,18 @@ mod test_status {
     async fn recv_408() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/status"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/status"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1735,7 +1637,8 @@ mod test_status {
 mod test_event {
     use serde_json::json;
 
-    use crate::data::formats::{DataConnectionEventEnum, DataConnectionId};
+    use crate::common::DataConnectionId;
+    use crate::data::formats::DataConnectionEventEnum;
     use crate::error;
     use helper::server;
 
@@ -1746,22 +1649,20 @@ mod test_event {
     async fn recv_200_open() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "event": "OPEN"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "event": "OPEN"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1778,22 +1679,20 @@ mod test_event {
     async fn recv_200_close() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "event": "CLOSE"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "event": "CLOSE"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1810,23 +1709,21 @@ mod test_event {
     async fn recv_200_error() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "event": "ERROR",
-                        "error_message": "error"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "event": "ERROR",
+                    "error_message": "error"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1848,30 +1745,28 @@ mod test_event {
     async fn recv_400() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({
-                        "command_type": "DATA_CONNECTION_EVENTS",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "string",
-                                    "message": "string"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({
+                    "command_type": "DATA_CONNECTION_EVENTS",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "string",
+                                "message": "string"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1891,20 +1786,18 @@ mod test_event {
     async fn recv_403() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1924,20 +1817,18 @@ mod test_event {
     async fn recv_404() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1957,20 +1848,18 @@ mod test_event {
     async fn recv_405() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1990,20 +1879,18 @@ mod test_event {
     async fn recv_406() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2023,20 +1910,18 @@ mod test_event {
     async fn recv_408() {
         let data_connection_id = DataConnectionId("dc-test".to_string());
 
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/data/connections/dc-test/events"
-                    && req.method() == reqwest::Method::GET
-                {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/data/connections/dc-test/events"
+                && req.method() == reqwest::Method::GET
+            {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 

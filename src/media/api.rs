@@ -172,34 +172,32 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_201_video() {
-        let server = server::http(move |mut req| {
-            async move {
-                if req.uri() == "/media" && req.method() == reqwest::Method::POST {
-                    let mut full: Vec<u8> = Vec::new();
-                    while let Some(item) = req.body_mut().next().await {
-                        full.extend(&*item.unwrap());
-                    }
-                    let media_options: CreateMediaOptions =
-                        serde_json::from_slice(&full).expect("PeerOptions parse error");
-
-                    let media_id = if media_options.is_video {
-                        "vi-test"
-                    } else {
-                        "au-test"
-                    };
-                    let json = json!({
-                        "media_id": media_id,
-                        "port": 10001,
-                        "ip_v4": "127.0.0.1"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::CREATED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
+        let server = server::http(move |mut req| async move {
+            if req.uri() == "/media" && req.method() == reqwest::Method::POST {
+                let mut full: Vec<u8> = Vec::new();
+                while let Some(item) = req.body_mut().next().await {
+                    full.extend(&*item.unwrap());
                 }
+                let media_options: CreateMediaOptions =
+                    serde_json::from_slice(&full).expect("PeerOptions parse error");
+
+                let media_id = if media_options.is_video {
+                    "vi-test"
+                } else {
+                    "au-test"
+                };
+                let json = json!({
+                    "media_id": media_id,
+                    "port": 10001,
+                    "ip_v4": "127.0.0.1"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::CREATED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -215,34 +213,32 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_201_audio() {
-        let server = server::http(move |mut req| {
-            async move {
-                if req.uri() == "/media" && req.method() == reqwest::Method::POST {
-                    let mut full: Vec<u8> = Vec::new();
-                    while let Some(item) = req.body_mut().next().await {
-                        full.extend(&*item.unwrap());
-                    }
-                    let media_options: CreateMediaOptions =
-                        serde_json::from_slice(&full).expect("PeerOptions parse error");
-
-                    let media_id = if media_options.is_video {
-                        "vi-test"
-                    } else {
-                        "au-test"
-                    };
-                    let json = json!({
-                        "media_id": media_id,
-                        "port": 10001,
-                        "ip_v4": "127.0.0.1"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::CREATED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
+        let server = server::http(move |mut req| async move {
+            if req.uri() == "/media" && req.method() == reqwest::Method::POST {
+                let mut full: Vec<u8> = Vec::new();
+                while let Some(item) = req.body_mut().next().await {
+                    full.extend(&*item.unwrap());
                 }
+                let media_options: CreateMediaOptions =
+                    serde_json::from_slice(&full).expect("PeerOptions parse error");
+
+                let media_id = if media_options.is_video {
+                    "vi-test"
+                } else {
+                    "au-test"
+                };
+                let json = json!({
+                    "media_id": media_id,
+                    "port": 10001,
+                    "ip_v4": "127.0.0.1"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::CREATED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -258,28 +254,26 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "MEDIA_CREATE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "peer_id",
-                                    "message": "peer_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "MEDIA_CREATE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "peer_id",
+                                "message": "peer_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -296,18 +290,16 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -324,18 +316,16 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -352,18 +342,16 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -380,18 +368,16 @@ mod test_create_media {
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -418,19 +404,17 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_204() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NO_CONTENT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NO_CONTENT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -446,29 +430,27 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_400() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "MEDIA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_id",
-                                    "message": "media_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "MEDIA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_id",
+                                "message": "media_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -487,19 +469,17 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_403() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -518,19 +498,17 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_404() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -549,19 +527,17 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_405() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -580,19 +556,17 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_406() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -611,19 +585,17 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_408() {
         let media_id = "test-media_id";
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/{}", media_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/{}", media_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -649,22 +621,20 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_201() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "rtcp_id": "rc-test",
-                        "port": 10003,
-                        "ip_v4": "127.0.0.1"
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::CREATED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "rtcp_id": "rc-test",
+                    "port": 10003,
+                    "ip_v4": "127.0.0.1"
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::CREATED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -681,28 +651,26 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "MEDIA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_id",
-                                    "message": "media_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "MEDIA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_id",
+                                "message": "media_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -720,18 +688,16 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -749,18 +715,16 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -778,18 +742,16 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -807,18 +769,16 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -846,19 +806,17 @@ mod test_delete_rtcp {
     async fn recv_201() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NO_CONTENT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NO_CONTENT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -875,29 +833,27 @@ mod test_delete_rtcp {
     async fn recv_400() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "MEDIA_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_id",
-                                    "message": "media_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "MEDIA_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_id",
+                                "message": "media_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -917,19 +873,17 @@ mod test_delete_rtcp {
     async fn recv_403() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -949,19 +903,17 @@ mod test_delete_rtcp {
     async fn recv_404() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -981,19 +933,17 @@ mod test_delete_rtcp {
     async fn recv_405() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1013,19 +963,17 @@ mod test_delete_rtcp {
     async fn recv_406() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1045,19 +993,17 @@ mod test_delete_rtcp {
     async fn recv_408() {
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/rtcp/{}", rtcp_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/rtcp/{}", rtcp_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1084,23 +1030,21 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_201() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "PEERS_CALL",
-                        "params": {
-                            "media_connection_id": "mc-test"
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::ACCEPTED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "PEERS_CALL",
+                    "params": {
+                        "media_connection_id": "mc-test"
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::ACCEPTED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1123,28 +1067,26 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_CREATE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "peer_id",
-                                    "message": "peer_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_CREATE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "peer_id",
+                                "message": "peer_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1170,18 +1112,16 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1207,18 +1147,16 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1244,18 +1182,16 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1281,18 +1217,16 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| {
-            async move {
-                if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1328,19 +1262,17 @@ mod test_delete_call {
     async fn recv_204() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NO_CONTENT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NO_CONTENT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1357,29 +1289,27 @@ mod test_delete_call {
     async fn recv_400() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_DELETE",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_connection_id",
-                                    "message": "media_connection_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_DELETE",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_connection_id",
+                                "message": "media_connection_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1399,19 +1329,17 @@ mod test_delete_call {
     async fn recv_403() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1431,19 +1359,17 @@ mod test_delete_call {
     async fn recv_404() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1463,19 +1389,17 @@ mod test_delete_call {
     async fn recv_405() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1495,19 +1419,17 @@ mod test_delete_call {
     async fn recv_406() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1527,19 +1449,17 @@ mod test_delete_call {
     async fn recv_408() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1568,27 +1488,25 @@ mod test_answer {
     async fn recv_202() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_ANSWER",
-                        "params": {
-                            "video_port": 10011,
-                            "video_id": "vi-test",
-                            "audio_port": 10021,
-                            "audio_id": "au-test"
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::ACCEPTED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_ANSWER",
+                    "params": {
+                        "video_port": 10011,
+                        "video_id": "vi-test",
+                        "audio_port": 10021,
+                        "audio_id": "au-test"
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::ACCEPTED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1612,29 +1530,27 @@ mod test_answer {
     async fn recv_400() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_ANSWER",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_id",
-                                    "message": "media_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_ANSWER",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_id",
+                                "message": "media_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1658,19 +1574,17 @@ mod test_answer {
     async fn recv_403() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1694,19 +1608,17 @@ mod test_answer {
     async fn recv_404() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1730,19 +1642,17 @@ mod test_answer {
     async fn recv_405() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1766,19 +1676,17 @@ mod test_answer {
     async fn recv_406() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1802,19 +1710,17 @@ mod test_answer {
     async fn recv_408() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/answer", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/answer", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1847,19 +1753,17 @@ mod test_pli {
     async fn recv_202() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::CREATED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::CREATED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1882,29 +1786,27 @@ mod test_pli {
     async fn recv_400() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_PLI",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_id",
-                                    "message": "media_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_PLI",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_id",
+                                "message": "media_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1930,19 +1832,17 @@ mod test_pli {
     async fn recv_403() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -1968,19 +1868,17 @@ mod test_pli {
     async fn recv_404() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2006,19 +1904,17 @@ mod test_pli {
     async fn recv_405() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2044,19 +1940,17 @@ mod test_pli {
     async fn recv_406() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2082,19 +1976,17 @@ mod test_pli {
     async fn recv_408() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/pli", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/pli", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2129,19 +2021,17 @@ mod test_events {
     async fn recv_202_ready() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({"event": "READY"});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({"event": "READY"});
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2158,19 +2048,17 @@ mod test_events {
     async fn recv_202_stream() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({"event": "STREAM"});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({"event": "STREAM"});
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2187,19 +2075,17 @@ mod test_events {
     async fn recv_202_close() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({"event": "CLOSE"});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({"event": "CLOSE"});
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2216,19 +2102,17 @@ mod test_events {
     async fn recv_202_error() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({"event": "ERROR", "error_message": "hoge"});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({"event": "ERROR", "error_message": "hoge"});
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2250,29 +2134,27 @@ mod test_events {
     async fn recv_400() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_EVENTS",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_id",
-                                    "message": "media_id field is not specified"
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_EVENTS",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_id",
+                                "message": "media_id field is not specified"
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2292,19 +2174,17 @@ mod test_events {
     async fn recv_403() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2324,19 +2204,17 @@ mod test_events {
     async fn recv_404() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2356,19 +2234,17 @@ mod test_events {
     async fn recv_405() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2388,19 +2264,17 @@ mod test_events {
     async fn recv_406() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2420,19 +2294,17 @@ mod test_events {
     async fn recv_408() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/events", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/events", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2457,33 +2329,31 @@ mod test_status {
     async fn recv_200() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({
-                        "metadata": "",
-                        "open": true,
-                        "remote_id": "media_caller",
-                        "ssrc": [
-                            {
-                                "media_id": "au-test",
-                                "ssrc": 2
-                            },
-                            {
-                                "media_id": "vi-test",
-                                "ssrc": 3
-                            }
-                        ]
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::OK)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({
+                    "metadata": "",
+                    "open": true,
+                    "remote_id": "media_caller",
+                    "ssrc": [
+                        {
+                            "media_id": "au-test",
+                            "ssrc": 2
+                        },
+                        {
+                            "media_id": "vi-test",
+                            "ssrc": 3
+                        }
+                    ]
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::OK)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2505,29 +2375,27 @@ mod test_status {
     async fn recv_400() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({
-                        "command_type": "MEDIA_CONNECTION_STATUS",
-                        "params": {
-                            "errors": [
-                                {
-                                    "field": "media_connection_id",
-                                    "message": "media_connection_id is not exists."
-                                }
-                            ]
-                        }
-                    });
-                    http::Response::builder()
-                        .status(hyper::StatusCode::BAD_REQUEST)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({
+                    "command_type": "MEDIA_CONNECTION_STATUS",
+                    "params": {
+                        "errors": [
+                            {
+                                "field": "media_connection_id",
+                                "message": "media_connection_id is not exists."
+                            }
+                        ]
+                    }
+                });
+                http::Response::builder()
+                    .status(hyper::StatusCode::BAD_REQUEST)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2547,19 +2415,17 @@ mod test_status {
     async fn recv_403() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::FORBIDDEN)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::FORBIDDEN)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2579,19 +2445,17 @@ mod test_status {
     async fn recv_404() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_FOUND)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_FOUND)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2611,19 +2475,17 @@ mod test_status {
     async fn recv_405() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2643,19 +2505,17 @@ mod test_status {
     async fn recv_406() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 
@@ -2675,19 +2535,17 @@ mod test_status {
     async fn recv_408() {
         let media_connection_id = "mc-test";
 
-        let server = server::http(move |req| {
-            async move {
-                let uri = format!("/media/connections/{}/status", media_connection_id);
-                if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                    let json = json!({});
-                    http::Response::builder()
-                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                        .header("Content-type", "application/json")
-                        .body(hyper::Body::from(json.to_string()))
-                        .unwrap()
-                } else {
-                    unreachable!();
-                }
+        let server = server::http(move |req| async move {
+            let uri = format!("/media/connections/{}/status", media_connection_id);
+            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
+                let json = json!({});
+                http::Response::builder()
+                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                    .header("Content-type", "application/json")
+                    .body(hyper::Body::from(json.to_string()))
+                    .unwrap()
+            } else {
+                unreachable!();
             }
         });
 

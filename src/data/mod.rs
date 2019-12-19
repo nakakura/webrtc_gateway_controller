@@ -4,7 +4,7 @@ pub mod formats;
 use futures::channel::mpsc::*;
 use futures::*;
 
-use crate::common::{PeerId, PeerInfo};
+use crate::common::{DataConnectionId, PeerId, PeerInfo};
 use crate::data::formats::*;
 use crate::error;
 
@@ -50,7 +50,7 @@ pub async fn connect_flow<'a>(
     let result = api::create_data_connection(base_url, &query).await?;
     listen_events(
         base_url,
-        result.params.data_connection_id.as_str(),
+        result.params.data_connection_id,
         on_open_tx,
         on_close_tx,
         on_error_tx,
@@ -62,7 +62,7 @@ pub async fn connect_flow<'a>(
 
 pub async fn redirect_flow<'a>(
     base_url: &str,
-    data_connection_id: &str,
+    data_connection_id: DataConnectionId,
     on_open_tx: Option<Sender<OnOpenTxParameters>>,
     on_close_tx: Option<Sender<OnCloseTxParameters>>,
     on_error_tx: Option<Sender<OnErrorTxParameters>>,
@@ -95,10 +95,11 @@ pub async fn redirect_flow<'a>(
     };
 
     #[cfg(test)]
-    let _ = inject_api_redirect_data(base_url, data_connection_id, &redirect_data_params)?;
+    let _ = inject_api_redirect_data(base_url, data_connection_id.as_str(), &redirect_data_params)?;
     #[cfg(not(test))]
     let _ =
-        api::redirect_data_connection(base_url, data_connection_id, &redirect_data_params).await?;
+        api::redirect_data_connection(base_url, data_connection_id.as_str(), &redirect_data_params)
+            .await?;
     listen_events(
         base_url,
         data_connection_id,
@@ -113,7 +114,7 @@ pub async fn redirect_flow<'a>(
 
 async fn listen_events<'a>(
     base_url: &str,
-    data_connection_id: &str,
+    data_connection_id: DataConnectionId,
     mut on_open_tx: Option<Sender<OnOpenTxParameters>>,
     mut on_close_tx: Option<Sender<OnCloseTxParameters>>,
     mut on_error_tx: Option<Sender<OnErrorTxParameters>>,
@@ -123,14 +124,14 @@ async fn listen_events<'a>(
 ) -> Result<(), error::ErrorEnum> {
     loop {
         #[cfg(test)]
-        let result = inject_api_events(base_url, data_connection_id);
+        let result = inject_api_events(base_url, data_connection_id.as_str());
         #[cfg(not(test))]
-        let result = api::event(base_url, data_connection_id).await;
+        let result = api::event(base_url, data_connection_id.as_str()).await;
         match result {
             Ok(formats::DataConnectionEventEnum::OPEN) => {
                 if let Some(ref mut tx) = on_open_tx {
                     if tx
-                        .send(OnOpenTxParameters(data_connection_id.to_string()))
+                        .send(OnOpenTxParameters(data_connection_id.clone()))
                         .await
                         .is_err()
                     {
@@ -140,9 +141,7 @@ async fn listen_events<'a>(
             }
             Ok(formats::DataConnectionEventEnum::CLOSE) => {
                 if let Some(ref mut tx) = on_close_tx {
-                    let _ = tx
-                        .send(OnCloseTxParameters(data_connection_id.to_string()))
-                        .await;
+                    let _ = tx.send(OnCloseTxParameters(data_connection_id)).await;
                 }
                 break;
             }
@@ -151,7 +150,7 @@ async fn listen_events<'a>(
             }) => {
                 if let Some(ref mut tx) = on_error_tx {
                     let _ = tx
-                        .send(OnErrorTxParameters(data_connection_id.to_string(), message))
+                        .send(OnErrorTxParameters(data_connection_id, message))
                         .await;
                 }
                 break;
@@ -346,7 +345,9 @@ mod test_connect_flow {
                 .map(|result| {
                     assert_eq!(
                         result,
-                        Some(OnCloseTxParameters("data_connection_id".to_string()))
+                        Some(OnCloseTxParameters(DataConnectionId(
+                            "data_connection_id".to_string()
+                        )))
                     );
                 })
                 .await;
@@ -394,7 +395,7 @@ mod test_redirect_flow {
         };
         let result = super::redirect_flow(
             "base_url",
-            "data_connection_id",
+            DataConnectionId("data_connection_id".to_string()),
             None,
             None,
             None,
@@ -434,7 +435,7 @@ mod test_redirect_flow {
         };
         let result = super::redirect_flow(
             "base_url",
-            "data_connection_id",
+            DataConnectionId("data_connection_id".to_string()),
             None,
             None,
             None,
@@ -477,7 +478,7 @@ mod test_redirect_flow {
         };
         let result = super::redirect_flow(
             "base_url",
-            "data_connection_id",
+            DataConnectionId("data_connection_id".to_string()),
             None,
             None,
             None,
@@ -520,7 +521,7 @@ mod test_redirect_flow {
         };
         let result = super::redirect_flow(
             "base_url",
-            "data_connection_id",
+            DataConnectionId("data_connection_id".to_string()),
             None,
             None,
             None,

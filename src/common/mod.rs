@@ -28,6 +28,15 @@ pub struct PeerInfo {
     pub token: Token,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct DataConnectionId(pub String);
+
+impl DataConnectionId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
 pub async fn api_access<A: Sized, T: Sized, R: Sized>(
     success_code: reqwest::StatusCode,
     is_404_captable: bool,

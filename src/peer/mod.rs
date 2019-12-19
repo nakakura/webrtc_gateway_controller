@@ -4,6 +4,7 @@ pub mod formats;
 
 use futures::*;
 
+#[cfg(test)]
 use crate::common::PeerInfo;
 use crate::error;
 use formats::*;

@@ -1,9 +1,9 @@
+/*
 use futures::*;
 use serde_json::json;
 
 use helper::server;
 use webrtc_gateway_controller::peer::*;
-/*
 #[tokio::test]
 async fn test_listen_events() {
     let peer_id = "peer_id";

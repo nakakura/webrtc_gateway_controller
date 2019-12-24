@@ -115,6 +115,7 @@ pub async fn status(
 
 #[cfg(test)]
 mod test_create_peer {
+    use futures::*;
     use serde_json::json;
 
     use crate::common::{PeerId, Token};

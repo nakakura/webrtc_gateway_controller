@@ -524,6 +524,7 @@ mod test_delete_data {
 
 #[cfg(test)]
 mod test_create_data_connection {
+    use futures::*;
     use serde_json::json;
 
     use crate::common::{PeerId, Token};
@@ -1013,6 +1014,7 @@ mod test_delete_data_connection {
 
 #[cfg(test)]
 mod test_redirect_data_connection {
+    use futures::*;
     use serde_json::json;
 
     use crate::common::DataConnectionId;

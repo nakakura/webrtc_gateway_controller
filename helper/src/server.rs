@@ -74,7 +74,7 @@ where
     thread::Builder::new()
         .name(tname)
         .spawn(move || {
-            let mut rt = tokio::runtime::current_thread::Runtime::new().expect("rt new");
+            let mut rt = tokio::runtime::Runtime::new().expect("rt new");
             rt.block_on(srv).unwrap();
             let _ = panic_tx.send(());
         })

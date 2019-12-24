@@ -162,6 +162,7 @@ pub async fn status(
 
 #[cfg(test)]
 mod test_create_media {
+    use futures::*;
     use serde_json::json;
 
     use crate::error;

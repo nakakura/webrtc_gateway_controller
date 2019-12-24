@@ -1,3 +1,5 @@
+#![warn(rust_2018_idioms)]
+
 use futures::channel::mpsc::*;
 use futures::*;
 use log::{info, warn};
@@ -206,7 +208,6 @@ async fn data_connection_on_error(event: OnErrorTxParameters) {
     );
 }
 
-#[cfg(not(test))]
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() {

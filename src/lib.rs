@@ -3,6 +3,7 @@ pub mod data;
 pub mod error;
 pub mod media;
 pub mod peer;
+pub mod terminal;
 
 use lazy_static::*;
 

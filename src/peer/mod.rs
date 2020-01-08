@@ -1,11 +1,10 @@
 /// Functions in this module are responsible for concealing the raw APIs
-pub mod api;
+mod api;
 pub mod formats;
 
 use futures::channel::mpsc;
 use futures::*;
 
-#[cfg(test)]
 use crate::common::PeerInfo;
 use crate::error;
 use formats::*;
@@ -54,6 +53,14 @@ pub async fn create<'a>(
         }
     }
     Ok(())
+}
+
+pub async fn delete(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
+    api::delete_peer(base_url, peer_info).await
+}
+
+pub async fn status(base_url: &str, peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::ErrorEnum> {
+    api::status(base_url, peer_info).await
 }
 
 /// create_peer start listening events if WebRTC Gateway succeed to create peer object.
@@ -131,7 +138,7 @@ mod test_create {
             };
             assert_eq!(
                 event,
-                Some(PeerEventEnum::OPEN(PeerOpenEvent{ params: peer_info }))
+                Some(PeerEventEnum::OPEN(PeerOpenEvent { params: peer_info }))
             );
 
             let event = event_listener.next().await;

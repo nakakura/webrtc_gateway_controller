@@ -9,6 +9,10 @@ use crate::common::PeerInfo;
 use crate::error;
 use formats::*;
 
+/// FIXME
+/// all the peer events should be handled in one method.
+/// also, all the keyboard events should be handled in the same method.
+/// the method will work in and_then block of join(keyboard_events, peer_events).forld(status, |status, event|{})
 pub async fn peer_create_and_listen_events<'a>(
     base_url: &str,
     peer_id: &str,

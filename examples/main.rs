@@ -74,6 +74,7 @@ async fn peer_runner(observers: PeerEventObservers) {
         });
     tokio::spawn(on_error_notify_future.map(|_| ()));
 
+    /*
     let _ = peer::peer_create_and_listen_events(
         &*BASE_URL,
         &*PEER_ID,
@@ -85,6 +86,7 @@ async fn peer_runner(observers: PeerEventObservers) {
         Some(on_error_tx),
     )
     .await;
+    */
 }
 
 // FIXME: write test

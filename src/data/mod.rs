@@ -8,15 +8,31 @@ use crate::common::{DataConnectionId, PeerId, PeerInfo};
 use crate::data::formats::*;
 use crate::error;
 
-/// This function let a WebRTC Gateway to open a socket to receive media which will be redirected to neighbour peer.
+/// This function let a WebRTC Gateway open a socket to receive media which will be redirected to neighbour peer.
 pub async fn open_source_socket() -> Result<CreatedResponse, error::ErrorEnum> {
     let base_url = super::base_url();
     api::create_data(base_url).await
 }
 
+/// This function let a WebRTC Gateway close a socket to receive media which will be redirected to neighbour peer.
 pub async fn close_source_socket(data_id: DataId) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
     api::delete_data(base_url, data_id.as_str()).await
+}
+
+/// This function let a WebRTC Gateway establish a DataChannel to neighbour
+pub async fn connect(
+    query: CreateDataConnectionQuery,
+) -> Result<DataConnectionId, error::ErrorEnum> {
+    let base_url = super::base_url();
+    let result = api::create_data_connection(base_url, &query).await?;
+    Ok(result.params.data_connection_id)
+}
+
+/// This function let a WebRTC Gateway close a DataChannel
+pub async fn disconnect(data_connection_id: DataConnectionId) -> Result<(), error::ErrorEnum> {
+    let base_url = super::base_url();
+    api::delete_data_connection(base_url, data_connection_id.as_str()).await
 }
 
 pub async fn connect_flow<'a>(

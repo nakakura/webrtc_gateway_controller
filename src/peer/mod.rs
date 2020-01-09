@@ -99,9 +99,13 @@ mod test_listen_event {
                     if counter == 1 {
                         Ok(PeerEventEnum::TIMEOUT)
                     } else if counter == 2 {
-                        Ok(PeerEventEnum::OPEN(PeerOpenEvent { params: peer_info_cp.clone() }))
+                        Ok(PeerEventEnum::OPEN(PeerOpenEvent {
+                            params: peer_info_cp.clone(),
+                        }))
                     } else if counter == 3 {
-                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info_cp.clone() }))
+                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent {
+                            params: peer_info_cp.clone(),
+                        }))
                     } else {
                         unreachable!();
                     }
@@ -174,7 +178,9 @@ mod test_listen_event {
                             peer_id: PeerId("hoge".to_string()),
                             token: Token("token".to_string()),
                         };
-                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info.clone() }))
+                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent {
+                            params: peer_info.clone(),
+                        }))
                     } else {
                         unreachable!();
                     }

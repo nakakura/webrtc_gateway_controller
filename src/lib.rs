@@ -25,5 +25,11 @@ lazy_static! {
 #[cfg(test)]
 lazy_static! {
     static ref API_KEY: String = "test-key".to_string();
+    pub static ref BASE_URL: String =
+        ::std::env::var("BASE_URL").unwrap_or("http://localhost:8000".to_string());
     static ref DOMAIN: String = "localhost".to_string();
+}
+
+pub fn base_url() -> &'static str {
+    &*BASE_URL
 }

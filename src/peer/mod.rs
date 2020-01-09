@@ -9,29 +9,33 @@ use crate::common::PeerInfo;
 use crate::error;
 use formats::*;
 
-pub async fn create<'a>(
-    base_url: &str,
-    peer_id: &str,
-    turn: bool,
+/// Send Creating a Peer Object request to WebRTC Gateway
+/// Notice: This api call does not guarantee that WebRTC Gateway creates a Peer Object successfully.
+/// You need to wait OPEN event
+/// This function returns PeerInfo just for starting receiving events
+pub async fn create<'a>(peer_id: &str, turn: bool) -> Result<PeerInfo, error::ErrorEnum> {
+    let base_url = crate::base_url();
+    let result = api::create_peer(base_url, peer_id, turn).await?;
+    Ok(result.params)
+}
+
+/// Listen events of a Peer Object
+/// This function need to repeat long-polling to WebRTC Gateway's peer event API.
+/// When the API returns TIMEOUT events, this function ignore them and keep listening events.
+/// It keep listening events till receiving CLOSE event or HTTP Error Codes.
+pub async fn listen_events<'a>(
+    peer_info: &PeerInfo,
     mut event_sender: mpsc::Sender<PeerEventEnum>,
-    #[cfg(test)] mut inject_api_create_peer: Box<
-        dyn FnMut(&str, &str, bool) -> Result<CreatedResponse, error::ErrorEnum> + 'a,
-    >,
     #[cfg(test)] mut inject_api_events: Box<
         dyn FnMut(&str, &PeerInfo) -> Result<PeerEventEnum, error::ErrorEnum> + 'a,
     >,
 ) -> Result<(), error::ErrorEnum> {
-    #[cfg(test)]
-    let result = inject_api_create_peer(base_url, peer_id, turn)?;
-    #[cfg(not(test))]
-    let result = api::create_peer(base_url, peer_id, turn).await?;
-    let peer_info = result.params;
-
+    let base_url = crate::base_url();
     loop {
         #[cfg(test)]
-        let result = inject_api_events(base_url, &peer_info)?;
+        let result = inject_api_events(base_url, peer_info)?;
         #[cfg(not(test))]
-        let result = api::event(base_url, &peer_info).await?;
+        let result = api::event(base_url, peer_info).await?;
 
         match result {
             PeerEventEnum::TIMEOUT => {}
@@ -59,14 +63,15 @@ pub async fn delete(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::E
     api::delete_peer(base_url, peer_info).await
 }
 
-pub async fn status(base_url: &str, peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::ErrorEnum> {
+pub async fn status(
+    base_url: &str,
+    peer_info: &PeerInfo,
+) -> Result<formats::PeerStatusMessage, error::ErrorEnum> {
     api::status(base_url, peer_info).await
 }
 
-/// create_peer start listening events if WebRTC Gateway succeed to create peer object.
-/// This test check whether create_peer is success, and recv events properly
 #[cfg(test)]
-mod test_create {
+mod test_listen_event {
     use futures::channel::mpsc::*;
     use futures::*;
 
@@ -76,18 +81,9 @@ mod test_create {
 
     #[tokio::test]
     async fn recv_open_event_after_long_time() {
-        // it mocks that peer object is successfully created.
-        let inject_api_create_peer = move |_base_url: &str,
-                                           peer_id: &str,
-                                           _turn: bool|
-              -> Result<CreatedResponse, error::ErrorEnum> {
-            Ok(CreatedResponse {
-                command_type: "PEERS_CREATE".to_string(),
-                params: PeerInfo {
-                    peer_id: PeerId(peer_id.to_string()),
-                    token: Token("token".to_string()),
-                },
-            })
+        let peer_info = PeerInfo {
+            peer_id: PeerId("hoge".to_string()),
+            token: Token("token".to_string()),
         };
         // WebRTC Gateway may return TIMEOUT before another events.
         // It returns TIMEOUT in 1st call, and OPEN event in 2nd call
@@ -95,6 +91,7 @@ mod test_create {
         let inject_api_event = {
             || {
                 let mut counter = 0u16;
+                let peer_info_cp = peer_info.clone();
                 move |_base_url: &str,
                       _peer_info: &PeerInfo|
                       -> Result<PeerEventEnum, error::ErrorEnum> {
@@ -102,17 +99,9 @@ mod test_create {
                     if counter == 1 {
                         Ok(PeerEventEnum::TIMEOUT)
                     } else if counter == 2 {
-                        let peer_info = PeerInfo {
-                            peer_id: PeerId("hoge".to_string()),
-                            token: Token("token".to_string()),
-                        };
-                        Ok(PeerEventEnum::OPEN(PeerOpenEvent { params: peer_info }))
+                        Ok(PeerEventEnum::OPEN(PeerOpenEvent { params: peer_info_cp.clone() }))
                     } else if counter == 3 {
-                        let peer_info = PeerInfo {
-                            peer_id: PeerId("hoge".to_string()),
-                            token: Token("token".to_string()),
-                        };
-                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info }))
+                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info_cp.clone() }))
                     } else {
                         unreachable!();
                     }
@@ -121,14 +110,7 @@ mod test_create {
         }();
 
         let (tx, mut event_listener) = mpsc::channel::<PeerEventEnum>(0);
-        let fut = super::create(
-            "base_url",
-            "peer_id",
-            true,
-            tx,
-            Box::new(inject_api_create_peer),
-            Box::new(inject_api_event),
-        );
+        let fut = super::listen_events(&peer_info, tx, Box::new(inject_api_event));
 
         let events_future = async {
             let event = event_listener.next().await;
@@ -161,18 +143,9 @@ mod test_create {
 
     #[tokio::test]
     async fn recv_error_event_after_connection_event() {
-        // it mocks that peer object is successfully created.
-        let inject_api_create_peer = move |_base_url: &str,
-                                           peer_id: &str,
-                                           _turn: bool|
-              -> Result<CreatedResponse, error::ErrorEnum> {
-            Ok(CreatedResponse {
-                command_type: "PEERS_CREATE".to_string(),
-                params: PeerInfo {
-                    peer_id: PeerId(peer_id.to_string()),
-                    token: Token("token".to_string()),
-                },
-            })
+        let peer_info = PeerInfo {
+            peer_id: PeerId("hoge".to_string()),
+            token: Token("token".to_string()),
         };
         // WebRTC Gateway may return TIMEOUT before another events.
         // It returns TIMEOUT in 1st call, and ERROR event in 2nd call
@@ -201,7 +174,7 @@ mod test_create {
                             peer_id: PeerId("hoge".to_string()),
                             token: Token("token".to_string()),
                         };
-                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info }))
+                        Ok(PeerEventEnum::CLOSE(PeerCloseEvent { params: peer_info.clone() }))
                     } else {
                         unreachable!();
                     }
@@ -210,14 +183,7 @@ mod test_create {
         }();
 
         let (tx, mut event_listener) = mpsc::channel::<PeerEventEnum>(0);
-        let fut = super::create(
-            "base_url",
-            "peer_id",
-            true,
-            tx,
-            Box::new(inject_api_create_peer),
-            Box::new(inject_api_event),
-        );
+        let fut = super::listen_events(&peer_info, tx, Box::new(inject_api_event));
 
         let events_future = async {
             let event = event_listener.next().await;
@@ -251,24 +217,15 @@ mod test_create {
 
     #[tokio::test]
     async fn recv_404_after_connection_event() {
-        // it mocks that peer object is successfully created.
-        let inject_api_create_peer = move |_base_url: &str,
-                                           peer_id: &str,
-                                           _turn: bool|
-              -> Result<CreatedResponse, error::ErrorEnum> {
-            Ok(CreatedResponse {
-                command_type: "PEERS_CREATE".to_string(),
-                params: PeerInfo {
-                    peer_id: PeerId(peer_id.to_string()),
-                    token: Token("token".to_string()),
-                },
-            })
+        let peer_info = PeerInfo {
+            peer_id: PeerId("hoge".to_string()),
+            token: Token("token".to_string()),
         };
         // WebRTC Gateway may return TIMEOUT before another events.
         // It returns TIMEOUT in 1st call, and 2nd call fail
         // 3rd call never fires
         let inject_api_event = {
-            || {
+            move || {
                 let mut counter = 0u16;
                 move |_base_url: &str,
                       _peer_info: &PeerInfo|
@@ -286,53 +243,7 @@ mod test_create {
         }();
 
         let (tx, mut event_listener) = mpsc::channel::<PeerEventEnum>(0);
-        let fut = super::create(
-            "base_url",
-            "peer_id",
-            true,
-            tx,
-            Box::new(inject_api_create_peer),
-            Box::new(inject_api_event),
-        );
-
-        let events_future = async {
-            let event = event_listener.next().await;
-            assert!(event.is_none());
-        };
-
-        let (_, result) = join!(events_future, fut);
-        assert!(result.is_err());
-    }
-
-    #[tokio::test]
-    async fn create_error() {
-        // it mocks that webrtc gateway failed to create peer object
-        let inject_api_create_peer = move |_base_url: &str,
-                                           peer_id: &str,
-                                           _turn: bool|
-              -> Result<CreatedResponse, error::ErrorEnum> {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
-        };
-        // If create_peer failed, event is never listened
-        let inject_api_event = {
-            || {
-                move |_base_url: &str,
-                      _peer_info: &PeerInfo|
-                      -> Result<PeerEventEnum, error::ErrorEnum> {
-                    unreachable!();
-                }
-            }
-        }();
-
-        let (tx, mut event_listener) = mpsc::channel::<PeerEventEnum>(0);
-        let fut = super::create(
-            "base_url",
-            "peer_id",
-            true,
-            tx,
-            Box::new(inject_api_create_peer),
-            Box::new(inject_api_event),
-        );
+        let fut = super::listen_events(&peer_info, tx, Box::new(inject_api_event));
 
         let events_future = async {
             let event = event_listener.next().await;

@@ -26,7 +26,4 @@ helper = { path="./helper" }
 http = "0.2"
 hyper = { version = "0.13.1" }
 
-[[example]]
-name = "main"
-path = "examples/main.rs"
 

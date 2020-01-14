@@ -27,7 +27,7 @@ pub async fn create_peer(
     let peer_options = PeerOptions {
         key: key.to_string(),
         domain: (*crate::DOMAIN).clone(),
-        peer_id: PeerId(peer_id.to_string()),
+        peer_id: PeerId::new(peer_id),
         turn: turn,
     };
     let api_url = format!("{}/peers", base_url);
@@ -127,31 +127,33 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_201() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |mut req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let mut full: Vec<u8> = Vec::new();
-                while let Some(item) = req.body_mut().next().await {
-                    full.extend(&*item.unwrap());
-                }
-                let peer_options: PeerOptions =
-                    serde_json::from_slice(&full).expect("PeerOptions parse error");
-                let json = json!({
-                    "command_type": "PEERS_CREATE",
-                    "params": {
-                        "peer_id": peer_options.peer_id,
-                        "token": Token("test-token".to_string()),
+        let server = server::http(move |mut req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let mut full: Vec<u8> = Vec::new();
+                    while let Some(item) = req.body_mut().next().await {
+                        full.extend(&*item.unwrap());
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+                    let peer_options: PeerOptions =
+                        serde_json::from_slice(&full).expect("PeerOptions parse error");
+                    let json = json!({
+                        "command_type": "PEERS_CREATE",
+                        "params": {
+                            "peer_id": peer_options.peer_id,
+                            "token": Token::new("test-token"),
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::CREATED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -168,18 +170,20 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_201_but_from_another_webserver() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!("invalid-message");
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!("invalid-message");
+                    http::Response::builder()
+                        .status(hyper::StatusCode::CREATED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -197,28 +201,30 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({
-                    "command_type": "PEERS_CREATE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "key",
-                                "message": "key field is not specified"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({
+                        "command_type": "PEERS_CREATE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "key",
+                                    "message": "key field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -236,18 +242,20 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -264,18 +272,20 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -292,18 +302,20 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -320,18 +332,20 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -347,7 +361,7 @@ mod test_create_peer {
     /// If WebRTC Gateway itself is not found, create_peer function returns error
     #[tokio::test]
     async fn no_server() {
-        let peer_id = PeerId("hoge".to_string());
+        let peer_id = PeerId::new("hoge");
 
         let task = super::create_peer("http://localhost:0", peer_id.as_str(), false);
         let result = task.await;
@@ -372,27 +386,29 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_open() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "OPEN",
-                    "params": {
-                        "peer_id": PeerId("hoge".to_string()),
-                        "token": Token("test-token".to_string()),
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "event": "OPEN",
+                        "params": {
+                            "peer_id": PeerId::new("hoge"),
+                            "token": Token::new("test-token"),
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -416,30 +432,32 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_connection() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "CONNECTION",
-                    "data_params": {
-                        "data_connection_id": "dc-test"
-                    },
-                    "params": {
-                        "peer_id": PeerId("hoge".to_string()),
-                        "token": Token("test-token".to_string()),
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "event": "CONNECTION",
+                        "data_params": {
+                            "data_connection_id": "dc-test"
+                        },
+                        "params": {
+                            "peer_id": PeerId::new("hoge"),
+                            "token": Token::new("test-token"),
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -464,30 +482,32 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_call() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "CALL",
-                    "call_params": {
-                        "media_connection_id": "mc-test"
-                    },
-                    "params": {
-                        "peer_id": PeerId("hoge".to_string()),
-                        "token": Token("test-token".to_string()),
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "event": "CALL",
+                        "call_params": {
+                            "media_connection_id": "mc-test"
+                        },
+                        "params": {
+                            "peer_id": PeerId::new("hoge"),
+                            "token": Token::new("test-token"),
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -512,27 +532,29 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_close() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "CLOSE",
-                    "params": {
-                        "peer_id": PeerId("hoge".to_string()),
-                        "token": Token("test-token".to_string()),
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "event": "CLOSE",
+                        "params": {
+                            "peer_id": PeerId::new("hoge"),
+                            "token": Token::new("test-token"),
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -556,28 +578,30 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_recv_error() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "ERROR",
-                    "params": {
-                        "peer_id": PeerId("hoge".to_string()),
-                        "token": Token("test-token".to_string()),
-                    },
-                    "error_message": "error"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "event": "ERROR",
+                        "params": {
+                            "peer_id": PeerId::new("hoge"),
+                            "token": Token::new("test-token"),
+                        },
+                        "error_message": "error"
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -602,23 +626,25 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_200_but_recv_invalid_json() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "OPEN",
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "event": "OPEN",
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -637,31 +663,33 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "command_type": "PEERS_EVENTS",
-                    "params": {
-                        "errors": [
-                              {
-                                "field": "peer_id",
-                                "message": "peer_id field is not specified"
-                              }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "command_type": "PEERS_EVENTS",
+                        "params": {
+                            "errors": [
+                                  {
+                                    "field": "peer_id",
+                                    "message": "peer_id field is not specified"
+                                  }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -683,22 +711,24 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -720,22 +750,24 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -757,22 +789,24 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -794,22 +828,24 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -831,22 +867,24 @@ mod test_event {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/events?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -875,21 +913,23 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_204() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge?token=test-token"
-                && req.method() == reqwest::Method::DELETE
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NO_CONTENT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NO_CONTENT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -908,31 +948,33 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge?token=test-token"
-                && req.method() == reqwest::Method::DELETE
-            {
-                let json = json!({
-                    "command_type": "PEERS_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "key",
-                                "message": "key field is not specified"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
+                    let json = json!({
+                        "command_type": "PEERS_DELETE",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "key",
+                                    "message": "key field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -954,21 +996,23 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge?token=test-token"
-                && req.method() == reqwest::Method::DELETE
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -990,21 +1034,23 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge?token=test-token"
-                && req.method() == reqwest::Method::DELETE
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1026,21 +1072,23 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge?token=test-token"
-                && req.method() == reqwest::Method::DELETE
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1062,21 +1110,23 @@ mod test_delete_peer {
     /// http://35.200.46.204/#/1.peers/peer_destroy
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge?token=test-token"
-                && req.method() == reqwest::Method::DELETE
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge?token=test-token"
+                    && req.method() == reqwest::Method::DELETE
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1108,24 +1158,26 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_200() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "peer_id": PeerId("hoge".to_string()),
-                    "disconnected": false
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "peer_id": PeerId::new("hoge"),
+                        "disconnected": false
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::OK)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1144,31 +1196,33 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "command_type": "PEERS_STATUS",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "peer_id",
-                                "message": "peer_id field is not specified"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({
+                        "command_type": "PEERS_STATUS",
+                        "params": {
+                            "errors": [
+                                {
+                                    "field": "peer_id",
+                                    "message": "peer_id field is not specified"
+                                }
+                            ]
+                        }
+                    });
+                    http::Response::builder()
+                        .status(hyper::StatusCode::BAD_REQUEST)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1189,21 +1243,23 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::FORBIDDEN)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1224,21 +1280,23 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_FOUND)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1259,21 +1317,23 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1294,21 +1354,23 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::NOT_ACCEPTABLE)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 
@@ -1329,21 +1391,23 @@ mod test_status {
     /// http://35.200.46.204/#/1.peers/peer_status
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId("hoge".to_string());
-        let token = Token("test-token".to_string());
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("test-token");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/status?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
+        let server = server::http(move |req| {
+            async move {
+                if req.uri() == "/peers/hoge/status?token=test-token"
+                    && req.method() == reqwest::Method::GET
+                {
+                    let json = json!({});
+                    http::Response::builder()
+                        .status(hyper::StatusCode::REQUEST_TIMEOUT)
+                        .header("Content-type", "application/json")
+                        .body(hyper::Body::from(json.to_string()))
+                        .unwrap()
+                } else {
+                    unreachable!();
+                }
             }
         });
 

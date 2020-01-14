@@ -5,7 +5,7 @@ pub mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::PeerInfo;
+use crate::common::{PeerId, PeerInfo};
 use crate::error;
 use formats::*;
 
@@ -13,9 +13,9 @@ use formats::*;
 /// Notice: This api call does not guarantee that WebRTC Gateway creates a Peer Object successfully.
 /// You need to wait OPEN event
 /// This function returns PeerInfo just for starting receiving events
-pub async fn create<'a>(peer_id: &str, turn: bool) -> Result<PeerInfo, error::ErrorEnum> {
+pub async fn create<'a>(peer_id: PeerId, turn: bool) -> Result<PeerInfo, error::ErrorEnum> {
     let base_url = crate::base_url();
-    let result = api::create_peer(base_url, peer_id, turn).await?;
+    let result = api::create_peer(base_url, peer_id.as_str(), turn).await?;
     Ok(result.params)
 }
 
@@ -82,8 +82,8 @@ mod test_listen_event {
     #[tokio::test]
     async fn recv_open_event_after_long_time() {
         let peer_info = PeerInfo {
-            peer_id: PeerId("hoge".to_string()),
-            token: Token("token".to_string()),
+            peer_id: PeerId::new("hoge"),
+            token: Token::new("token"),
         };
         // WebRTC Gateway may return TIMEOUT before another events.
         // It returns TIMEOUT in 1st call, and OPEN event in 2nd call
@@ -119,8 +119,8 @@ mod test_listen_event {
         let events_future = async {
             let event = event_listener.next().await;
             let peer_info = PeerInfo {
-                peer_id: PeerId("hoge".to_string()),
-                token: Token("token".to_string()),
+                peer_id: PeerId::new("hoge"),
+                token: Token::new("token"),
             };
             assert_eq!(
                 event,
@@ -129,8 +129,8 @@ mod test_listen_event {
 
             let event = event_listener.next().await;
             let peer_info = PeerInfo {
-                peer_id: PeerId("hoge".to_string()),
-                token: Token("token".to_string()),
+                peer_id: PeerId::new("hoge"),
+                token: Token::new("token"),
             };
             assert_eq!(
                 event,
@@ -148,8 +148,8 @@ mod test_listen_event {
     #[tokio::test]
     async fn recv_error_event_after_connection_event() {
         let peer_info = PeerInfo {
-            peer_id: PeerId("hoge".to_string()),
-            token: Token("token".to_string()),
+            peer_id: PeerId::new("hoge"),
+            token: Token::new("token"),
         };
         // WebRTC Gateway may return TIMEOUT before another events.
         // It returns TIMEOUT in 1st call, and ERROR event in 2nd call
@@ -165,8 +165,8 @@ mod test_listen_event {
                         Ok(PeerEventEnum::TIMEOUT)
                     } else if counter == 2 {
                         let peer_info = PeerInfo {
-                            peer_id: PeerId("peer_id".to_string()),
-                            token: Token("token".to_string()),
+                            peer_id: PeerId::new("peer_id"),
+                            token: Token::new("token"),
                         };
                         Ok(PeerEventEnum::ERROR(PeerErrorEvent {
                             params: peer_info,
@@ -175,8 +175,8 @@ mod test_listen_event {
                     } else if counter == 3 {
                         // user would call dalete /peer after receiving error message.
                         let peer_info = PeerInfo {
-                            peer_id: PeerId("hoge".to_string()),
-                            token: Token("token".to_string()),
+                            peer_id: PeerId::new("hoge"),
+                            token: Token::new("token"),
                         };
                         Ok(PeerEventEnum::CLOSE(PeerCloseEvent {
                             params: peer_info.clone(),
@@ -194,8 +194,8 @@ mod test_listen_event {
         let events_future = async {
             let event = event_listener.next().await;
             let peer_info = PeerInfo {
-                peer_id: PeerId("peer_id".to_string()),
-                token: Token("token".to_string()),
+                peer_id: PeerId::new("peer_id"),
+                token: Token::new("token"),
             };
             let error_event = Some(PeerEventEnum::ERROR(PeerErrorEvent {
                 params: peer_info,
@@ -205,8 +205,8 @@ mod test_listen_event {
 
             let event = event_listener.next().await;
             let peer_info = PeerInfo {
-                peer_id: PeerId("hoge".to_string()),
-                token: Token("token".to_string()),
+                peer_id: PeerId::new("hoge"),
+                token: Token::new("token"),
             };
             assert_eq!(
                 event,
@@ -224,8 +224,8 @@ mod test_listen_event {
     #[tokio::test]
     async fn recv_404_after_connection_event() {
         let peer_info = PeerInfo {
-            peer_id: PeerId("hoge".to_string()),
-            token: Token("token".to_string()),
+            peer_id: PeerId::new("hoge"),
+            token: Token::new("token"),
         };
         // WebRTC Gateway may return TIMEOUT before another events.
         // It returns TIMEOUT in 1st call, and 2nd call fail

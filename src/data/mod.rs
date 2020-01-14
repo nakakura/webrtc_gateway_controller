@@ -136,7 +136,7 @@ mod test_listen_events {
 
         let (tx, mut rx) = mpsc::channel::<super::DataConnectionEventEnum>(0);
         let fut = listen_events(
-            DataConnectionId("hoge".to_string()),
+            DataConnectionId::new("hoge"),
             tx,
             Box::new(inject_api_event),
         );
@@ -151,7 +151,7 @@ mod test_listen_events {
 
             let event = rx.next().await;
             let error = super::DataConnectionEventEnum::ERROR((
-                DataConnectionId("hoge".to_string()),
+                DataConnectionId::new("hoge"),
                 "error happen".to_string(),
             ));
             assert_eq!(event, Some(error));
@@ -193,7 +193,7 @@ mod test_listen_events {
 
         let (tx, mut rx) = mpsc::channel::<super::DataConnectionEventEnum>(0);
         let fut = listen_events(
-            DataConnectionId("hoge".to_string()),
+            DataConnectionId::new("hoge"),
             tx,
             Box::new(inject_api_event),
         );

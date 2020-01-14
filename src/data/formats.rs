@@ -47,6 +47,10 @@ impl DataId {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+
+    pub fn new(data_id: impl Into<String>) -> Self {
+        DataId(data_id.into())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

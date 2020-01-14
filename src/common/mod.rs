@@ -11,6 +11,10 @@ impl PeerId {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+
+    pub fn new(peer_id: impl Into<String>) -> Self {
+        PeerId(peer_id.into())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
@@ -19,6 +23,10 @@ pub struct Token(pub String);
 impl Token {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+
+    pub fn new(token: impl Into<String>) -> Self {
+        Token(token.into())
     }
 }
 
@@ -34,6 +42,10 @@ pub struct DataConnectionId(pub String);
 impl DataConnectionId {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+
+    pub fn new(data_connection_id: impl Into<String>) -> Self {
+        DataConnectionId(data_connection_id.into())
     }
 }
 

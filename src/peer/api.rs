@@ -20,14 +20,15 @@ use crate::error;
 /// http://35.200.46.204/#/1.peers/peer
 pub async fn create_peer(
     base_url: &str,
-    peer_id: &str,
+    api_key: impl Into<String>,
+    domain: impl Into<String>,
+    peer_id: PeerId,
     turn: bool,
 ) -> Result<CreatedResponse, error::ErrorEnum> {
-    let key = &*crate::API_KEY;
     let peer_options = PeerOptions {
-        key: key.to_string(),
-        domain: (*crate::DOMAIN).clone(),
-        peer_id: PeerId::new(peer_id),
+        key: api_key.into(),
+        domain: domain.into(),
+        peer_id: peer_id,
         turn: turn,
     };
     let api_url = format!("{}/peers", base_url);
@@ -158,7 +159,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.expect("CreatedResponse parse error");
         assert_eq!(result.command_type, "PEERS_CREATE".to_string());
         assert_eq!(result.params.peer_id, peer_id);
@@ -188,7 +189,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::ErrorEnum::ReqwestError { error: _e }) = result {
@@ -229,7 +230,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -260,7 +261,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().unwrap();
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -290,7 +291,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -320,7 +321,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -350,7 +351,7 @@ mod test_create_peer {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, peer_id.as_str(), false);
+        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -363,7 +364,7 @@ mod test_create_peer {
     async fn no_server() {
         let peer_id = PeerId::new("hoge");
 
-        let task = super::create_peer("http://localhost:0", peer_id.as_str(), false);
+        let task = super::create_peer("http://localhost:0", "api_key", "domain", peer_id, false);
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::ErrorEnum::ReqwestError { error: _e }) = result {

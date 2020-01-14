@@ -13,9 +13,14 @@ use formats::*;
 /// Notice: This api call does not guarantee that WebRTC Gateway creates a Peer Object successfully.
 /// You need to wait OPEN event
 /// This function returns PeerInfo just for starting receiving events
-pub async fn create<'a>(peer_id: PeerId, turn: bool) -> Result<PeerInfo, error::ErrorEnum> {
+pub async fn create<'a>(
+    api_key: impl Into<String>,
+    domain: impl Into<String>,
+    peer_id: PeerId,
+    turn: bool,
+) -> Result<PeerInfo, error::ErrorEnum> {
     let base_url = crate::base_url();
-    let result = api::create_peer(base_url, peer_id.as_str(), turn).await?;
+    let result = api::create_peer(base_url, api_key, domain, peer_id, turn).await?;
     Ok(result.params)
 }
 

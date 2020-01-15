@@ -1,10 +1,7 @@
-use std::time::Duration;
-
 use futures::channel::mpsc;
 use futures::*;
-use tokio::time::timeout;
 
-use crate::error;
+use webrtc_gateway_controller::error;
 
 // FIXME
 // Keyboard events should be subscribed from many locations
@@ -13,7 +10,11 @@ pub async fn read(mut observer: mpsc::Sender<String>) -> Result<(), error::Error
     let stdin = async_std::io::stdin();
     let mut line = String::new();
     while let _n = stdin.read_line(&mut line).await? {
-        observer.send(line.trim().to_string()).await;
+        let message = line.trim().to_string();
+        observer.send(message.clone()).await;
+        if message == "exit" {
+            break;
+        }
         line.clear()
     }
     Ok(())

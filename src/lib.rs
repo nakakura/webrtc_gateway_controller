@@ -1,9 +1,8 @@
-mod common;
+pub mod common;
 pub mod data;
 pub mod error;
 pub mod media;
 pub mod peer;
-pub mod terminal;
 
 use std::sync::Once;
 
@@ -21,7 +20,7 @@ pub fn initialize(base_url: impl Into<String>) {
     }
 }
 
-pub (crate) fn base_url() -> &'static str {
+pub(crate) fn base_url() -> &'static str {
     unsafe {
         INIT_CHECK.call_once(|| {
             if BASE_URL.len() == 0 {

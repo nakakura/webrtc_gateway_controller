@@ -52,6 +52,7 @@ pub async fn listen_events<'a>(
                 {
                     return Err(error::ErrorEnum::create_myerror("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
+                event_sender.close_channel();
                 break;
             }
             event => {
@@ -64,14 +65,13 @@ pub async fn listen_events<'a>(
     Ok(())
 }
 
-pub async fn delete(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
+pub async fn delete(peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
+    let base_url = crate::base_url();
     api::delete_peer(base_url, peer_info).await
 }
 
-pub async fn status(
-    base_url: &str,
-    peer_info: &PeerInfo,
-) -> Result<formats::PeerStatusMessage, error::ErrorEnum> {
+pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::ErrorEnum> {
+    let base_url = crate::base_url();
     api::status(base_url, peer_info).await
 }
 

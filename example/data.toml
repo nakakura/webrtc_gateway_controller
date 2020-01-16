@@ -1,0 +1,15 @@
+[gateway]
+ip = "127.0.0.1"
+port = 8000
+
+[peer]
+peer_id = "peer_id"
+domain = "localhost"
+
+[[redirects]]
+ip = "127.0.0.1"
+port = 10000
+
+[[redirects]]
+ip = "127.0.0.1"
+port = 10001

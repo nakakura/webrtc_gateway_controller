@@ -23,10 +23,15 @@ helper = { path="./helper" }
 
 [dev-dependencies]
 async-std = "1.4.0"
+either = "1.5"
 http = "0.2"
 hyper = { version = "0.13.1" }
+toml = "0.5"
 
 [[example]]
 name = "peer"
 path = "example/peer.rs"
 
+[[example]]
+name = "data"
+path = "example/data.rs"

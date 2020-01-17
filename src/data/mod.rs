@@ -42,6 +42,14 @@ pub async fn disconnect(data_connection_id: DataConnectionId) -> Result<(), erro
     api::delete_data_connection(base_url, data_connection_id.as_str()).await
 }
 
+/// This function to get status of DataChannel
+pub async fn status(
+    data_connection_id: DataConnectionId,
+) -> Result<DataConnectionStatus, error::ErrorEnum> {
+    let base_url = super::base_url();
+    api::status(base_url, data_connection_id.as_str()).await
+}
+
 /// This function keep listening events from a WebRTC Gateway.
 /// It keep accessing event API endpoint until receiving a CLOSE event or HTTP Error Code.
 pub async fn listen_events<'a>(

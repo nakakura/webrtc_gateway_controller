@@ -157,6 +157,12 @@ async fn on_peer_key_events(
                 let status = peer::status(peer_info).await?;
                 info!("Peer {:?} is now {:?}", peer_info, status);
             }
+            let mut notifiers = params.control_message_notifier();
+            for notifier in notifiers {
+                notifier
+                    .send(ControlMessage(String::from("status")))
+                    .await;
+            }
             Ok(params)
         }
         "disconnect" => {
@@ -266,8 +272,16 @@ async fn on_data_key_events(
     state: DataConnectionState,
     ControlMessage(message): ControlMessage,
 ) -> Result<DataConnectionState, error::ErrorEnum> {
+    //FIXME not enough
     match message.as_str() {
-        //FIXME not enough
+        "status" => {
+            let data_connection_id = state.data_connection_id();
+            if let Some(data_connection_id) = data_connection_id {
+                let status = data::status(data_connection_id.clone()).await?;
+                info!("DataConnection {:?} is now {:?}", data_connection_id, status);
+            }
+            Ok(state)
+        }
         "disconnect" => {
             let data_connection_id = state.data_connection_id();
             if let Some(data_connection_id) = data_connection_id {

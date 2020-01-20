@@ -42,6 +42,14 @@ pub async fn disconnect(data_connection_id: DataConnectionId) -> Result<(), erro
     api::delete_data_connection(base_url, data_connection_id.as_str()).await
 }
 
+pub async fn redirect(
+    data_connection_id: &DataConnectionId,
+    redirect_data_params: &RedirectDataParams,
+) -> Result<RedirectDataResponse, error::ErrorEnum> {
+    let base_url = super::base_url();
+    api::redirect_data_connection(base_url, data_connection_id.as_str(), redirect_data_params).await
+}
+
 /// This function to get status of DataChannel
 pub async fn status(
     data_connection_id: DataConnectionId,

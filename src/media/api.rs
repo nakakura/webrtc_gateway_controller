@@ -6,7 +6,7 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common;
+use crate::common::{self, *};
 use crate::error;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
@@ -165,8 +165,9 @@ mod test_create_media {
     use futures::*;
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
-    use crate::media::formats::CreateMediaOptions;
+    use crate::media::formats::*;
     use helper::server;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
@@ -205,7 +206,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.media_id, "vi-test".to_string());
+        assert_eq!(result.media_id, MediaId::new("vi-test"));
         assert_eq!(result.port, 10001);
         assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
     }
@@ -246,7 +247,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, false);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.media_id, "au-test".to_string());
+        assert_eq!(result.media_id, MediaId::new("au-test"));
         assert_eq!(result.port, 10001);
         assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
     }
@@ -396,6 +397,7 @@ mod test_create_media {
 mod test_delete_media {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
     use helper::server;
 
@@ -614,6 +616,7 @@ mod test_delete_media {
 mod test_create_rtcp {
     use serde_json::json;
 
+    use crate::common::{self, *};
     use crate::error;
     use helper::server;
 
@@ -797,6 +800,8 @@ mod test_create_rtcp {
 mod test_delete_rtcp {
     use serde_json::json;
 
+    use crate::common::*;
+    use crate::common::{self, *};
     use crate::error;
     use helper::server;
 
@@ -1022,6 +1027,7 @@ mod test_delete_rtcp {
 mod test_create_call {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
     use crate::media::formats::CallParameters;
     use helper::server;
@@ -1050,9 +1056,9 @@ mod test_create_call {
         });
 
         let call_params = CallParameters {
-            peer_id: "peer_id".to_string(),
-            token: "pt-test".to_string(),
-            target_id: "target_id".to_string(),
+            peer_id: PeerId::new("peer_id"),
+            token: Token::new("pt-test"),
+            target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
         };
@@ -1092,9 +1098,9 @@ mod test_create_call {
         });
 
         let call_params = CallParameters {
-            peer_id: "peer_id".to_string(),
-            token: "pt-test".to_string(),
-            target_id: "target_id".to_string(),
+            peer_id: PeerId::new("peer_id"),
+            token: Token::new("pt-test"),
+            target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
         };
@@ -1127,9 +1133,9 @@ mod test_create_call {
         });
 
         let call_params = CallParameters {
-            peer_id: "peer_id".to_string(),
-            token: "pt-test".to_string(),
-            target_id: "target_id".to_string(),
+            peer_id: PeerId::new("peer_id"),
+            token: Token::new("pt-test"),
+            target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
         };
@@ -1162,9 +1168,9 @@ mod test_create_call {
         });
 
         let call_params = CallParameters {
-            peer_id: "peer_id".to_string(),
-            token: "pt-test".to_string(),
-            target_id: "target_id".to_string(),
+            peer_id: PeerId::new("peer_id"),
+            token: Token::new("pt-test"),
+            target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
         };
@@ -1197,9 +1203,9 @@ mod test_create_call {
         });
 
         let call_params = CallParameters {
-            peer_id: "peer_id".to_string(),
-            token: "pt-test".to_string(),
-            target_id: "target_id".to_string(),
+            peer_id: PeerId::new("peer_id"),
+            token: Token::new("pt-test"),
+            target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
         };
@@ -1232,9 +1238,9 @@ mod test_create_call {
         });
 
         let call_params = CallParameters {
-            peer_id: "peer_id".to_string(),
-            token: "pt-test".to_string(),
-            target_id: "target_id".to_string(),
+            peer_id: PeerId::new("peer_id"),
+            token: Token::new("pt-test"),
+            target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
         };
@@ -1253,6 +1259,7 @@ mod test_create_call {
 mod test_delete_call {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
     use helper::server;
 
@@ -1478,8 +1485,9 @@ mod test_delete_call {
 mod test_answer {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
-    use crate::media::formats::AnswerParameters;
+    use crate::media::formats::*;
     use helper::server;
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1519,9 +1527,9 @@ mod test_answer {
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.expect("event parse error");
         assert_eq!(result.params.video_port, Some(10011));
-        assert_eq!(result.params.video_id, Some("vi-test".to_string()));
+        assert_eq!(result.params.video_id, Some(MediaId::new("vi-test")));
         assert_eq!(result.params.audio_port, Some(10021));
-        assert_eq!(result.params.audio_id, Some("au-test".to_string()));
+        assert_eq!(result.params.audio_id, Some(MediaId::new("au-test")));
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1743,6 +1751,7 @@ mod test_answer {
 mod test_pli {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
     use crate::media::formats::*;
     use helper::server;
@@ -2011,8 +2020,9 @@ mod test_pli {
 mod test_events {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
-    use crate::media::formats::MediaConnectionEventEnum;
+    use crate::media::formats::*;
     use helper::server;
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2320,6 +2330,7 @@ mod test_events {
 mod test_status {
     use serde_json::json;
 
+    use crate::common::*;
     use crate::error;
     use helper::server;
 
@@ -2363,9 +2374,9 @@ mod test_status {
         let result = task.await.expect("event parse error");
         assert_eq!(result.open, true);
         assert_eq!(result.ssrc.len(), 2);
-        assert_eq!(result.ssrc[0].media_id, "au-test");
+        assert_eq!(result.ssrc[0].media_id.as_str(), "au-test");
         assert_eq!(result.ssrc[0].ssrc, 2);
-        assert_eq!(result.ssrc[1].media_id, "vi-test");
+        assert_eq!(result.ssrc[1].media_id.as_str(), "vi-test");
         assert_eq!(result.ssrc[1].ssrc, 3);
     }
 

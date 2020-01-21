@@ -35,3 +35,7 @@ path = "example/peer.rs"
 [[example]]
 name = "data"
 path = "example/data.rs"
+
+[[example]]
+name = "media"
+path = "example/media.rs"

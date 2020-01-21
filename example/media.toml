@@ -1,0 +1,21 @@
+[gateway]
+ip = "127.0.0.1"
+port = 8000
+
+[peer]
+peer_id = "peer_id"
+domain = "localhost"
+
+[[media]]
+video = true
+audio = true
+video_redirect = { ip = "127.0.0.1", port = 10000 }
+video_params = { bandwidth = 1500, codec = "H264", payload_type = 100, sampling_rate = 90000 }
+audio_redirect = { ip = "127.0.0.1", port = 10010 }
+audio_params = { bandwidth = 1500, codec = "OPUS", payload_type = 111, sampling_rate = 48000 }
+
+[[media]]
+video = true
+audio = false
+video_redirect = { ip = "127.0.0.1", port = 10001 }
+

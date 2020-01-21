@@ -20,17 +20,17 @@ pub async fn open_media_socket(is_video: bool) -> Result<CreateMediaResponse, er
     api::create_media(base_url, is_video).await
 }
 
-pub async fn delete_media(base_url: &str, media_id: &MediaId) -> Result<(), error::ErrorEnum> {
+pub async fn delete_media(media_id: &MediaId) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
     api::delete_media(base_url, media_id.as_str()).await
 }
 
-pub async fn open_rtcp_socket(base_url: &str) -> Result<CreateRtcpResponse, error::ErrorEnum> {
+pub async fn open_rtcp_socket() -> Result<CreateRtcpResponse, error::ErrorEnum> {
     let base_url = super::base_url();
     api::create_rtcp(base_url).await
 }
 
-pub async fn delete_rtcp(base_url: &str, rtcp_id: &RtcpId) -> Result<(), error::ErrorEnum> {
+pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
     api::delete_rtcp(base_url, rtcp_id.as_str()).await
 }

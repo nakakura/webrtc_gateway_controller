@@ -74,11 +74,11 @@ pub struct CallParameters {
 #[allow(non_snake_case)]
 pub struct Constraints {
     pub video: bool,
-    videoReceiveEnabled: bool,
-    audio: bool,
-    audioReceiveEnabled: bool,
-    video_params: MediaParams,
-    audio_params: MediaParams,
+    pub videoReceiveEnabled: Option<bool>,
+    pub audio: bool,
+    pub audioReceiveEnabled: Option<bool>,
+    pub video_params: Option<MediaParams>,
+    pub audio_params: Option<MediaParams>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
@@ -86,9 +86,9 @@ pub struct MediaParams {
     pub band_width: usize,
     pub codec: String,
     pub media_id: MediaId,
-    pub rtcp_id: RtcpId,
-    pub payload_type: u16,
-    pub sampling_rate: usize,
+    pub rtcp_id: Option<RtcpId>,
+    pub payload_type: Option<u16>,
+    pub sampling_rate: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
@@ -119,7 +119,7 @@ pub struct MediaConnectionIdWrapper {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct AnswerParameters {
-    pub constraints: Option<Constraints>,
+    pub constraints: Constraints,
     pub redirect_params: Option<RedirectParameters>,
 }
 

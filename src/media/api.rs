@@ -1520,8 +1520,26 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
+
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
         let task = super::answer(&addr, media_connection_id, &params);
@@ -1564,10 +1582,28 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
+
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
@@ -1598,8 +1634,26 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
+
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
         let task = super::answer(&addr, media_connection_id, &params);
@@ -1632,8 +1686,26 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
+
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
         let task = super::answer(&addr, media_connection_id, &params);
@@ -1666,8 +1738,25 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
         let task = super::answer(&addr, media_connection_id, &params);
@@ -1700,8 +1789,26 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
+
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
         let task = super::answer(&addr, media_connection_id, &params);
@@ -1734,8 +1841,26 @@ mod test_answer {
         });
 
         let addr = format!("http://{}", server.addr());
+        let video_params = MediaParams {
+            band_width: 1500,
+            codec: String::from("H264"),
+            media_id: MediaId::new("test"),
+            rtcp_id: None,
+            payload_type: None,
+            sampling_rate: None,
+        };
+
+        let constraints = Constraints {
+            video: true,
+            videoReceiveEnabled: Some(true),
+            audio: false,
+            audioReceiveEnabled: Some(false),
+            video_params: Some(video_params),
+            audio_params: None,
+        };
+
         let params = AnswerParameters {
-            constraints: None,
+            constraints: constraints,
             redirect_params: None,
         };
         let task = super::answer(&addr, media_connection_id, &params);

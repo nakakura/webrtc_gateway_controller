@@ -122,7 +122,7 @@ pub async fn pli(
 /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
 /// If server returns 400, 403, 404, 405, 406, 408, it returns error
 /// http://35.200.46.204/#/3.media/media_connection_event
-pub async fn events(
+pub async fn event(
     base_url: &str,
     media_connection_id: &str,
 ) -> Result<MediaConnectionEventEnum, error::ErrorEnum> {
@@ -2047,7 +2047,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, MediaConnectionEventEnum::READY);
     }
@@ -2074,7 +2074,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, MediaConnectionEventEnum::STREAM);
     }
@@ -2101,7 +2101,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, MediaConnectionEventEnum::CLOSE);
     }
@@ -2128,7 +2128,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(
             result,
@@ -2170,7 +2170,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2200,7 +2200,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2230,7 +2230,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2260,7 +2260,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2290,7 +2290,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::ErrorEnum::MyError { error: _e } = result {
         } else {
@@ -2320,7 +2320,7 @@ mod test_events {
         });
 
         let addr = format!("http://{}", server.addr());
-        let task = super::events(&addr, media_connection_id);
+        let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, MediaConnectionEventEnum::TIMEOUT);
     }

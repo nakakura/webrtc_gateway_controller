@@ -22,7 +22,7 @@ pub async fn open_source_socket() -> Result<CreatedResponse, error::ErrorEnum> {
 }
 
 /// This function let a WebRTC Gateway close a socket to receive media which will be redirected to neighbour peer.
-pub async fn close_source_socket(data_id: DataId) -> Result<(), error::ErrorEnum> {
+pub async fn close_source_socket(data_id: &DataId) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
     api::delete_data(base_url, data_id.as_str()).await
 }
@@ -52,7 +52,7 @@ pub async fn redirect(
 
 /// This function to get status of DataChannel
 pub async fn status(
-    data_connection_id: DataConnectionId,
+    data_connection_id: &DataConnectionId,
 ) -> Result<DataConnectionStatus, error::ErrorEnum> {
     let base_url = super::base_url();
     api::status(base_url, data_connection_id.as_str()).await

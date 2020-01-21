@@ -459,7 +459,7 @@ async fn on_data_key_events(
         "status" => {
             // prinnts all DataConnection status
             for data_connection_id in state.data_connection_id_iter() {
-                let status = data::status(data_connection_id.clone()).await?;
+                let status = data::status(&data_connection_id).await?;
                 info!(
                     "##################\nDataConnection {:?} is now {:?}",
                     data_connection_id, status

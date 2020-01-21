@@ -645,7 +645,7 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.rtcp_id, "rc-test");
+        assert_eq!(result.rtcp_id.as_str(), "rc-test");
         assert_eq!(result.port, 10003);
         assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
     }

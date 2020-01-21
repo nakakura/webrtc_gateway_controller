@@ -15,6 +15,19 @@ impl MediaId {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct RtcpId(pub String);
+
+impl RtcpId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn new(rtcp_id: impl Into<String>) -> Self {
+        RtcpId(rtcp_id.into())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct MediaConnectionId(pub String);
 
 impl MediaConnectionId {
@@ -42,7 +55,7 @@ pub struct CreateMediaResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreateRtcpResponse {
-    pub rtcp_id: String,
+    pub rtcp_id: RtcpId,
     pub port: u16,
     pub ip_v4: Option<String>,
     pub ip_v6: Option<String>,
@@ -73,7 +86,7 @@ pub struct MediaParams {
     pub band_width: usize,
     pub codec: String,
     pub media_id: MediaId,
-    pub rtcp_id: String,
+    pub rtcp_id: RtcpId,
     pub payload_type: u16,
     pub sampling_rate: usize,
 }

@@ -99,6 +99,9 @@ fn read_config(path: &'static str) -> Config {
 
 #[tokio::main]
 async fn main() {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
     env_logger::init();
 
     //load and set parameters
@@ -278,7 +281,10 @@ impl DataConnectionState {
         self.0.contains_key(data_connection_id)
     }
 
-    pub fn get(&self, data_connection_id: &DataConnectionId) -> Option<&(Option<CreatedResponse>, Option<RedirectParams>)> {
+    pub fn get(
+        &self,
+        data_connection_id: &DataConnectionId,
+    ) -> Option<&(Option<CreatedResponse>, Option<RedirectParams>)> {
         self.0.get(data_connection_id)
     }
 }

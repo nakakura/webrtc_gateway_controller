@@ -100,10 +100,10 @@ pub struct RedirectParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct RedirectParameters {
-    video: Option<RedirectParams>,
-    video_rtcp: Option<RedirectParams>,
-    audio: Option<RedirectParams>,
-    audio_rtcp: Option<RedirectParams>,
+    pub video: Option<RedirectParams>,
+    pub video_rtcp: Option<RedirectParams>,
+    pub audio: Option<RedirectParams>,
+    pub audio_rtcp: Option<RedirectParams>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

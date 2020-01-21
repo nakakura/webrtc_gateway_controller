@@ -1,5 +1,5 @@
 mod api;
-mod formats;
+pub mod formats;
 
 use futures::channel::mpsc;
 use futures::*;

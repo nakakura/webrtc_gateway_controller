@@ -1,5 +1,7 @@
 mod terminal;
 
+use std::collections::hash_set::Iter;
+use std::collections::HashSet;
 use std::fs;
 use std::io::{BufReader, Read};
 
@@ -182,6 +184,7 @@ async fn on_peer_key_events(
     mut params: PeerFoldState,
     message: String,
 ) -> Result<PeerFoldState, error::ErrorEnum> {
+    println!("recv {} in peer key events", message);
     match message.as_str() {
         "exit" => {
             // FIXME: not yet
@@ -206,17 +209,16 @@ async fn on_peer_key_events(
             }
             Ok(params)
         }
-        "disconnect" => {
+        message if message.starts_with("disconnect ") => {
             // Disconnect P2P link
+            // This function expects "connect DATA_CONNECTION_ID".
             let mut notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier
-                    .send(ControlMessage(String::from("disconnect")))
-                    .await;
+                notifier.send(ControlMessage(String::from(message))).await;
             }
             Ok(params)
         }
-        message if message.starts_with("connect") => {
+        message if message.starts_with("connect ") => {
             // Establish P2P datachannel to an neighbour.
             // This function expects "connect TARGET_ID".
             let mut args = message.split_whitespace();
@@ -235,12 +237,25 @@ async fn on_peer_key_events(
 
 // Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
 // This struct shows the previous state.
-struct DataConnectionState((Option<DataConnectionId>));
+#[derive(Default)]
+struct DataConnectionState((HashSet<DataConnectionId>));
 
 // This struct has only setter and getter.
 impl DataConnectionState {
-    pub fn data_connection_id(&self) -> Option<DataConnectionId> {
-        self.0.clone()
+    pub fn data_connection_id_iter(&self) -> Iter<DataConnectionId> {
+        self.0.iter()
+    }
+
+    pub fn insert_data_connection_id(&mut self, data_connection_id: DataConnectionId) -> bool {
+        self.0.insert(data_connection_id)
+    }
+
+    pub fn remove_data_connection_id(&mut self, data_connection_id: &DataConnectionId) -> bool {
+        self.0.remove(&data_connection_id)
+    }
+
+    pub fn contains(&self, data_connection_id: &DataConnectionId) -> bool {
+        self.0.contains(data_connection_id)
     }
 }
 
@@ -295,10 +310,11 @@ async fn connect(
         dc_event_observer.map(|event| Either::Left(event)),
         control_message_observer.map(|event| Either::Right(event)),
     );
-    let fold_fut = stream.fold(
-        DataConnectionState((Some(data_connection_id))),
-        |sum, acc| async move { on_data_events(sum, acc).await.expect("error") },
-    );
+    let mut state = DataConnectionState::default();
+    state.insert_data_connection_id(data_connection_id);
+    let fold_fut = stream.fold(state, |sum, acc| async move {
+        on_data_events(sum, acc).await.expect("error")
+    });
     tokio::spawn(fold_fut);
 
     Ok(params)
@@ -349,13 +365,12 @@ async fn redirect(
         dc_event_observer.map(|event| Either::Left(event)),
         control_message_observer.map(|event| Either::Right(event)),
     );
-    let fold_fut = stream.fold(
-        DataConnectionState((Some(data_connection_id))),
-        |sum, acc| async move {
-            let result = on_data_events(sum, acc).await.expect("error");
-            result
-        },
-    );
+    let mut state = DataConnectionState::default();
+    state.insert_data_connection_id(data_connection_id);
+    let fold_fut = stream.fold(state, |sum, acc| async move {
+        let result = on_data_events(sum, acc).await.expect("error");
+        result
+    }).map(|_| futures::future::ok::<(), error::ErrorEnum>(()));
     tokio::spawn(fold_fut);
 
     Ok(params)
@@ -396,15 +411,14 @@ async fn on_data_api_events(
 
 // This function process Keyboard Inputs
 async fn on_data_key_events(
-    state: DataConnectionState,
+    mut state: DataConnectionState,
     ControlMessage(message): ControlMessage,
 ) -> Result<DataConnectionState, error::ErrorEnum> {
     //FIXME not enough
     match message.as_str() {
         "status" => {
-            // prinnts DataConnection status
-            let data_connection_id = state.data_connection_id();
-            if let Some(data_connection_id) = data_connection_id {
+            // prinnts all DataConnection status
+            for data_connection_id in state.data_connection_id_iter() {
                 let status = data::status(data_connection_id.clone()).await?;
                 info!(
                     "DataConnection {:?} is now {:?}",
@@ -413,13 +427,22 @@ async fn on_data_key_events(
             }
             Ok(state)
         }
-        "disconnect" => {
+        message if message.starts_with("disconnect ") => {
             // close P2P link
-            let data_connection_id = state.data_connection_id();
-            if let Some(data_connection_id) = data_connection_id {
-                let result = data::disconnect(data_connection_id).await?;
+            let mut args = message.split_whitespace();
+            let _ = args.next();
+            if let Some(data_connection_id) = args.next() {
+                let data_connection_id = DataConnectionId::new(data_connection_id);
+                if state.contains(&data_connection_id) {
+                    let result = data::disconnect(&data_connection_id).await?;
+                    state.remove_data_connection_id(&data_connection_id);
+                } else {
+                    warn!("{:?} is not a valid Data Connection Id", data_connection_id);
+                }
+            } else {
+                warn!("input \"disconnect DATA_CONNECTION_ID\"");
             }
-            Ok(DataConnectionState((None)))
+            Ok(state)
         }
         _ => Ok(state),
     }

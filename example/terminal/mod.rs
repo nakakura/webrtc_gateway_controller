@@ -11,6 +11,7 @@ pub async fn read(mut observer: mpsc::Sender<String>) -> Result<(), error::Error
     let mut line = String::new();
     while let _n = stdin.read_line(&mut line).await? {
         let message = line.trim().to_string();
+        println!("{:?}", message);
         observer.send(message.clone()).await;
         if message == "exit" {
             break;

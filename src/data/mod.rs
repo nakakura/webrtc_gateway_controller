@@ -37,7 +37,7 @@ pub async fn connect(
 }
 
 /// This function let a WebRTC Gateway close a DataChannel
-pub async fn disconnect(data_connection_id: DataConnectionId) -> Result<(), error::ErrorEnum> {
+pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
     api::delete_data_connection(base_url, data_connection_id.as_str()).await
 }

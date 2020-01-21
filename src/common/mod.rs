@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct PeerId(pub String);
 
 impl PeerId {
@@ -17,7 +17,7 @@ impl PeerId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct Token(pub String);
 
 impl Token {
@@ -30,13 +30,13 @@ impl Token {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct PeerInfo {
     pub peer_id: PeerId,
     pub token: Token,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct DataConnectionId(pub String);
 
 impl DataConnectionId {

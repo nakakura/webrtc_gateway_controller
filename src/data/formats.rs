@@ -16,7 +16,7 @@ pub struct CreateDataConnectionQuery {
     pub token: Token,
     pub options: Option<DataConnectionParameters>,
     pub target_id: PeerId,
-    pub params: DataIdWrapper,
+    pub params: Option<DataIdWrapper>,
     pub redirect_params: Option<RedirectParams>,
 }
 
@@ -78,8 +78,8 @@ pub struct RedirectParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct RedirectDataParams {
-    pub feed_params: DataIdWrapper,
-    pub redirect_params: RedirectParams,
+    pub feed_params: Option<DataIdWrapper>,
+    pub redirect_params: Option<RedirectParams>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

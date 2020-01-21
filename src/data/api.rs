@@ -571,7 +571,7 @@ mod test_create_data_connection {
             token: token,
             options: None,
             target_id: target_id,
-            params: data_id,
+            params: Some(data_id),
             redirect_params: None,
         };
 
@@ -620,7 +620,7 @@ mod test_create_data_connection {
             token: token,
             options: None,
             target_id: target_id,
-            params: data_id,
+            params: Some(data_id),
             redirect_params: None,
         };
         let task = super::create_data_connection(&addr, &query);
@@ -660,7 +660,7 @@ mod test_create_data_connection {
             token: token,
             options: None,
             target_id: target_id,
-            params: data_id,
+            params: Some(data_id),
             redirect_params: None,
         };
         let task = super::create_data_connection(&addr, &query);
@@ -700,7 +700,7 @@ mod test_create_data_connection {
             token: token,
             options: None,
             target_id: target_id,
-            params: data_id,
+            params: Some(data_id),
             redirect_params: None,
         };
         let task = super::create_data_connection(&addr, &query);
@@ -740,7 +740,7 @@ mod test_create_data_connection {
             token: token,
             options: None,
             target_id: target_id,
-            params: data_id,
+            params: Some(data_id),
             redirect_params: None,
         };
         let task = super::create_data_connection(&addr, &query);
@@ -780,7 +780,7 @@ mod test_create_data_connection {
             token: token,
             options: None,
             target_id: target_id,
-            params: data_id,
+            params: Some(data_id),
             redirect_params: None,
         };
         let task = super::create_data_connection(&addr, &query);
@@ -1041,14 +1041,25 @@ mod test_redirect_data_connection {
                 let redirect_data_params: RedirectDataParams =
                     serde_json::from_slice(&full).expect("PeerOptions parse error");
                 assert_eq!(
-                    redirect_data_params.feed_params.data_id,
+                    redirect_data_params
+                        .feed_params
+                        .clone()
+                        .expect("no data params")
+                        .data_id,
                     DataId::new("da-test")
                 );
                 assert_eq!(
-                    redirect_data_params.redirect_params.ip_v4,
+                    redirect_data_params
+                        .redirect_params
+                        .clone()
+                        .expect("no redirect params")
+                        .ip_v4,
                     Some(ip_v4.to_string())
                 );
-                assert_eq!(redirect_data_params.redirect_params.port, port);
+                assert_eq!(
+                    redirect_data_params.redirect_params.expect("no port").port,
+                    port
+                );
 
                 let json = json!({
                     "command_type": "DATA_CONNECTION_PUT",
@@ -1071,8 +1082,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1128,8 +1139,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1175,8 +1186,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1222,8 +1233,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1269,8 +1280,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1316,8 +1327,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1364,8 +1375,8 @@ mod test_redirect_data_connection {
             port: port,
         };
         let redirect_data_params = RedirectDataParams {
-            feed_params: data_id_obj,
-            redirect_params: redirect_params,
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(redirect_params),
         };
 
         let addr = format!("http://{}", server.addr());

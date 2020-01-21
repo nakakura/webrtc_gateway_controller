@@ -274,7 +274,7 @@ async fn connect(
         token: peer_info.token,
         options: None,
         target_id: target_id,
-        params: DataIdWrapper { data_id: data_id },
+        params: Some(DataIdWrapper { data_id: data_id }),
         redirect_params: redirect_info,
     };
     let data_connection_id = data::connect(query).await?;
@@ -318,6 +318,8 @@ async fn redirect(
     let result = data::open_source_socket().await?;
     let data_id = result.data_id;
     // Data received from DataConnection will be redirected according to this information.
+    // If there is no redirect infor in config.toml, redirect info will be None.
+    // In this case, the data channel is virtually sendonly.
     let redirect_info = params.socket_config().map(|socket_config| {
         RedirectParams {
             ip_v4: Some(socket_config.ip),
@@ -325,16 +327,11 @@ async fn redirect(
             port: socket_config.port,
         }
     });
-
-    //FIXME: It should be optional value
-    if let Some(redirect_info) = redirect_info {
-        let redirect_params = data::formats::RedirectDataParams {
-            feed_params: DataIdWrapper { data_id: data_id },
-            redirect_params: redirect_info,
-        };
-
-        let result = data::redirect(&data_connection_id, &redirect_params).await;
-    }
+    let redirect_params = data::formats::RedirectDataParams {
+        feed_params: Some(DataIdWrapper { data_id: data_id }),
+        redirect_params: redirect_info,
+    };
+    let result = data::redirect(&data_connection_id, &redirect_params).await;
 
     // Notify keyboard inputs to the sub-task with this channel
     let (mut control_message_notifier, control_message_observer) =

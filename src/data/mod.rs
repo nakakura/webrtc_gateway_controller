@@ -63,16 +63,10 @@ pub async fn status(
 pub async fn listen_events<'a>(
     data_connection_id: DataConnectionId,
     mut event_notifier: mpsc::Sender<DataConnectionEventEnum>,
-    #[cfg(test)] mut inject_api_events: Box<
-        dyn FnMut(&str, &str) -> Result<formats::DataConnectionEventEnum, error::ErrorEnum> + 'a,
-    >,
 ) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
 
     loop {
-        #[cfg(test)]
-        let result = inject_api_events(base_url, data_connection_id.as_str())?;
-        #[cfg(not(test))]
         let result = api::event(base_url, data_connection_id.as_str()).await?;
         match result {
             formats::DataConnectionEventEnum::OPEN => {
@@ -113,111 +107,4 @@ pub async fn listen_events<'a>(
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod test_listen_events {
-    use futures::channel::mpsc::*;
-    use futures::*;
-
-    use super::*;
-    use crate::common::{PeerId, PeerInfo, Token};
-    use crate::error;
-
-    #[tokio::test]
-    async fn listen_event() {
-        let inject_api_event = {
-            || {
-                let mut counter = 0u16;
-                move |_base_url: &str,
-                      _data_connection_id: &str|
-                      -> Result<formats::DataConnectionEventEnum, error::ErrorEnum> {
-                    counter += 1;
-                    if counter == 1 {
-                        Ok(formats::DataConnectionEventEnum::TIMEOUT)
-                    } else if counter == 2 {
-                        Ok(formats::DataConnectionEventEnum::OPEN)
-                    } else if counter == 3 {
-                        Ok(formats::DataConnectionEventEnum::ERROR {
-                            error_message: "error happen".to_string(),
-                        })
-                    } else if counter == 4 {
-                        Ok(formats::DataConnectionEventEnum::CLOSE)
-                    } else {
-                        unreachable!();
-                    }
-                }
-            }
-        }();
-
-        let (tx, mut rx) = mpsc::channel::<super::DataConnectionEventEnum>(0);
-        let fut = listen_events(
-            DataConnectionId::new("hoge"),
-            tx,
-            Box::new(inject_api_event),
-        );
-        let events_future = async {
-            let event = rx.next().await;
-            assert_eq!(
-                event,
-                Some(super::DataConnectionEventEnum::OPEN(DataConnectionId(
-                    "hoge".to_string()
-                )))
-            );
-
-            let event = rx.next().await;
-            let error = super::DataConnectionEventEnum::ERROR((
-                DataConnectionId::new("hoge"),
-                "error happen".to_string(),
-            ));
-            assert_eq!(event, Some(error));
-
-            let event = rx.next().await;
-            assert_eq!(
-                event,
-                Some(super::DataConnectionEventEnum::CLOSE(DataConnectionId(
-                    "hoge".to_string()
-                )))
-            );
-
-            let event = rx.next().await;
-            assert_eq!(event, None);
-        };
-        let (_, result) = join!(events_future, fut);
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn listen_event_http_error() {
-        let inject_api_event = {
-            || {
-                let mut counter = 0u16;
-                move |_base_url: &str,
-                      _data_connection_id: &str|
-                      -> Result<formats::DataConnectionEventEnum, error::ErrorEnum> {
-                    counter += 1;
-                    if counter == 1 {
-                        Ok(formats::DataConnectionEventEnum::TIMEOUT)
-                    } else if counter == 2 {
-                        Err(error::ErrorEnum::create_myerror("http error"))
-                    } else {
-                        unreachable!();
-                    }
-                }
-            }
-        }();
-
-        let (tx, mut rx) = mpsc::channel::<super::DataConnectionEventEnum>(0);
-        let fut = listen_events(
-            DataConnectionId::new("hoge"),
-            tx,
-            Box::new(inject_api_event),
-        );
-        let events_future = async {
-            let event = rx.next().await;
-            assert_eq!(event, None);
-        };
-        let (_, result) = join!(events_future, fut);
-        assert!(result.is_err());
-    }
 }

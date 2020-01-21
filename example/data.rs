@@ -121,15 +121,17 @@ async fn main() {
         peer_event_observer.map(|e| Either::Left(e)),
         key_observer.map(|e| Either::Right(e)),
     );
-    let fold_fut = peer_event_stream.fold(
-        // before receiving Peer::OPEN event, peer object might not be created.
-        // So I set None for PeerInfo.
-        PeerFoldState((None, config.redirects, vec![])),
-        |sum, acc| async move {
-            let sum = on_peer_events(sum, acc).await.expect("error");
-            sum
-        },
-    );
+    let fold_fut = peer_event_stream
+        .fold(
+            // before receiving Peer::OPEN event, peer object might not be created.
+            // So I set None for PeerInfo.
+            PeerFoldState((None, config.redirects, vec![])),
+            |sum, acc| async move {
+                let sum = on_peer_events(sum, acc).await.expect("error");
+                sum
+            },
+        )
+        .map(|_| futures::future::ok::<(), error::ErrorEnum>(()));
 
     //execute all the futures
     let (fold_fut_result, event_fut_result, key_fut_reult) =
@@ -191,6 +193,12 @@ async fn on_peer_key_events(
             // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
             // Content Socket will be automaticall released, so it is not necessary to release them manually.
             // https://github.com/skyway/skyway-webrtc-gateway/blob/master/docs/release_process.md
+            let mut notifiers = params.control_message_notifier();
+            for notifier in notifiers {
+                notifier
+                    .send(ControlMessage(String::from("disconnect_all")))
+                    .await;
+            }
             if let Some(peer_info) = params.peer_info() {
                 let _unit = peer::delete(&peer_info).await?;
             }
@@ -237,7 +245,7 @@ async fn on_peer_key_events(
 
 // Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
 // This struct shows the previous state.
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct DataConnectionState((HashSet<DataConnectionId>));
 
 // This struct has only setter and getter.
@@ -370,7 +378,7 @@ async fn redirect(
     let fold_fut = stream.fold(state, |sum, acc| async move {
         let result = on_data_events(sum, acc).await.expect("error");
         result
-    }).map(|_| futures::future::ok::<(), error::ErrorEnum>(()));
+    });
     tokio::spawn(fold_fut);
 
     Ok(params)
@@ -442,6 +450,14 @@ async fn on_data_key_events(
             } else {
                 warn!("input \"disconnect DATA_CONNECTION_ID\"");
             }
+            Ok(state)
+        }
+        "disconnect_all" => {
+            for data_connection_id in state.clone().data_connection_id_iter() {
+                let result = data::disconnect(data_connection_id).await?;
+                state.remove_data_connection_id(data_connection_id);
+            }
+
             Ok(state)
         }
         _ => Ok(state),

@@ -1066,7 +1066,7 @@ mod test_create_call {
         let addr = format!("http://{}", server.addr());
         let task = super::create_call(&addr, &call_params);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.params.media_connection_id, "mc-test".to_string());
+        assert_eq!(result.params.media_connection_id.as_str(), "mc-test");
     }
 
     /// Fn create_call access to the POST /media/connections endpoint.

@@ -14,6 +14,19 @@ impl MediaId {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct MediaConnectionId(pub String);
+
+impl MediaConnectionId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn new(media_connection_id: impl Into<String>) -> Self {
+        MediaConnectionId(media_connection_id.into())
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreateMediaOptions {
     pub is_video: bool,
@@ -88,7 +101,7 @@ pub struct CallResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct MediaConnectionIdWrapper {
-    pub media_connection_id: String,
+    pub media_connection_id: MediaConnectionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

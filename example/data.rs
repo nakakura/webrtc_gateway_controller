@@ -1,7 +1,7 @@
 mod terminal;
 
 use std::collections::hash_set::Iter;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::fs;
 use std::io::{BufReader, Read};
 
@@ -15,8 +15,12 @@ use serde_derive::Deserialize;
 
 use either::Either;
 use peer::formats::PeerEventEnum;
+use std::collections::hash_map::Keys;
+use std::net::SocketAddr;
 use webrtc_gateway_controller::common::{DataConnectionId, PeerId, PeerInfo};
-use webrtc_gateway_controller::data::formats::{DataIdWrapper, RedirectParams};
+use webrtc_gateway_controller::data::formats::{
+    CreatedResponse, DataId, DataIdWrapper, RedirectDataParams, RedirectParams,
+};
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -246,24 +250,36 @@ async fn on_peer_key_events(
 // Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
 // This struct shows the previous state.
 #[derive(Clone, Default)]
-struct DataConnectionState((HashSet<DataConnectionId>));
+struct DataConnectionState(
+    (HashMap<DataConnectionId, (Option<CreatedResponse>, Option<RedirectParams>)>),
+);
 
 // This struct has only setter and getter.
 impl DataConnectionState {
-    pub fn data_connection_id_iter(&self) -> Iter<DataConnectionId> {
-        self.0.iter()
+    pub fn data_connection_id_iter(
+        &self,
+    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<RedirectParams>)> {
+        self.0.keys()
     }
 
-    pub fn insert_data_connection_id(&mut self, data_connection_id: DataConnectionId) -> bool {
-        self.0.insert(data_connection_id)
+    pub fn insert_data_connection_id(
+        &mut self,
+        data_connection_id: DataConnectionId,
+        value: (Option<CreatedResponse>, Option<RedirectParams>),
+    ) {
+        let _ = self.0.insert(data_connection_id, value);
     }
 
-    pub fn remove_data_connection_id(&mut self, data_connection_id: &DataConnectionId) -> bool {
-        self.0.remove(&data_connection_id)
+    pub fn remove_data_connection_id(&mut self, data_connection_id: &DataConnectionId) {
+        let _ = self.0.remove(&data_connection_id);
     }
 
     pub fn contains(&self, data_connection_id: &DataConnectionId) -> bool {
-        self.0.contains(data_connection_id)
+        self.0.contains_key(data_connection_id)
+    }
+
+    pub fn get(&self, data_connection_id: &DataConnectionId) -> Option<&(Option<CreatedResponse>, Option<RedirectParams>)> {
+        self.0.get(data_connection_id)
     }
 }
 
@@ -279,8 +295,7 @@ async fn connect(
         .expect("peer has not been created");
 
     // Data received from this content socket will be redirected to neighbour with DataConnection.
-    let result = data::open_source_socket().await?;
-    let data_id = result.data_id;
+    let data_socket_created_response = data::open_source_socket().await?;
 
     // Data received from DataConnection will be redirected according to this information.
     let redirect_info = params.socket_config().map(|socket_config| {
@@ -297,8 +312,10 @@ async fn connect(
         token: peer_info.token,
         options: None,
         target_id: target_id,
-        params: Some(DataIdWrapper { data_id: data_id }),
-        redirect_params: redirect_info,
+        params: Some(DataIdWrapper {
+            data_id: data_socket_created_response.data_id.clone(),
+        }),
+        redirect_params: redirect_info.clone(),
     };
     let data_connection_id = data::connect(query).await?;
 
@@ -319,7 +336,10 @@ async fn connect(
         control_message_observer.map(|event| Either::Right(event)),
     );
     let mut state = DataConnectionState::default();
-    state.insert_data_connection_id(data_connection_id);
+    state.insert_data_connection_id(
+        data_connection_id,
+        (Some(data_socket_created_response), redirect_info),
+    );
     let fold_fut = stream.fold(state, |sum, acc| async move {
         on_data_events(sum, acc).await.expect("error")
     });
@@ -339,8 +359,7 @@ async fn redirect(
         .clone()
         .expect("peer has not been created");
     // Data received from this content socket will be redirected to neighbour with DataConnection.
-    let result = data::open_source_socket().await?;
-    let data_id = result.data_id;
+    let data_socket_created_response = data::open_source_socket().await?;
     // Data received from DataConnection will be redirected according to this information.
     // If there is no redirect infor in config.toml, redirect info will be None.
     // In this case, the data channel is virtually sendonly.
@@ -352,8 +371,10 @@ async fn redirect(
         }
     });
     let redirect_params = data::formats::RedirectDataParams {
-        feed_params: Some(DataIdWrapper { data_id: data_id }),
-        redirect_params: redirect_info,
+        feed_params: Some(DataIdWrapper {
+            data_id: data_socket_created_response.data_id.clone(),
+        }),
+        redirect_params: redirect_info.clone(),
     };
     let result = data::redirect(&data_connection_id, &redirect_params).await;
 
@@ -374,7 +395,10 @@ async fn redirect(
         control_message_observer.map(|event| Either::Right(event)),
     );
     let mut state = DataConnectionState::default();
-    state.insert_data_connection_id(data_connection_id);
+    state.insert_data_connection_id(
+        data_connection_id,
+        (Some(data_socket_created_response), redirect_info),
+    );
     let fold_fut = stream.fold(state, |sum, acc| async move {
         let result = on_data_events(sum, acc).await.expect("error");
         result
@@ -404,8 +428,10 @@ async fn on_data_api_events(
     //FIXME not enough
     match event {
         data::DataConnectionEventEnum::OPEN(date_connection_id) => {
-            // FIXME: notify the open event to user
             info!("{:?} is opend", date_connection_id);
+            let value = state.get(&date_connection_id).expect("socket info not set");
+            info!("it's source port is {:?}", value.0);
+            info!("it's destination socket is {:?}", value.1);
             Ok(state)
         }
         data::DataConnectionEventEnum::CLOSE(date_connection_id) => {
@@ -429,9 +455,12 @@ async fn on_data_key_events(
             for data_connection_id in state.data_connection_id_iter() {
                 let status = data::status(data_connection_id.clone()).await?;
                 info!(
-                    "DataConnection {:?} is now {:?}",
+                    "##################\nDataConnection {:?} is now {:?}",
                     data_connection_id, status
                 );
+                let value = state.get(&data_connection_id).expect("socket info not set");
+                info!("it's source port is {:?}", value.0);
+                info!("it's destination socket is {:?}", value.1);
             }
             Ok(state)
         }

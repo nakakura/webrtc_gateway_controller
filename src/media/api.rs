@@ -6,7 +6,7 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common::{self, *};
+use crate::common;
 use crate::error;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
@@ -165,7 +165,6 @@ mod test_create_media {
     use futures::*;
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use crate::media::formats::*;
     use helper::server;
@@ -397,7 +396,6 @@ mod test_create_media {
 mod test_delete_media {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use helper::server;
 
@@ -616,7 +614,6 @@ mod test_delete_media {
 mod test_create_rtcp {
     use serde_json::json;
 
-    use crate::common::{self, *};
     use crate::error;
     use helper::server;
 
@@ -800,8 +797,6 @@ mod test_create_rtcp {
 mod test_delete_rtcp {
     use serde_json::json;
 
-    use crate::common::*;
-    use crate::common::{self, *};
     use crate::error;
     use helper::server;
 
@@ -1259,7 +1254,6 @@ mod test_create_call {
 mod test_delete_call {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use helper::server;
 
@@ -1485,7 +1479,6 @@ mod test_delete_call {
 mod test_answer {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use crate::media::formats::*;
     use helper::server;
@@ -1876,7 +1869,6 @@ mod test_answer {
 mod test_pli {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use crate::media::formats::*;
     use helper::server;
@@ -2145,7 +2137,6 @@ mod test_pli {
 mod test_events {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use crate::media::formats::*;
     use helper::server;
@@ -2455,7 +2446,6 @@ mod test_events {
 mod test_status {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use helper::server;
 

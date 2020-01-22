@@ -1,10 +1,10 @@
 pub mod api;
 pub mod formats;
 
-use futures::channel::mpsc::{self, *};
+use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::{DataConnectionId, PeerId, PeerInfo};
+use crate::common::DataConnectionId;
 use crate::data::formats::*;
 use crate::error;
 

@@ -1,9 +1,7 @@
 mod terminal;
 
 use futures::channel::mpsc;
-use futures::future::FutureExt;
 use futures::prelude::*;
-use futures::*;
 use log::info;
 
 use peer::formats::PeerEventEnum;

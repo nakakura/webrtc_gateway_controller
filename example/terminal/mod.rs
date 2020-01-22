@@ -9,10 +9,14 @@ use webrtc_gateway_controller::error;
 pub async fn read(mut observer: mpsc::Sender<String>) -> Result<(), error::ErrorEnum> {
     let stdin = async_std::io::stdin();
     let mut line = String::new();
-    while let _n = stdin.read_line(&mut line).await? {
+    loop {
+        let _n = stdin.read_line(&mut line).await?;
         let message = line.trim().to_string();
         println!("{:?}", message);
-        observer.send(message.clone()).await;
+        let _ = observer
+            .send(message.clone())
+            .await
+            .expect("terminal error");
         if message == "exit" {
             break;
         }

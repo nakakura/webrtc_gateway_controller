@@ -6,8 +6,6 @@ pub mod peer;
 
 use std::sync::Once;
 
-use lazy_static::*;
-
 static mut BASE_URL: String = String::new();
 static INIT: Once = Once::new();
 static INIT_CHECK: Once = Once::new();

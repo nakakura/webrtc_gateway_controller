@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 
@@ -92,7 +91,7 @@ impl From<ReqwestError> for ErrorEnum {
 
 impl PartialEq for ReqwestError {
     fn eq(&self, other: &ReqwestError) -> bool {
-        self.0.description() == other.0.description()
+        self.0.to_string() == other.0.to_string()
     }
 }
 

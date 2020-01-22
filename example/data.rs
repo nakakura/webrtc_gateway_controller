@@ -1,26 +1,21 @@
 mod terminal;
 
-use std::collections::hash_set::Iter;
+use std::collections::hash_map::Keys;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{BufReader, Read};
 
 use either;
+use either::Either;
 use futures::channel::mpsc;
 use futures::future::FutureExt;
 use futures::prelude::*;
-use futures::*;
 use log::{info, warn};
 use serde_derive::Deserialize;
 
-use either::Either;
 use peer::formats::PeerEventEnum;
-use std::collections::hash_map::Keys;
-use std::net::SocketAddr;
 use webrtc_gateway_controller::common::{DataConnectionId, PeerId, PeerInfo};
-use webrtc_gateway_controller::data::formats::{
-    CreatedResponse, DataId, DataIdWrapper, RedirectDataParams, RedirectParams,
-};
+use webrtc_gateway_controller::data::formats::{CreatedResponse, DataIdWrapper, RedirectParams};
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -196,13 +191,12 @@ async fn on_peer_key_events(
     println!("recv {} in peer key events", message);
     match message.as_str() {
         "exit" => {
-            // FIXME: not yet
             // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
             // Content Socket will be automaticall released, so it is not necessary to release them manually.
             // https://github.com/skyway/skyway-webrtc-gateway/blob/master/docs/release_process.md
-            let mut notifiers = params.control_message_notifier();
+            let notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier
+                let _ = notifier
                     .send(ControlMessage(String::from("disconnect_all")))
                     .await;
             }
@@ -218,18 +212,18 @@ async fn on_peer_key_events(
                 let status = peer::status(peer_info).await?;
                 info!("Peer {:?} is now {:?}", peer_info, status);
             }
-            let mut notifiers = params.control_message_notifier();
+            let notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier.send(ControlMessage(String::from("status"))).await;
+                let _ = notifier.send(ControlMessage(String::from("status"))).await;
             }
             Ok(params)
         }
         message if message.starts_with("disconnect ") => {
             // Disconnect P2P link
             // This function expects "connect DATA_CONNECTION_ID".
-            let mut notifiers = params.control_message_notifier();
+            let notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier.send(ControlMessage(String::from(message))).await;
+                let _ = notifier.send(ControlMessage(String::from(message))).await;
             }
             Ok(params)
         }
@@ -254,7 +248,7 @@ async fn on_peer_key_events(
 // This struct shows the previous state.
 #[derive(Clone, Default)]
 struct DataConnectionState(
-    (HashMap<DataConnectionId, (Option<CreatedResponse>, Option<RedirectParams>)>),
+    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<RedirectParams>)>,
 );
 
 // This struct has only setter and getter.
@@ -326,8 +320,7 @@ async fn connect(
     let data_connection_id = data::connect(query).await?;
 
     // Notify keyboard inputs to the sub-task with this channel
-    let (mut control_message_notifier, control_message_observer) =
-        mpsc::channel::<ControlMessage>(0);
+    let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
     // hold notifier
     params.set_control_message_notifier(control_message_notifier);
 
@@ -359,11 +352,6 @@ async fn redirect(
     mut params: PeerFoldState,
     data_connection_id: DataConnectionId,
 ) -> Result<PeerFoldState, error::ErrorEnum> {
-    // to show which peer's DataConnection to WebRTC Gateway
-    let peer_info = params
-        .peer_info()
-        .clone()
-        .expect("peer has not been created");
     // Data received from this content socket will be redirected to neighbour with DataConnection.
     let data_socket_created_response = data::open_source_socket().await?;
     // Data received from DataConnection will be redirected according to this information.
@@ -382,11 +370,12 @@ async fn redirect(
         }),
         redirect_params: redirect_info.clone(),
     };
-    let result = data::redirect(&data_connection_id, &redirect_params).await;
+    let _ = data::redirect(&data_connection_id, &redirect_params)
+        .await
+        .expect("redirect data failed");
 
     // Notify keyboard inputs to the sub-task with this channel
-    let (mut control_message_notifier, control_message_observer) =
-        mpsc::channel::<ControlMessage>(0);
+    let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
     // hold the notifier
     params.set_control_message_notifier(control_message_notifier);
 
@@ -477,7 +466,7 @@ async fn on_data_key_events(
             if let Some(data_connection_id) = args.next() {
                 let data_connection_id = DataConnectionId::new(data_connection_id);
                 if state.contains(&data_connection_id) {
-                    let result = data::disconnect(&data_connection_id).await?;
+                    let _ = data::disconnect(&data_connection_id).await?;
                     state.remove_data_connection_id(&data_connection_id);
                 } else {
                     warn!("{:?} is not a valid Data Connection Id", data_connection_id);
@@ -489,7 +478,7 @@ async fn on_data_key_events(
         }
         "disconnect_all" => {
             for data_connection_id in state.clone().data_connection_id_iter() {
-                let result = data::disconnect(data_connection_id).await?;
+                let _ = data::disconnect(data_connection_id).await?;
                 state.remove_data_connection_id(data_connection_id);
             }
 

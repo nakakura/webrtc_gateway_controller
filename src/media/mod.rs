@@ -54,7 +54,6 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 }
 
 pub async fn send_pli(
-    base_url: &str,
     media_connection_id: &MediaConnectionId,
     params: &RedirectParams,
 ) -> Result<(), error::ErrorEnum> {

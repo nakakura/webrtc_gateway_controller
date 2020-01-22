@@ -1,6 +1,6 @@
 mod terminal;
 
-use std::collections::hash_set::Iter;
+use std::collections::hash_map::Keys;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{BufReader, Read};
@@ -10,13 +10,11 @@ use either::Either;
 use futures::channel::mpsc;
 use futures::future::FutureExt;
 use futures::prelude::*;
-use futures::*;
 use log::{info, warn};
+use serde_derive::Deserialize;
+
 use media::formats::*;
 use peer::formats::PeerEventEnum;
-use serde_derive::Deserialize;
-use std::collections::hash_map::Keys;
-use std::net::SocketAddr;
 use webrtc_gateway_controller::common::{PeerId, PeerInfo};
 use webrtc_gateway_controller::*;
 
@@ -238,13 +236,12 @@ async fn on_peer_key_events(
 ) -> Result<PeerFoldState, error::ErrorEnum> {
     match message.as_str() {
         "exit" => {
-            // FIXME: not yet
             // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
             // Content Socket will be automaticall released, so it is not necessary to release them manually.
             // https://github.com/skyway/skyway-webrtc-gateway/blob/master/docs/release_process.md
-            let mut notifiers = params.control_message_notifier();
+            let notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier
+                let _ = notifier
                     .send(ControlMessage(String::from("disconnect_all")))
                     .await;
             }
@@ -260,18 +257,18 @@ async fn on_peer_key_events(
                 let status = peer::status(peer_info).await?;
                 info!("Peer {:?} is now {:?}", peer_info, status);
             }
-            let mut notifiers = params.control_message_notifier();
+            let notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier.send(ControlMessage(String::from("status"))).await;
+                let _ = notifier.send(ControlMessage(String::from("status"))).await;
             }
             Ok(params)
         }
         message if message.starts_with("disconnect ") => {
             // Disconnect P2P link
             // This function expects "connect DATA_CONNECTION_ID".
-            let mut notifiers = params.control_message_notifier();
+            let notifiers = params.control_message_notifier();
             for notifier in notifiers {
-                notifier.send(ControlMessage(String::from(message))).await;
+                let _ = notifier.send(ControlMessage(String::from(message))).await;
             }
             Ok(params)
         }
@@ -405,7 +402,7 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
 // This struct shows the previous state.
 #[derive(Clone, Default)]
 struct MediaConnectionState(
-    (HashMap<MediaConnectionId, (Option<MediaPair>, Option<MediaPair>, RedirectParameters)>),
+    HashMap<MediaConnectionId, (Option<MediaPair>, Option<MediaPair>, RedirectParameters)>,
 );
 
 // This struct has only setter and getter.
@@ -470,8 +467,7 @@ async fn call(
     let media_connection_id = media::call(&call_params).await?.params.media_connection_id;
 
     // Notify keyboard inputs to the sub-task with this channel
-    let (mut control_message_notifier, control_message_observer) =
-        mpsc::channel::<ControlMessage>(0);
+    let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
     let (mc_event_notifier, mc_event_observer) =
@@ -513,7 +509,7 @@ async fn on_media_events(
 
 // This function process MediaConnection events
 async fn on_media_api_events(
-    mut state: MediaConnectionState,
+    state: MediaConnectionState,
     event: media::MediaConnectionEventEnum,
 ) -> Result<MediaConnectionState, error::ErrorEnum> {
     //FIXME not enough
@@ -567,7 +563,7 @@ async fn on_media_key_events(
             if let Some(media_connection_id) = args.next() {
                 let media_connection_id = MediaConnectionId::new(media_connection_id);
                 if state.contains(&media_connection_id) {
-                    let result = media::disconnect(&media_connection_id).await?;
+                    let _ = media::disconnect(&media_connection_id).await?;
                     state.remove_media_connection_id(&media_connection_id);
                 } else {
                     warn!(
@@ -582,7 +578,7 @@ async fn on_media_key_events(
         }
         "disconnect_all" => {
             for media_connection_id in state.clone().media_connection_id_iter() {
-                let result = media::disconnect(media_connection_id).await?;
+                let _ = media::disconnect(media_connection_id).await?;
                 state.remove_media_connection_id(media_connection_id);
             }
 

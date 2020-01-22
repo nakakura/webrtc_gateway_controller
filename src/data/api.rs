@@ -11,7 +11,7 @@ use crate::error;
 /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
 /// If server returns 400, 405, 406, 408, create_data returns error
 /// http://35.200.46.204/#/2.data/data
-pub(crate) async fn create_data(base_url: &str) -> Result<CreatedResponse, error::ErrorEnum> {
+pub(crate) async fn create_data(base_url: &str) -> Result<CreatedResponse, error::Error> {
     let api_url = format!("{}/data", base_url);
     let json = json!({});
     let api_call = || Client::new().post(&api_url).json(&json).send();
@@ -23,7 +23,7 @@ pub(crate) async fn create_data(base_url: &str) -> Result<CreatedResponse, error
 /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_delete
-pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::Error> {
     let api_url = format!("{}/data/{}", base_url, data_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -37,7 +37,7 @@ pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), err
 pub(crate) async fn create_data_connection(
     base_url: &str,
     params: &CreateDataConnectionQuery,
-) -> Result<CreateDataConnectionResponse, error::ErrorEnum> {
+) -> Result<CreateDataConnectionResponse, error::Error> {
     let api_url = format!("{}/data/connections", base_url);
     let api_call = || Client::new().post(&api_url).json(params).send();
     let parser =
@@ -52,7 +52,7 @@ pub(crate) async fn create_data_connection(
 pub(crate) async fn delete_data_connection(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<(), error::ErrorEnum> {
+) -> Result<(), error::Error> {
     let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -67,7 +67,7 @@ pub(crate) async fn redirect_data_connection(
     base_url: &str,
     data_connection_id: &str,
     redirect_data_params: &RedirectDataParams,
-) -> Result<RedirectDataResponse, error::ErrorEnum> {
+) -> Result<RedirectDataResponse, error::Error> {
     let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
     let api_call = || {
         Client::new()
@@ -86,7 +86,7 @@ pub(crate) async fn redirect_data_connection(
 pub(crate) async fn status(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<DataConnectionStatus, error::ErrorEnum> {
+) -> Result<DataConnectionStatus, error::Error> {
     let api_url = format!(
         "{}/data/connections/{}/status",
         base_url, data_connection_id
@@ -104,7 +104,7 @@ pub(crate) async fn status(
 pub(crate) async fn event(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<DataConnectionEventEnum, error::ErrorEnum> {
+) -> Result<DataConnectionEventEnum, error::Error> {
     let api_url = format!(
         "{}/data/connections/{}/events",
         base_url, data_connection_id
@@ -114,7 +114,7 @@ pub(crate) async fn event(
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
-            error::ErrorEnum::MyError { error: message } if message == "recv RequestTimeout" => {
+            error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
                 Ok(DataConnectionEventEnum::TIMEOUT)
             }
             e => Err(e),
@@ -189,7 +189,7 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -215,7 +215,7 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -241,7 +241,7 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -267,7 +267,7 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -293,7 +293,7 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -364,7 +364,7 @@ mod test_delete_data {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -401,7 +401,7 @@ mod test_delete_data {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -438,7 +438,7 @@ mod test_delete_data {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -475,7 +475,7 @@ mod test_delete_data {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -512,7 +512,7 @@ mod test_delete_data {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data(&addr, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -622,7 +622,7 @@ mod test_create_data_connection {
         };
         let task = super::create_data_connection(&addr, &query);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -662,7 +662,7 @@ mod test_create_data_connection {
         };
         let task = super::create_data_connection(&addr, &query);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -702,7 +702,7 @@ mod test_create_data_connection {
         };
         let task = super::create_data_connection(&addr, &query);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -742,7 +742,7 @@ mod test_create_data_connection {
         };
         let task = super::create_data_connection(&addr, &query);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -782,7 +782,7 @@ mod test_create_data_connection {
         };
         let task = super::create_data_connection(&addr, &query);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -857,7 +857,7 @@ mod test_delete_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -886,7 +886,7 @@ mod test_delete_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -915,7 +915,7 @@ mod test_delete_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -944,7 +944,7 @@ mod test_delete_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -973,7 +973,7 @@ mod test_delete_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1002,7 +1002,7 @@ mod test_delete_data_connection {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_data_connection(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1147,7 +1147,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1194,7 +1194,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1241,7 +1241,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1288,7 +1288,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1335,7 +1335,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1383,7 +1383,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1471,7 +1471,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1512,7 +1512,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1543,7 +1543,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1574,7 +1574,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1605,7 +1605,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1636,7 +1636,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1783,7 +1783,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1814,7 +1814,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1845,7 +1845,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1876,7 +1876,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1907,7 +1907,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }

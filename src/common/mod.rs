@@ -8,10 +8,10 @@ pub async fn api_access<A: Sized, T: Sized, R: Sized>(
     is_404_captable: bool,
     api_call: impl Fn() -> A,
     f: impl Fn(reqwest::Response) -> R,
-) -> Result<T, error::ErrorEnum>
+) -> Result<T, error::Error>
 where
     A: Future<Output = Result<reqwest::Response, reqwest::Error>>,
-    R: Future<Output = Result<T, error::ErrorEnum>>,
+    R: Future<Output = Result<T, error::Error>>,
 {
     let res = api_call().await?;
     match res.status() {
@@ -28,20 +28,20 @@ where
                     .fold("recv message".to_string(), |sum, acc| {
                         format!("{}\n{}", sum, acc.message)
                     });
-                Err(error::ErrorEnum::create_myerror(&message))
+                Err(error::Error::create_myerror(&message))
             }),
-        reqwest::StatusCode::FORBIDDEN => Err(error::ErrorEnum::create_myerror("recv Forbidden")),
+        reqwest::StatusCode::FORBIDDEN => Err(error::Error::create_myerror("recv Forbidden")),
         reqwest::StatusCode::NOT_FOUND if is_404_captable => {
-            Err(error::ErrorEnum::create_myerror("recv Not Found"))
+            Err(error::Error::create_myerror("recv Not Found"))
         }
         reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::ErrorEnum::create_myerror("recv Method Not Allowed"))
+            Err(error::Error::create_myerror("recv Method Not Allowed"))
         }
         reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::ErrorEnum::create_myerror("recv Not Acceptable"))
+            Err(error::Error::create_myerror("recv Not Acceptable"))
         }
         reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::ErrorEnum::create_myerror("recv RequestTimeout"))
+            Err(error::Error::create_myerror("recv RequestTimeout"))
         }
         _ => {
             unreachable!();

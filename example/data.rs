@@ -131,7 +131,7 @@ async fn main() {
                 sum
             },
         )
-        .map(|_| futures::future::ok::<(), error::ErrorEnum>(()));
+        .map(|_| futures::future::ok::<(), error::Error>(()));
 
     //execute all the futures
     let (fold_fut_result, event_fut_result, key_fut_reult) =
@@ -144,7 +144,7 @@ async fn main() {
 async fn on_peer_events(
     status: PeerFoldState,
     event: Either<PeerEventEnum, String>,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     match event {
         Either::Left(api_events) => on_peer_api_events(status, api_events).await,
         Either::Right(key_events) => on_peer_key_events(status, key_events).await,
@@ -155,7 +155,7 @@ async fn on_peer_events(
 async fn on_peer_api_events(
     params: PeerFoldState,
     event: PeerEventEnum,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     match event {
         PeerEventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
@@ -185,7 +185,7 @@ async fn on_peer_api_events(
 async fn on_peer_key_events(
     mut params: PeerFoldState,
     message: String,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     println!("recv {} in peer key events", message);
     match message.as_str() {
         "exit" => {
@@ -285,7 +285,7 @@ impl DataConnectionState {
 async fn connect(
     mut params: PeerFoldState,
     target_id: PeerId,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     // Notify which peer object needs to establish P2P link to WebRTC Gateway.
     let peer_info = params
         .peer_info()
@@ -349,7 +349,7 @@ async fn connect(
 async fn redirect(
     mut params: PeerFoldState,
     data_connection_id: DataConnectionId,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     // Data received from this content socket will be redirected to neighbour with DataConnection.
     let data_socket_created_response = data::open_source_socket().await?;
     // Data received from DataConnection will be redirected according to this information.
@@ -406,7 +406,7 @@ async fn redirect(
 async fn on_data_events(
     sum: DataConnectionState,
     event: Either<data::DataConnectionEventEnum, ControlMessage>,
-) -> Result<DataConnectionState, error::ErrorEnum> {
+) -> Result<DataConnectionState, error::Error> {
     match event {
         Either::Left(event) => on_data_api_events(sum, event).await,
         Either::Right(event) => on_data_key_events(sum, event).await,
@@ -417,7 +417,7 @@ async fn on_data_events(
 async fn on_data_api_events(
     state: DataConnectionState,
     event: data::DataConnectionEventEnum,
-) -> Result<DataConnectionState, error::ErrorEnum> {
+) -> Result<DataConnectionState, error::Error> {
     //FIXME not enough
     match event {
         data::DataConnectionEventEnum::OPEN(date_connection_id) => {
@@ -440,7 +440,7 @@ async fn on_data_api_events(
 async fn on_data_key_events(
     mut state: DataConnectionState,
     ControlMessage(message): ControlMessage,
-) -> Result<DataConnectionState, error::ErrorEnum> {
+) -> Result<DataConnectionState, error::Error> {
     //FIXME not enough
     match message.as_str() {
         "status" => {

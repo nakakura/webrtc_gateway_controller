@@ -22,7 +22,7 @@ pub async fn create<'a>(
     domain: impl Into<String>,
     peer_id: PeerId,
     turn: bool,
-) -> Result<PeerInfo, error::ErrorEnum> {
+) -> Result<PeerInfo, error::Error> {
     let base_url = crate::base_url();
     let result = api::create_peer(base_url, api_key, domain, peer_id, turn).await?;
     Ok(result.params)
@@ -35,7 +35,7 @@ pub async fn create<'a>(
 pub async fn listen_events<'a>(
     peer_info: &PeerInfo,
     mut event_sender: mpsc::Sender<PeerEventEnum>,
-) -> Result<(), error::ErrorEnum> {
+) -> Result<(), error::Error> {
     let base_url = crate::base_url();
     loop {
         let result = api::event(base_url, peer_info).await?;
@@ -48,14 +48,14 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(error::ErrorEnum::create_myerror("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_myerror("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
                 event_sender.close_channel();
                 break;
             }
             event => {
                 if event_sender.send(event).await.is_err() {
-                    return Err(error::ErrorEnum::create_myerror("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_myerror("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
             }
         }
@@ -63,12 +63,12 @@ pub async fn listen_events<'a>(
     Ok(())
 }
 
-pub async fn delete(peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
+pub async fn delete(peer_info: &PeerInfo) -> Result<(), error::Error> {
     let base_url = crate::base_url();
     api::delete_peer(base_url, peer_info).await
 }
 
-pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::ErrorEnum> {
+pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::Error> {
     let base_url = crate::base_url();
     api::status(base_url, peer_info).await
 }

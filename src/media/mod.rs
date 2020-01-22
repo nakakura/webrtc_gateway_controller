@@ -22,27 +22,27 @@ pub enum MediaConnectionEvents {
     ERROR((MediaConnectionId, String)),
 }
 
-pub async fn open_media_socket(is_video: bool) -> Result<CreateMediaResponse, error::ErrorEnum> {
+pub async fn open_media_socket(is_video: bool) -> Result<CreateMediaResponse, error::Error> {
     let base_url = super::base_url();
     api::create_media(base_url, is_video).await
 }
 
-pub async fn delete_media(media_id: &MediaId) -> Result<(), error::ErrorEnum> {
+pub async fn delete_media(media_id: &MediaId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_media(base_url, media_id.as_str()).await
 }
 
-pub async fn open_rtcp_socket() -> Result<CreateRtcpResponse, error::ErrorEnum> {
+pub async fn open_rtcp_socket() -> Result<CreateRtcpResponse, error::Error> {
     let base_url = super::base_url();
     api::create_rtcp(base_url).await
 }
 
-pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::ErrorEnum> {
+pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_rtcp(base_url, rtcp_id.as_str()).await
 }
 
-pub async fn call(call_params: &CallParameters) -> Result<CallResponse, error::ErrorEnum> {
+pub async fn call(call_params: &CallParameters) -> Result<CallResponse, error::Error> {
     let base_url = super::base_url();
     api::create_call(base_url, call_params).await
 }
@@ -50,12 +50,12 @@ pub async fn call(call_params: &CallParameters) -> Result<CallResponse, error::E
 pub async fn answer(
     media_connection_id: &MediaConnectionId,
     params: &AnswerParameters,
-) -> Result<AnswerResponse, error::ErrorEnum> {
+) -> Result<AnswerResponse, error::Error> {
     let base_url = super::base_url();
     api::answer(base_url, media_connection_id.as_str(), params).await
 }
 
-pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), error::ErrorEnum> {
+pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_call(base_url, media_connection_id.as_str()).await
 }
@@ -63,7 +63,7 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 pub async fn send_pli(
     media_connection_id: &MediaConnectionId,
     params: &RedirectParams,
-) -> Result<(), error::ErrorEnum> {
+) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::pli(base_url, media_connection_id.as_str(), params).await
 }
@@ -71,7 +71,7 @@ pub async fn send_pli(
 pub async fn listen_events<'a>(
     media_connection_id: MediaConnectionId,
     mut event_notifier: mpsc::Sender<MediaConnectionEvents>,
-) -> Result<(), error::ErrorEnum> {
+) -> Result<(), error::Error> {
     let base_url = super::base_url();
 
     loop {
@@ -83,7 +83,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(error::ErrorEnum::create_myerror("fail to notify an event"));
+                    return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
             formats::MediaConnectionEventEnum::CLOSE => {
@@ -92,7 +92,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(error::ErrorEnum::create_myerror("fail to notify an event"));
+                    return Err(error::Error::create_myerror("fail to notify an event"));
                 };
                 break;
             }
@@ -102,7 +102,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(error::ErrorEnum::create_myerror("fail to notify an event"));
+                    return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
             formats::MediaConnectionEventEnum::ERROR {
@@ -116,7 +116,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(error::ErrorEnum::create_myerror("fail to notify an event"));
+                    return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
             formats::MediaConnectionEventEnum::TIMEOUT => {}
@@ -128,7 +128,7 @@ pub async fn listen_events<'a>(
 
 pub async fn status(
     media_connection_id: &MediaConnectionId,
-) -> Result<MediaConnectionStatus, error::ErrorEnum> {
+) -> Result<MediaConnectionStatus, error::Error> {
     let base_url = super::base_url();
     api::status(base_url, media_connection_id.as_str()).await
 }

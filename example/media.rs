@@ -184,7 +184,7 @@ async fn main() {
                 sum
             },
         )
-        .map(|_| futures::future::ok::<(), error::ErrorEnum>(()));
+        .map(|_| futures::future::ok::<(), error::Error>(()));
 
     //execute all the futures
     let (fold_fut_result, event_fut_result, key_fut_reult) =
@@ -197,7 +197,7 @@ async fn main() {
 async fn on_peer_events(
     status: PeerFoldState,
     event: Either<PeerEventEnum, String>,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     match event {
         Either::Left(api_events) => on_peer_api_events(status, api_events).await,
         Either::Right(key_events) => on_peer_key_events(status, key_events).await,
@@ -208,7 +208,7 @@ async fn on_peer_events(
 async fn on_peer_api_events(
     params: PeerFoldState,
     event: PeerEventEnum,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     match event {
         PeerEventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
@@ -232,7 +232,7 @@ async fn on_peer_api_events(
 async fn on_peer_key_events(
     mut params: PeerFoldState,
     message: String,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+) -> Result<PeerFoldState, error::Error> {
     match message.as_str() {
         "exit" => {
             // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
@@ -290,7 +290,7 @@ async fn on_peer_key_events(
 
 async fn create_constraints(
     media_params: &MediaConfig,
-) -> Result<(Option<MediaPair>, Option<MediaPair>, Constraints), error::ErrorEnum> {
+) -> Result<(Option<MediaPair>, Option<MediaPair>, Constraints), error::Error> {
     let video_constraints = if media_params.video {
         let video_response = media::open_media_socket(true).await?;
         let rtcp_response = media::open_rtcp_socket().await?;
@@ -437,10 +437,7 @@ impl MediaConnectionState {
 }
 
 // start establishing MediaConnection to an neighbour
-async fn call(
-    mut params: PeerFoldState,
-    target_id: PeerId,
-) -> Result<PeerFoldState, error::ErrorEnum> {
+async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldState, error::Error> {
     // Notify which peer object needs to establish P2P link to WebRTC Gateway.
     let peer_info = params
         .peer_info()
@@ -498,7 +495,7 @@ async fn call(
 async fn on_media_events(
     state: MediaConnectionState,
     event: Either<media::MediaConnectionEvents, ControlMessage>,
-) -> Result<MediaConnectionState, error::ErrorEnum> {
+) -> Result<MediaConnectionState, error::Error> {
     match event {
         Either::Left(event) => on_media_api_events(state, event).await,
         Either::Right(event) => on_media_key_events(state, event).await,
@@ -509,7 +506,7 @@ async fn on_media_events(
 async fn on_media_api_events(
     state: MediaConnectionState,
     event: media::MediaConnectionEvents,
-) -> Result<MediaConnectionState, error::ErrorEnum> {
+) -> Result<MediaConnectionState, error::Error> {
     //FIXME not enough
     match event {
         media::MediaConnectionEvents::READY(media_connection_id) => {
@@ -526,7 +523,7 @@ async fn on_media_api_events(
             info!("{:?} is closed", media_connection_id);
             Ok(state)
         }
-        _ => Ok::<_, error::ErrorEnum>(state),
+        _ => Ok::<_, error::Error>(state),
     }
 }
 
@@ -534,7 +531,7 @@ async fn on_media_api_events(
 async fn on_media_key_events(
     mut state: MediaConnectionState,
     ControlMessage(message): ControlMessage,
-) -> Result<MediaConnectionState, error::ErrorEnum> {
+) -> Result<MediaConnectionState, error::Error> {
     //FIXME not enough
     match message.as_str() {
         "status" => {
@@ -582,6 +579,6 @@ async fn on_media_key_events(
 
             Ok(state)
         }
-        _ => Ok::<_, error::ErrorEnum>(state),
+        _ => Ok::<_, error::Error>(state),
     }
 }

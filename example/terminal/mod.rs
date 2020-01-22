@@ -6,7 +6,7 @@ use webrtc_gateway_controller::error;
 // FIXME
 // Keyboard events should be subscribed from many locations
 // The struct should implement addEventListener and deleteEventListener.
-pub async fn read(mut observer: mpsc::Sender<String>) -> Result<(), error::ErrorEnum> {
+pub async fn read(mut observer: mpsc::Sender<String>) -> Result<(), error::Error> {
     let stdin = async_std::io::stdin();
     let mut line = String::new();
     loop {

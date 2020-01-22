@@ -13,7 +13,7 @@ use crate::error;
 pub(crate) async fn create_media(
     base_url: &str,
     is_video: bool,
-) -> Result<CreateMediaResponse, error::ErrorEnum> {
+) -> Result<CreateMediaResponse, error::Error> {
     let api_url = format!("{}/media", base_url);
     let option = CreateMediaOptions { is_video: is_video };
     let api_call = || Client::new().post(&api_url).json(&option).send();
@@ -25,7 +25,7 @@ pub(crate) async fn create_media(
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/streams_delete
-pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::Error> {
     let api_url = format!("{}/media/{}", base_url, media_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -36,7 +36,7 @@ pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), e
 /// If the API returns values with 201 Created, it returns CreateRtcpResponse
 /// If server returns 400, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_create
-pub(crate) async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::ErrorEnum> {
+pub(crate) async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::Error> {
     let api_url = format!("{}/media/rtcp", base_url);
     let api_call = || Client::new().post(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<CreateRtcpResponse>().map_err(Into::into);
@@ -47,7 +47,7 @@ pub(crate) async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, er
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_delete
-pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::Error> {
     let api_url = format!("{}/media/rtcp/{}", base_url, rtcp_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -61,7 +61,7 @@ pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), err
 pub(crate) async fn create_call(
     base_url: &str,
     call_params: &CallParameters,
-) -> Result<CallResponse, error::ErrorEnum> {
+) -> Result<CallResponse, error::Error> {
     let api_url = format!("{}/media/connections", base_url);
     let api_call = || Client::new().post(&api_url).json(call_params).send();
     let parser = |r: reqwest::Response| r.json::<CallResponse>().map_err(Into::into);
@@ -75,7 +75,7 @@ pub(crate) async fn create_call(
 pub(crate) async fn delete_call(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<(), error::ErrorEnum> {
+) -> Result<(), error::Error> {
     let api_url = format!("{}/media/connections/{}", base_url, media_connection_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -90,7 +90,7 @@ pub(crate) async fn answer(
     base_url: &str,
     media_connection_id: &str,
     params: &AnswerParameters,
-) -> Result<AnswerResponse, error::ErrorEnum> {
+) -> Result<AnswerResponse, error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/answer",
         base_url, media_connection_id
@@ -108,7 +108,7 @@ pub(crate) async fn pli(
     base_url: &str,
     media_connection_id: &str,
     params: &RedirectParams,
-) -> Result<(), error::ErrorEnum> {
+) -> Result<(), error::Error> {
     let api_url = format!("{}/media/connections/{}/pli", base_url, media_connection_id);
     let api_call = || Client::new().post(&api_url).json(params).send();
     let parser = |_| future::ok(());
@@ -122,7 +122,7 @@ pub(crate) async fn pli(
 pub(crate) async fn event(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<MediaConnectionEventEnum, error::ErrorEnum> {
+) -> Result<MediaConnectionEventEnum, error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/events",
         base_url, media_connection_id
@@ -132,7 +132,7 @@ pub(crate) async fn event(
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
-            error::ErrorEnum::MyError { error: message } if message == "recv RequestTimeout" => {
+            error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
                 Ok(MediaConnectionEventEnum::TIMEOUT)
             }
             e => Err(e),
@@ -147,7 +147,7 @@ pub(crate) async fn event(
 pub(crate) async fn status(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<MediaConnectionStatus, error::ErrorEnum> {
+) -> Result<MediaConnectionStatus, error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/status",
         base_url, media_connection_id
@@ -278,7 +278,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -304,7 +304,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -330,7 +330,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -356,7 +356,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -382,7 +382,7 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -455,7 +455,7 @@ mod test_delete_media {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_media(&addr, media_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -484,7 +484,7 @@ mod test_delete_media {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_media(&addr, media_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -513,7 +513,7 @@ mod test_delete_media {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_media(&addr, media_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -542,7 +542,7 @@ mod test_delete_media {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_media(&addr, media_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -571,7 +571,7 @@ mod test_delete_media {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_media(&addr, media_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -600,7 +600,7 @@ mod test_delete_media {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_media(&addr, media_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -675,7 +675,7 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -702,7 +702,7 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -729,7 +729,7 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -756,7 +756,7 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -783,7 +783,7 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -858,7 +858,7 @@ mod test_delete_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_rtcp(&addr, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -888,7 +888,7 @@ mod test_delete_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_rtcp(&addr, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -918,7 +918,7 @@ mod test_delete_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_rtcp(&addr, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -948,7 +948,7 @@ mod test_delete_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_rtcp(&addr, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -978,7 +978,7 @@ mod test_delete_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_rtcp(&addr, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1008,7 +1008,7 @@ mod test_delete_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_rtcp(&addr, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1100,7 +1100,7 @@ mod test_create_call {
         let addr = format!("http://{}", server.addr());
         let task = super::create_call(&addr, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1135,7 +1135,7 @@ mod test_create_call {
         let addr = format!("http://{}", server.addr());
         let task = super::create_call(&addr, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1170,7 +1170,7 @@ mod test_create_call {
         let addr = format!("http://{}", server.addr());
         let task = super::create_call(&addr, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1205,7 +1205,7 @@ mod test_create_call {
         let addr = format!("http://{}", server.addr());
         let task = super::create_call(&addr, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1240,7 +1240,7 @@ mod test_create_call {
         let addr = format!("http://{}", server.addr());
         let task = super::create_call(&addr, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1315,7 +1315,7 @@ mod test_delete_call {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_call(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1345,7 +1345,7 @@ mod test_delete_call {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_call(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1375,7 +1375,7 @@ mod test_delete_call {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_call(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1405,7 +1405,7 @@ mod test_delete_call {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_call(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1435,7 +1435,7 @@ mod test_delete_call {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_call(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1465,7 +1465,7 @@ mod test_delete_call {
         let addr = format!("http://{}", server.addr());
         let task = super::delete_call(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1596,7 +1596,7 @@ mod test_answer {
 
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1648,7 +1648,7 @@ mod test_answer {
         };
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1700,7 +1700,7 @@ mod test_answer {
         };
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1751,7 +1751,7 @@ mod test_answer {
         };
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1803,7 +1803,7 @@ mod test_answer {
         };
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1855,7 +1855,7 @@ mod test_answer {
         };
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1943,7 +1943,7 @@ mod test_pli {
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1979,7 +1979,7 @@ mod test_pli {
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2015,7 +2015,7 @@ mod test_pli {
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2051,7 +2051,7 @@ mod test_pli {
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2087,7 +2087,7 @@ mod test_pli {
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2123,7 +2123,7 @@ mod test_pli {
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2285,7 +2285,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2315,7 +2315,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2345,7 +2345,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2375,7 +2375,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2405,7 +2405,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2526,7 +2526,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2556,7 +2556,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2586,7 +2586,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2616,7 +2616,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2646,7 +2646,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -2676,7 +2676,7 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }

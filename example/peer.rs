@@ -49,7 +49,7 @@ async fn main() {
 async fn on_peer_events(
     status: PeerFoldParameters,
     event: EventEnum,
-) -> Result<PeerFoldParameters, error::ErrorEnum> {
+) -> Result<PeerFoldParameters, error::Error> {
     match event {
         EventEnum::Api(api_events) => on_peer_api_events(status, api_events).await,
         EventEnum::Keyboard(key_events) => on_peer_key_events(status, key_events).await,
@@ -59,7 +59,7 @@ async fn on_peer_events(
 async fn on_peer_api_events(
     PeerFoldParameters((peer_info, vec)): PeerFoldParameters,
     event: PeerEventEnum,
-) -> Result<PeerFoldParameters, error::ErrorEnum> {
+) -> Result<PeerFoldParameters, error::Error> {
     match event {
         PeerEventEnum::OPEN(event) => {
             info!("Peer {:?} is created", event.params);
@@ -76,7 +76,7 @@ async fn on_peer_api_events(
 async fn on_peer_key_events(
     PeerFoldParameters((peer_info, vec)): PeerFoldParameters,
     message: String,
-) -> Result<PeerFoldParameters, error::ErrorEnum> {
+) -> Result<PeerFoldParameters, error::Error> {
     match message.as_str() {
         "exit" => {
             if let Some(peer_info) = peer_info {

@@ -22,7 +22,7 @@ pub(crate) async fn create_peer(
     domain: impl Into<String>,
     peer_id: PeerId,
     turn: bool,
-) -> Result<CreatedResponse, error::ErrorEnum> {
+) -> Result<CreatedResponse, error::Error> {
     let peer_options = PeerOptions {
         key: api_key.into(),
         domain: domain.into(),
@@ -48,7 +48,7 @@ pub(crate) async fn create_peer(
 pub(crate) async fn event(
     base_url: &str,
     peer_info: &PeerInfo,
-) -> Result<PeerEventEnum, error::ErrorEnum> {
+) -> Result<PeerEventEnum, error::Error> {
     let api_url = format!(
         "{}/peers/{}/events?token={}",
         base_url,
@@ -68,7 +68,7 @@ pub(crate) async fn event(
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
-            error::ErrorEnum::MyError { error: message } if message == "recv RequestTimeout" => {
+            error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
                 Ok(PeerEventEnum::TIMEOUT)
             }
             e => Err(e),
@@ -81,10 +81,7 @@ pub(crate) async fn event(
 /// If any error happens, it returns 400, 403, 404, 405, 406, 408.
 /// When it returns 400, it also send a json message.
 /// http://35.200.46.204/#/1.peers/peer_destroy
-pub(crate) async fn delete_peer(
-    base_url: &str,
-    peer_info: &PeerInfo,
-) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::Error> {
     let api_url = format!(
         "{}/peers/{}?token={}",
         base_url,
@@ -103,7 +100,7 @@ pub(crate) async fn delete_peer(
 pub(crate) async fn status(
     base_url: &str,
     peer_info: &PeerInfo,
-) -> Result<PeerStatusMessage, error::ErrorEnum> {
+) -> Result<PeerStatusMessage, error::Error> {
     let api_url = format!(
         "{}/peers/{}/status?token={}",
         base_url,
@@ -189,7 +186,7 @@ mod test_create_peer {
         let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await;
         assert!(result.is_err());
-        if let Err(error::ErrorEnum::ReqwestError { error: _e }) = result {
+        if let Err(error::Error::ReqwestError { error: _e }) = result {
         } else {
             unreachable!();
         }
@@ -227,7 +224,7 @@ mod test_create_peer {
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -256,7 +253,7 @@ mod test_create_peer {
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().unwrap();
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -284,7 +281,7 @@ mod test_create_peer {
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -312,7 +309,7 @@ mod test_create_peer {
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -340,7 +337,7 @@ mod test_create_peer {
         let addr = format!("http://{}", server.addr());
         let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -354,7 +351,7 @@ mod test_create_peer {
         let task = super::create_peer("http://localhost:0", "api_key", "domain", peer_id, false);
         let result = task.await;
         assert!(result.is_err());
-        if let Err(error::ErrorEnum::ReqwestError { error: _e }) = result {
+        if let Err(error::Error::ReqwestError { error: _e }) = result {
         } else {
             unreachable!();
         }
@@ -674,7 +671,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -711,7 +708,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -748,7 +745,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -785,7 +782,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -822,7 +819,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -945,7 +942,7 @@ mod test_delete_peer {
 
         let task = super::delete_peer(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -981,7 +978,7 @@ mod test_delete_peer {
 
         let task = super::delete_peer(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1017,7 +1014,7 @@ mod test_delete_peer {
 
         let task = super::delete_peer(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1053,7 +1050,7 @@ mod test_delete_peer {
 
         let task = super::delete_peer(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1089,7 +1086,7 @@ mod test_delete_peer {
 
         let task = super::delete_peer(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1179,7 +1176,7 @@ mod test_status {
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1214,7 +1211,7 @@ mod test_status {
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1249,7 +1246,7 @@ mod test_status {
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1284,7 +1281,7 @@ mod test_status {
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1319,7 +1316,7 @@ mod test_status {
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
@@ -1354,7 +1351,7 @@ mod test_status {
         };
         let task = super::status(&addr, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::ErrorEnum::MyError { error: _e } = result {
+        if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }

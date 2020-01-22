@@ -17,7 +17,7 @@ use peer::formats::PeerEventEnum;
 use serde_derive::Deserialize;
 use std::collections::hash_map::Keys;
 use std::net::SocketAddr;
-use webrtc_gateway_controller::common::{DataConnectionId, PeerId, PeerInfo};
+use webrtc_gateway_controller::common::{PeerId, PeerInfo};
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -154,7 +154,6 @@ async fn main() {
 
     //load and set parameters
     let config = read_config("example/media.toml");
-    println!("{:?}", config);
 
     let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
     let domain = config.peer.domain;
@@ -237,7 +236,6 @@ async fn on_peer_key_events(
     mut params: PeerFoldState,
     message: String,
 ) -> Result<PeerFoldState, error::ErrorEnum> {
-    println!("recv {} in peer key events", message);
     match message.as_str() {
         "exit" => {
             // FIXME: not yet
@@ -257,7 +255,7 @@ async fn on_peer_key_events(
             Ok(params)
         }
         "status" => {
-            // Show status of PeerObject and DataConnection
+            // Show status of PeerObject and MediaConnection
             if let Some(ref peer_info) = params.peer_info() {
                 let status = peer::status(peer_info).await?;
                 info!("Peer {:?} is now {:?}", peer_info, status);
@@ -307,7 +305,6 @@ async fn create_constraints(
         (
             Some(media_pair),
             Some((video_response, rtcp_response)).map(|(media_response, rtcp_response)| {
-                println!("media params {:?}", media_params);
                 let params = media_params
                     .clone()
                     .video_params
@@ -404,7 +401,7 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
     redirect_params
 }
 
-// Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
+// Process for MediaConnection reacts to fold stream of MediaConnection events and UserInput streams.
 // This struct shows the previous state.
 #[derive(Clone, Default)]
 struct MediaConnectionState(
@@ -425,6 +422,14 @@ impl MediaConnectionState {
         value: (Option<MediaPair>, Option<MediaPair>, RedirectParameters),
     ) {
         let _ = self.0.insert(media_connection_id, value);
+    }
+
+    pub fn remove_media_connection_id(&mut self, media_connection_id: &MediaConnectionId) {
+        let _ = self.0.remove(&media_connection_id);
+    }
+
+    pub fn contains(&self, media_connection_id: &MediaConnectionId) -> bool {
+        self.0.contains_key(media_connection_id)
     }
 
     pub fn get(
@@ -467,16 +472,14 @@ async fn call(
     // Notify keyboard inputs to the sub-task with this channel
     let (mut control_message_notifier, control_message_observer) =
         mpsc::channel::<ControlMessage>(0);
-    // hold notifier
-    params.set_control_message_notifier(control_message_notifier);
 
-    // listen DataConnection events and send them with this channel
+    // listen MediaConnection events and send them with this channel
     let (mc_event_notifier, mc_event_observer) =
         mpsc::channel::<media::MediaConnectionEventEnum>(0);
     let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
     tokio::spawn(event_listen_fut);
 
-    // DataConnection process will work according to DataConnection events and keyboard inputs
+    // MediaConnection process will work according to MediaConnection events and keyboard inputs
     let stream = futures::stream::select(
         mc_event_observer.map(|event| Either::Left(event)),
         control_message_observer.map(|event| Either::Right(event)),
@@ -491,10 +494,12 @@ async fn call(
     });
     tokio::spawn(fold_fut);
 
+    // hold notifier
+    params.set_control_message_notifier(control_message_notifier);
     Ok(params)
 }
 
-// This function is called in a fold of User Input and DataConnection Event streams.
+// This function is called in a fold of User Input and MediaConnection Event streams.
 // It parse the stream and process them with its internal functions
 async fn on_media_events(
     state: MediaConnectionState,
@@ -506,13 +511,27 @@ async fn on_media_events(
     }
 }
 
-// This function process DataConnection events
+// This function process MediaConnection events
 async fn on_media_api_events(
     mut state: MediaConnectionState,
     event: media::MediaConnectionEventEnum,
 ) -> Result<MediaConnectionState, error::ErrorEnum> {
     //FIXME not enough
     match event {
+        media::MediaConnectionEventEnum::READY(media_connection_id) => {
+            info!("{:?} is ready", media_connection_id);
+            let value = state
+                .get(&media_connection_id)
+                .expect("socket info not set");
+            info!("it's video src socket is {:?}", value.0);
+            info!("it's audio src socket is {:?}", value.1);
+            info!("it's redirect info is {:?}", value.2);
+            Ok(state)
+        }
+        media::MediaConnectionEventEnum::CLOSE(media_connection_id) => {
+            info!("{:?} is closed", media_connection_id);
+            Ok(state)
+        }
         _ => Ok::<_, error::ErrorEnum>(state),
     }
 }
@@ -525,11 +544,11 @@ async fn on_media_key_events(
     //FIXME not enough
     match message.as_str() {
         "status" => {
-            // prinnts all DataConnection status
+            // prinnts all MediaConnection status
             for media_connection_id in state.media_connection_id_iter() {
                 let status = media::status(&media_connection_id).await?;
                 info!(
-                    "##################\nDataConnection {:?} is now {:?}",
+                    "##################\nMediaConnection {:?} is now {:?}",
                     media_connection_id, status
                 );
                 let value = state
@@ -539,6 +558,34 @@ async fn on_media_key_events(
                 info!("it's audio src socket is {:?}", value.1);
                 info!("it's redirect info is {:?}", value.2);
             }
+            Ok(state)
+        }
+        message if message.starts_with("disconnect ") => {
+            // close P2P link
+            let mut args = message.split_whitespace();
+            let _ = args.next();
+            if let Some(media_connection_id) = args.next() {
+                let media_connection_id = MediaConnectionId::new(media_connection_id);
+                if state.contains(&media_connection_id) {
+                    let result = media::disconnect(&media_connection_id).await?;
+                    state.remove_media_connection_id(&media_connection_id);
+                } else {
+                    warn!(
+                        "{:?} is not a valid Media Connection Id",
+                        media_connection_id
+                    );
+                }
+            } else {
+                warn!("input \"disconnect MEDIA_CONNECTION_ID\"");
+            }
+            Ok(state)
+        }
+        "disconnect_all" => {
+            for media_connection_id in state.clone().media_connection_id_iter() {
+                let result = media::disconnect(media_connection_id).await?;
+                state.remove_media_connection_id(media_connection_id);
+            }
+
             Ok(state)
         }
         _ => Ok::<_, error::ErrorEnum>(state),

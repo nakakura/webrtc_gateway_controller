@@ -100,7 +100,6 @@ pub async fn listen_events<'a>(
                 {
                     return Err(error::ErrorEnum::create_myerror("fail to notify an event"));
                 };
-                break;
             }
             formats::MediaConnectionEventEnum::ERROR {
                 error_message: message,

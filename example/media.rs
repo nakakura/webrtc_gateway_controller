@@ -59,6 +59,12 @@ impl PeerFoldState {
     }
 }
 
+#[derive(Clone, Debug, Deserialize)]
+struct MediaPair {
+    media_id: media::formats::CreateMediaResponse,
+    rtcp_id: media::formats::CreateRtcpResponse,
+}
+
 // It shows config toml formats
 #[derive(Clone, Debug, Deserialize)]
 struct Config {
@@ -110,6 +116,22 @@ struct MediaParamConfig {
     pub sampling_rate: usize,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+struct MediaSocketInfo {
+    pub media_id: MediaId,
+    pub ip_v4: Option<String>,
+    pub ip_v6: Option<String>,
+    pub port: u16,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct RtcpSocketInfo {
+    pub rtcp_id: RtcpId,
+    pub ip_v4: Option<String>,
+    pub ip_v6: Option<String>,
+    pub port: u16,
+}
+
 // read config from toml file
 fn read_config(path: &'static str) -> Config {
     let mut file_content = String::new();
@@ -132,6 +154,8 @@ async fn main() {
 
     //load and set parameters
     let config = read_config("example/media.toml");
+    println!("{:?}", config);
+
     let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
     let domain = config.peer.domain;
     let peer_id = common::PeerId::new(config.peer.peer_id);
@@ -270,57 +294,78 @@ async fn on_peer_key_events(
     }
 }
 
-async fn create_constraints(media_params: &MediaConfig) -> Result<Constraints, error::ErrorEnum> {
+async fn create_constraints(
+    media_params: &MediaConfig,
+) -> Result<(Option<MediaPair>, Option<MediaPair>, Constraints), error::ErrorEnum> {
     let video_constraints = if media_params.video {
         let video_response = media::open_media_socket(true).await?;
         let rtcp_response = media::open_rtcp_socket().await?;
-        Some((video_response, rtcp_response)).map(|(media_response, rtcp_response)| {
-            let params = media_params
-                .clone()
-                .video_params
-                .expect("video params should be set");
-            MediaParams {
-                band_width: params.band_width,
-                codec: params.codec,
-                media_id: media_response.media_id,
-                rtcp_id: Some(rtcp_response.rtcp_id),
-                payload_type: Some(params.payload_type),
-                sampling_rate: Some(params.sampling_rate),
-            }
-        })
+        let media_pair = MediaPair {
+            media_id: video_response.clone(),
+            rtcp_id: rtcp_response.clone(),
+        };
+        (
+            Some(media_pair),
+            Some((video_response, rtcp_response)).map(|(media_response, rtcp_response)| {
+                println!("media params {:?}", media_params);
+                let params = media_params
+                    .clone()
+                    .video_params
+                    .expect("video params should be set");
+                MediaParams {
+                    band_width: params.band_width,
+                    codec: params.codec,
+                    media_id: media_response.media_id,
+                    rtcp_id: Some(rtcp_response.rtcp_id),
+                    payload_type: Some(params.payload_type),
+                    sampling_rate: Some(params.sampling_rate),
+                }
+            }),
+        )
     } else {
-        None
+        (None, None)
     };
 
     let audio_constraints = if media_params.audio {
         let audio_response = media::open_media_socket(false).await?;
         let rtcp_response = media::open_rtcp_socket().await?;
-        Some((audio_response, rtcp_response)).map(|(media_response, rtcp_response)| {
-            let params = media_params
-                .clone()
-                .audio_params
-                .expect("video params should be set");
-            MediaParams {
-                band_width: params.band_width,
-                codec: params.codec,
-                media_id: media_response.media_id,
-                rtcp_id: Some(rtcp_response.rtcp_id),
-                payload_type: Some(params.payload_type),
-                sampling_rate: Some(params.sampling_rate),
-            }
-        })
+        let media_pair = MediaPair {
+            media_id: audio_response.clone(),
+            rtcp_id: rtcp_response.clone(),
+        };
+        (
+            Some(media_pair),
+            Some((audio_response, rtcp_response)).map(|(media_response, rtcp_response)| {
+                let params = media_params
+                    .clone()
+                    .audio_params
+                    .expect("video params should be set");
+                MediaParams {
+                    band_width: params.band_width,
+                    codec: params.codec,
+                    media_id: media_response.media_id,
+                    rtcp_id: Some(rtcp_response.rtcp_id),
+                    payload_type: Some(params.payload_type),
+                    sampling_rate: Some(params.sampling_rate),
+                }
+            }),
+        )
     } else {
-        None
+        (None, None)
     };
 
-    Ok(Constraints {
-        video: media_params.video,
-        videoReceiveEnabled: Some(media_params.video_redirect.is_some()),
-        audio: media_params.audio,
-        audioReceiveEnabled: Some(media_params.audio_redirect.is_some()),
-        video_params: video_constraints,
-        audio_params: audio_constraints,
-    })
+    Ok((
+        video_constraints.0,
+        audio_constraints.0,
+        Constraints {
+            video: media_params.video,
+            videoReceiveEnabled: Some(media_params.video_redirect.is_some()),
+            audio: media_params.audio,
+            audioReceiveEnabled: Some(media_params.audio_redirect.is_some()),
+            video_params: video_constraints.1,
+            audio_params: audio_constraints.1,
+        },
+    ))
 }
 
 fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
@@ -359,6 +404,37 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
     redirect_params
 }
 
+// Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
+// This struct shows the previous state.
+#[derive(Clone, Default)]
+struct MediaConnectionState(
+    (HashMap<MediaConnectionId, (Option<MediaPair>, Option<MediaPair>, RedirectParameters)>),
+);
+
+// This struct has only setter and getter.
+impl MediaConnectionState {
+    pub fn media_connection_id_iter(
+        &self,
+    ) -> Keys<MediaConnectionId, (Option<MediaPair>, Option<MediaPair>, RedirectParameters)> {
+        self.0.keys()
+    }
+
+    pub fn insert_media_connection_id(
+        &mut self,
+        media_connection_id: MediaConnectionId,
+        value: (Option<MediaPair>, Option<MediaPair>, RedirectParameters),
+    ) {
+        let _ = self.0.insert(media_connection_id, value);
+    }
+
+    pub fn get(
+        &self,
+        media_connection_id: &MediaConnectionId,
+    ) -> Option<&(Option<MediaPair>, Option<MediaPair>, RedirectParameters)> {
+        self.0.get(media_connection_id)
+    }
+}
+
 // start establishing MediaConnection to an neighbour
 async fn call(
     mut params: PeerFoldState,
@@ -382,10 +458,89 @@ async fn call(
         peer_id: peer_info.peer_id,
         token: peer_info.token,
         target_id: target_id,
-        constraints: Some(constraints),
-        redirect_params: Some(redirect_params),
+        constraints: Some(constraints.2),
+        redirect_params: Some(redirect_params.clone()),
     };
 
-    let call_response = media::call(&call_params).await?;
+    let media_connection_id = media::call(&call_params).await?.params.media_connection_id;
+
+    // Notify keyboard inputs to the sub-task with this channel
+    let (mut control_message_notifier, control_message_observer) =
+        mpsc::channel::<ControlMessage>(0);
+    // hold notifier
+    params.set_control_message_notifier(control_message_notifier);
+
+    // listen DataConnection events and send them with this channel
+    let (mc_event_notifier, mc_event_observer) =
+        mpsc::channel::<media::MediaConnectionEventEnum>(0);
+    let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
+    tokio::spawn(event_listen_fut);
+
+    // DataConnection process will work according to DataConnection events and keyboard inputs
+    let stream = futures::stream::select(
+        mc_event_observer.map(|event| Either::Left(event)),
+        control_message_observer.map(|event| Either::Right(event)),
+    );
+    let mut state = MediaConnectionState::default();
+    state.insert_media_connection_id(
+        media_connection_id,
+        (constraints.0, constraints.1, redirect_params),
+    );
+    let fold_fut = stream.fold(state, |sum, acc| async move {
+        on_media_events(sum, acc).await.expect("error")
+    });
+    tokio::spawn(fold_fut);
+
     Ok(params)
+}
+
+// This function is called in a fold of User Input and DataConnection Event streams.
+// It parse the stream and process them with its internal functions
+async fn on_media_events(
+    state: MediaConnectionState,
+    event: Either<media::MediaConnectionEventEnum, ControlMessage>,
+) -> Result<MediaConnectionState, error::ErrorEnum> {
+    match event {
+        Either::Left(event) => on_media_api_events(state, event).await,
+        Either::Right(event) => on_media_key_events(state, event).await,
+    }
+}
+
+// This function process DataConnection events
+async fn on_media_api_events(
+    mut state: MediaConnectionState,
+    event: media::MediaConnectionEventEnum,
+) -> Result<MediaConnectionState, error::ErrorEnum> {
+    //FIXME not enough
+    match event {
+        _ => Ok::<_, error::ErrorEnum>(state),
+    }
+}
+
+// This function process Keyboard Inputs
+async fn on_media_key_events(
+    mut state: MediaConnectionState,
+    ControlMessage(message): ControlMessage,
+) -> Result<MediaConnectionState, error::ErrorEnum> {
+    //FIXME not enough
+    match message.as_str() {
+        "status" => {
+            // prinnts all DataConnection status
+            for media_connection_id in state.media_connection_id_iter() {
+                let status = media::status(&media_connection_id).await?;
+                info!(
+                    "##################\nDataConnection {:?} is now {:?}",
+                    media_connection_id, status
+                );
+                let value = state
+                    .get(&media_connection_id)
+                    .expect("socket info not set");
+                info!("it's video src socket is {:?}", value.0);
+                info!("it's audio src socket is {:?}", value.1);
+                info!("it's redirect info is {:?}", value.2);
+            }
+            Ok(state)
+        }
+        _ => Ok::<_, error::ErrorEnum>(state),
+    }
 }

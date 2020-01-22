@@ -1,5 +1,5 @@
 pub mod api;
-pub mod formats;
+pub(crate) mod formats;
 
 use futures::channel::mpsc;
 use futures::*;
@@ -7,6 +7,10 @@ use futures::*;
 use crate::data::formats::*;
 use crate::error;
 use formats::DataConnectionId;
+
+pub use formats::{
+    CreateDataConnectionQuery, CreatedResponse, DataIdWrapper, RedirectDataParams, RedirectParams,
+};
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {

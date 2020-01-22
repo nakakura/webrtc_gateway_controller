@@ -1,14 +1,21 @@
 mod api;
-pub mod formats;
+pub(crate) mod formats;
 
 use futures::channel::mpsc;
 use futures::*;
 
 use crate::error;
-use formats::*;
+
+pub use formats::{
+    AnswerParameters, AnswerResponse, AnswerResponseParams, CallParameters, CallResponse,
+    Constraints, CreateMediaOptions, CreateMediaResponse, CreateRtcpResponse,
+    MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams,
+    RedirectParameters, RedirectParams, SsrcPair,
+};
+use formats::{MediaConnectionId, MediaId, RtcpId};
 
 #[derive(Debug, PartialEq, PartialOrd)]
-pub enum MediaConnectionEventEnum {
+pub enum MediaConnectionEvents {
     READY(MediaConnectionId),
     STREAM(MediaConnectionId),
     CLOSE(MediaConnectionId),
@@ -63,7 +70,7 @@ pub async fn send_pli(
 
 pub async fn listen_events<'a>(
     media_connection_id: MediaConnectionId,
-    mut event_notifier: mpsc::Sender<MediaConnectionEventEnum>,
+    mut event_notifier: mpsc::Sender<MediaConnectionEvents>,
 ) -> Result<(), error::ErrorEnum> {
     let base_url = super::base_url();
 
@@ -72,7 +79,7 @@ pub async fn listen_events<'a>(
         match result {
             formats::MediaConnectionEventEnum::READY => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::READY(media_connection_id.clone()))
+                    .send(MediaConnectionEvents::READY(media_connection_id.clone()))
                     .await
                     .is_err()
                 {
@@ -81,7 +88,7 @@ pub async fn listen_events<'a>(
             }
             formats::MediaConnectionEventEnum::CLOSE => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::CLOSE(media_connection_id.clone()))
+                    .send(MediaConnectionEvents::CLOSE(media_connection_id.clone()))
                     .await
                     .is_err()
                 {
@@ -91,9 +98,7 @@ pub async fn listen_events<'a>(
             }
             formats::MediaConnectionEventEnum::STREAM => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::STREAM(
-                        media_connection_id.clone(),
-                    ))
+                    .send(MediaConnectionEvents::STREAM(media_connection_id.clone()))
                     .await
                     .is_err()
                 {
@@ -104,7 +109,7 @@ pub async fn listen_events<'a>(
                 error_message: message,
             } => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::ERROR((
+                    .send(MediaConnectionEvents::ERROR((
                         media_connection_id.clone(),
                         message,
                     )))

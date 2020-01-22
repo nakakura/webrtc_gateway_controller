@@ -4,7 +4,7 @@ use futures::channel::mpsc;
 use futures::prelude::*;
 use log::info;
 
-use peer::formats::PeerEventEnum;
+use peer::PeerEventEnum;
 use webrtc_gateway_controller::*;
 
 #[derive(Debug)]

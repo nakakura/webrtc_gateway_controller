@@ -13,8 +13,7 @@ use futures::prelude::*;
 use log::{info, warn};
 use serde_derive::Deserialize;
 
-use peer::formats::PeerEventEnum;
-use webrtc_gateway_controller::data::formats::{CreatedResponse, DataIdWrapper, RedirectParams};
+use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper, RedirectParams};
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -306,7 +305,7 @@ async fn connect(
     });
 
     // set up query and access to connect API.
-    let query = data::formats::CreateDataConnectionQuery {
+    let query = data::CreateDataConnectionQuery {
         peer_id: peer_info.peer_id,
         token: peer_info.token,
         options: None,
@@ -363,7 +362,7 @@ async fn redirect(
             port: socket_config.port,
         }
     });
-    let redirect_params = data::formats::RedirectDataParams {
+    let redirect_params = data::RedirectDataParams {
         feed_params: Some(DataIdWrapper {
             data_id: data_socket_created_response.data_id.clone(),
         }),

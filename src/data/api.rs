@@ -14,7 +14,7 @@ use crate::error;
 /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
 /// If server returns 400, 405, 406, 408, create_data returns error
 /// http://35.200.46.204/#/2.data/data
-pub async fn create_data(base_url: &str) -> Result<CreatedResponse, error::ErrorEnum> {
+pub(crate) async fn create_data(base_url: &str) -> Result<CreatedResponse, error::ErrorEnum> {
     let api_url = format!("{}/data", base_url);
     let json = json!({});
     let api_call = || Client::new().post(&api_url).json(&json).send();
@@ -26,7 +26,7 @@ pub async fn create_data(base_url: &str) -> Result<CreatedResponse, error::Error
 /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_delete
-pub async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/data/{}", base_url, data_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -37,7 +37,7 @@ pub async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::Err
 /// The API returns 202 Accepted, when a WebRTC Gateway succeed to start calling
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_connections_create
-pub async fn create_data_connection(
+pub(crate) async fn create_data_connection(
     base_url: &str,
     params: &CreateDataConnectionQuery,
 ) -> Result<CreateDataConnectionResponse, error::ErrorEnum> {
@@ -52,7 +52,7 @@ pub async fn create_data_connection(
 /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Peer Object
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_connection_close
-pub async fn delete_data_connection(
+pub(crate) async fn delete_data_connection(
     base_url: &str,
     data_connection_id: &str,
 ) -> Result<(), error::ErrorEnum> {
@@ -66,7 +66,7 @@ pub async fn delete_data_connection(
 /// The API returns 200 Ok, when a WebRTC Gateway succeed to start redirecting data received from neighbours
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_connection_put
-pub async fn redirect_data_connection(
+pub(crate) async fn redirect_data_connection(
     base_url: &str,
     data_connection_id: &str,
     redirect_data_params: &RedirectDataParams,
@@ -86,7 +86,7 @@ pub async fn redirect_data_connection(
 /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/status
-pub async fn status(
+pub(crate) async fn status(
     base_url: &str,
     data_connection_id: &str,
 ) -> Result<DataConnectionStatus, error::ErrorEnum> {
@@ -104,7 +104,7 @@ pub async fn status(
 /// Fn event returns DataConnectionEventEnum::Timeout to listen event again.
 /// When it receives 400, 403, 404, 405, 406, show errors.
 /// http://35.200.46.204/#/2.data/events
-pub async fn event(
+pub(crate) async fn event(
     base_url: &str,
     data_connection_id: &str,
 ) -> Result<DataConnectionEventEnum, error::ErrorEnum> {

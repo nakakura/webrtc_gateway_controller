@@ -19,7 +19,7 @@ use crate::{PeerId, PeerInfo};
 /// this function returns error
 /// Also, if server returns json which command_type is not "PEERS_CREATE", it returns error.
 /// http://35.200.46.204/#/1.peers/peer
-pub async fn create_peer(
+pub(crate) async fn create_peer(
     base_url: &str,
     api_key: impl Into<String>,
     domain: impl Into<String>,
@@ -48,7 +48,7 @@ pub async fn create_peer(
 /// this function returns error
 /// Also, if server returns json which command_type is not "PEERS_EVENTS", it returns error.
 /// http://35.200.46.204/#/1.peers/peer_event
-pub async fn event(
+pub(crate) async fn event(
     base_url: &str,
     peer_info: &PeerInfo,
 ) -> Result<PeerEventEnum, error::ErrorEnum> {
@@ -84,7 +84,10 @@ pub async fn event(
 /// If any error happens, it returns 400, 403, 404, 405, 406, 408.
 /// When it returns 400, it also send a json message.
 /// http://35.200.46.204/#/1.peers/peer_destroy
-pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_peer(
+    base_url: &str,
+    peer_info: &PeerInfo,
+) -> Result<(), error::ErrorEnum> {
     let api_url = format!(
         "{}/peers/{}?token={}",
         base_url,
@@ -100,7 +103,7 @@ pub async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), err
 /// The API returns JSON with 200 OK.
 /// If any error happens, it returns 400, 403, 404, 405, 406, 408
 /// http://35.200.46.204/#/1.peers/peer_status
-pub async fn status(
+pub(crate) async fn status(
     base_url: &str,
     peer_info: &PeerInfo,
 ) -> Result<PeerStatusMessage, error::ErrorEnum> {

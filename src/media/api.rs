@@ -13,7 +13,7 @@ use crate::error;
 /// If the API returns values with 201 Created, create_data returns the information as CreateMediaResponse
 /// If server returns 400, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/2.data/data
-pub async fn create_media(
+pub(crate) async fn create_media(
     base_url: &str,
     is_video: bool,
 ) -> Result<CreateMediaResponse, error::ErrorEnum> {
@@ -28,7 +28,7 @@ pub async fn create_media(
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/streams_delete
-pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/{}", base_url, media_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -39,7 +39,7 @@ pub async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::E
 /// If the API returns values with 201 Created, it returns CreateRtcpResponse
 /// If server returns 400, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_create
-pub async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::ErrorEnum> {
+pub(crate) async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::ErrorEnum> {
     let api_url = format!("{}/media/rtcp", base_url);
     let api_call = || Client::new().post(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<CreateRtcpResponse>().map_err(Into::into);
@@ -50,7 +50,7 @@ pub async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::Er
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_delete
-pub async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::ErrorEnum> {
+pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::ErrorEnum> {
     let api_url = format!("{}/media/rtcp/{}", base_url, rtcp_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
@@ -61,7 +61,7 @@ pub async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::Err
 /// If the API returns values with 202 Accepted, it returns CallResponse
 /// If server returns 400, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_connection_create
-pub async fn create_call(
+pub(crate) async fn create_call(
     base_url: &str,
     call_params: &CallParameters,
 ) -> Result<CallResponse, error::ErrorEnum> {
@@ -75,7 +75,7 @@ pub async fn create_call(
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, it returns error
 /// http://35.200.46.204/#/3.media/media_connection_close
-pub async fn delete_call(
+pub(crate) async fn delete_call(
     base_url: &str,
     media_connection_id: &str,
 ) -> Result<(), error::ErrorEnum> {
@@ -89,7 +89,7 @@ pub async fn delete_call(
 /// If the API returns values with 202 Accepted, it returns AnswerResponse
 /// If server returns 400, 403, 405, 406, 408, it returns error
 /// http://35.200.46.204/#/3.media/media_connection_answer
-pub async fn answer(
+pub(crate) async fn answer(
     base_url: &str,
     media_connection_id: &str,
     params: &AnswerParameters,
@@ -107,7 +107,7 @@ pub async fn answer(
 /// If the API returns values with 201 Accepted, it returns ()
 /// If server returns 400, 403, 405, 406, 408, it returns error
 /// http://35.200.46.204/#/3.media/media_connection_pli
-pub async fn pli(
+pub(crate) async fn pli(
     base_url: &str,
     media_connection_id: &str,
     params: &RedirectParams,
@@ -122,7 +122,7 @@ pub async fn pli(
 /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
 /// If server returns 400, 403, 404, 405, 406, 408, it returns error
 /// http://35.200.46.204/#/3.media/media_connection_event
-pub async fn event(
+pub(crate) async fn event(
     base_url: &str,
     media_connection_id: &str,
 ) -> Result<MediaConnectionEventEnum, error::ErrorEnum> {
@@ -147,7 +147,7 @@ pub async fn event(
 /// If the API returns values with 200 Ok, it returns MediaConnectionStatus
 /// If server returns 400, 403, 404, 405, 406, 408, it returns error
 /// http://35.200.46.204/#/3.media/media_connection_status
-pub async fn status(
+pub(crate) async fn status(
     base_url: &str,
     media_connection_id: &str,
 ) -> Result<MediaConnectionStatus, error::ErrorEnum> {

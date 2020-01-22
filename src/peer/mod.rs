@@ -1,12 +1,17 @@
 /// Functions in this module are responsible for concealing the raw APIs
 mod api;
-pub mod formats;
+pub(crate) mod formats;
 
 use futures::channel::mpsc;
 use futures::*;
 
 use crate::error;
-use formats::*;
+use formats::PeerId;
+pub use formats::{
+    CreatedResponse, PeerCallEvent, PeerCallEventMediaParams, PeerCloseEvent, PeerConnectionEvent,
+    PeerConnectionEventDataParams, PeerErrorEvent, PeerEventEnum, PeerInfo, PeerOpenEvent,
+    PeerOptions, PeerStatusMessage,
+};
 
 /// Send Creating a Peer Object request to WebRTC Gateway
 /// Notice: This api call does not guarantee that WebRTC Gateway creates a Peer Object successfully.

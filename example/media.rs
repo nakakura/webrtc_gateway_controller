@@ -13,8 +13,8 @@ use futures::prelude::*;
 use log::{info, warn};
 use serde_derive::Deserialize;
 
-use media::formats::*;
-use peer::formats::PeerEventEnum;
+use media::*;
+use peer::PeerEventEnum;
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -58,8 +58,8 @@ impl PeerFoldState {
 
 #[derive(Clone, Debug, Deserialize)]
 struct MediaPair {
-    media_id: media::formats::CreateMediaResponse,
-    rtcp_id: media::formats::CreateRtcpResponse,
+    media_id: media::CreateMediaResponse,
+    rtcp_id: media::CreateRtcpResponse,
 }
 
 // It shows config toml formats
@@ -469,8 +469,7 @@ async fn call(
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) =
-        mpsc::channel::<media::MediaConnectionEventEnum>(0);
+    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEvents>(0);
     let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
     tokio::spawn(event_listen_fut);
 
@@ -498,7 +497,7 @@ async fn call(
 // It parse the stream and process them with its internal functions
 async fn on_media_events(
     state: MediaConnectionState,
-    event: Either<media::MediaConnectionEventEnum, ControlMessage>,
+    event: Either<media::MediaConnectionEvents, ControlMessage>,
 ) -> Result<MediaConnectionState, error::ErrorEnum> {
     match event {
         Either::Left(event) => on_media_api_events(state, event).await,
@@ -509,11 +508,11 @@ async fn on_media_events(
 // This function process MediaConnection events
 async fn on_media_api_events(
     state: MediaConnectionState,
-    event: media::MediaConnectionEventEnum,
+    event: media::MediaConnectionEvents,
 ) -> Result<MediaConnectionState, error::ErrorEnum> {
     //FIXME not enough
     match event {
-        media::MediaConnectionEventEnum::READY(media_connection_id) => {
+        media::MediaConnectionEvents::READY(media_connection_id) => {
             info!("{:?} is ready", media_connection_id);
             let value = state
                 .get(&media_connection_id)
@@ -523,7 +522,7 @@ async fn on_media_api_events(
             info!("it's redirect info is {:?}", value.2);
             Ok(state)
         }
-        media::MediaConnectionEventEnum::CLOSE(media_connection_id) => {
+        media::MediaConnectionEvents::CLOSE(media_connection_id) => {
             info!("{:?} is closed", media_connection_id);
             Ok(state)
         }

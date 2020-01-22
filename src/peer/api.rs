@@ -1,6 +1,3 @@
-//FIXME
-#![allow(dead_code)]
-
 /// Functions in this mod are responsible for calling raw APIs
 use futures::*;
 use reqwest;

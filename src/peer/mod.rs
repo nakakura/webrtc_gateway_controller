@@ -5,7 +5,6 @@ pub mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::{PeerId, PeerInfo};
 use crate::error;
 use formats::*;
 

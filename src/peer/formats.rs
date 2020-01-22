@@ -1,6 +1,38 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{DataConnectionId, PeerId, PeerInfo};
+use crate::DataConnectionId;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct PeerId(pub String);
+
+impl PeerId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn new(peer_id: impl Into<String>) -> Self {
+        PeerId(peer_id.into())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct Token(pub String);
+
+impl Token {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn new(token: impl Into<String>) -> Self {
+        Token(token.into())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct PeerInfo {
+    pub peer_id: PeerId,
+    pub token: Token,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerOptions {

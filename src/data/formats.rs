@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{DataConnectionId, PeerId, Token};
+use crate::{PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreatedResponse {
@@ -56,6 +56,19 @@ impl DataId {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct DataIdWrapper {
     pub data_id: DataId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct DataConnectionId(pub String);
+
+impl DataConnectionId {
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn new(data_connection_id: impl Into<String>) -> Self {
+        DataConnectionId(data_connection_id.into())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

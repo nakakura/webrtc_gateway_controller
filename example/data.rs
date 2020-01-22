@@ -14,7 +14,6 @@ use log::{info, warn};
 use serde_derive::Deserialize;
 
 use peer::formats::PeerEventEnum;
-use webrtc_gateway_controller::common::{DataConnectionId, PeerId, PeerInfo};
 use webrtc_gateway_controller::data::formats::{CreatedResponse, DataIdWrapper, RedirectParams};
 use webrtc_gateway_controller::*;
 
@@ -103,7 +102,7 @@ async fn main() {
     let config = read_config("example/data.toml");
     let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
     let domain = config.peer.domain;
-    let peer_id = common::PeerId::new(config.peer.peer_id);
+    let peer_id = PeerId::new(config.peer.peer_id);
     let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
     webrtc_gateway_controller::initialize(base_url);
 

@@ -5,7 +5,6 @@ use futures::prelude::*;
 use log::info;
 
 use peer::formats::PeerEventEnum;
-use webrtc_gateway_controller::common::PeerInfo;
 use webrtc_gateway_controller::*;
 
 #[derive(Debug)]
@@ -24,7 +23,7 @@ async fn main() {
     let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
     let domain = ::std::env::var("DOMAIN").expect("DOMAIN is not set in environment variables");
     let peer_id = ::std::env::var("PEER_ID").expect("PEER_ID is not set in environment variables");
-    let peer_id = common::PeerId::new(peer_id);
+    let peer_id = PeerId::new(peer_id);
     let base_url = ::std::env::var("BASE_URL").unwrap_or("http://localhost:8000".to_string());
     webrtc_gateway_controller::initialize(base_url);
 

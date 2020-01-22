@@ -1,4 +1,4 @@
-use crate::common::{PeerId, Token};
+use crate::{PeerId, Token};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]

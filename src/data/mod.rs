@@ -4,9 +4,9 @@ pub mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::DataConnectionId;
 use crate::data::formats::*;
 use crate::error;
+use formats::DataConnectionId;
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {

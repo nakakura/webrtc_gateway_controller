@@ -15,7 +15,6 @@ use serde_derive::Deserialize;
 
 use media::formats::*;
 use peer::formats::PeerEventEnum;
-use webrtc_gateway_controller::common::{PeerId, PeerInfo};
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -155,7 +154,7 @@ async fn main() {
 
     let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
     let domain = config.peer.domain;
-    let peer_id = common::PeerId::new(config.peer.peer_id);
+    let peer_id = PeerId::new(config.peer.peer_id);
     let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
     webrtc_gateway_controller::initialize(base_url);
 

@@ -1022,9 +1022,9 @@ mod test_delete_rtcp {
 mod test_create_call {
     use serde_json::json;
 
-    use crate::common::*;
     use crate::error;
     use crate::media::formats::CallParameters;
+    use crate::*;
     use helper::server;
 
     /// Fn create_call access to the POST /media/connections endpoint.

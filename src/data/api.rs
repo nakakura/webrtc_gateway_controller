@@ -527,9 +527,9 @@ mod test_create_data_connection {
     use futures::*;
     use serde_json::json;
 
-    use crate::common::{PeerId, Token};
     use crate::data::formats::*;
     use crate::error;
+    use crate::{PeerId, Token};
     use helper::server;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
@@ -796,8 +796,8 @@ mod test_create_data_connection {
 mod test_delete_data_connection {
     use serde_json::json;
 
-    use crate::common::DataConnectionId;
     use crate::error;
+    use crate::DataConnectionId;
     use helper::server;
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -1017,9 +1017,9 @@ mod test_redirect_data_connection {
     use futures::*;
     use serde_json::json;
 
-    use crate::common::DataConnectionId;
     use crate::data::formats::*;
     use crate::error;
+    use crate::DataConnectionId;
     use helper::server;
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -1397,8 +1397,8 @@ mod test_redirect_data_connection {
 mod test_status {
     use serde_json::json;
 
-    use crate::common::DataConnectionId;
     use crate::error;
+    use crate::DataConnectionId;
     use helper::server;
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -1650,9 +1650,9 @@ mod test_status {
 mod test_event {
     use serde_json::json;
 
-    use crate::common::DataConnectionId;
     use crate::data::formats::DataConnectionEventEnum;
     use crate::error;
+    use crate::DataConnectionId;
     use helper::server;
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.

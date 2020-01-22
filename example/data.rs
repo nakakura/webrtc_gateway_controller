@@ -13,6 +13,7 @@ use futures::prelude::*;
 use log::{info, warn};
 use serde_derive::Deserialize;
 
+use std::net::SocketAddr;
 use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper, RedirectParams};
 use webrtc_gateway_controller::*;
 
@@ -92,6 +93,13 @@ fn read_config(path: &'static str) -> Config {
 
 #[tokio::main]
 async fn main() {
+    let x: SocketAddr = "[2001:DB8:0:0:8:800:200C:417A]:8000".parse().unwrap();
+    let x = common::SocketInfo(x);
+    let json = serde_json::to_string(&x).unwrap();
+    println!("{:?}", json);
+    let item: common::SocketInfo = serde_json::from_str(&json).unwrap();
+    println!("{:?}", item);
+
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
     }

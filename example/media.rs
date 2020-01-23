@@ -58,7 +58,7 @@ impl PeerFoldState {
 
 #[derive(Clone, Debug, Deserialize)]
 struct MediaPair {
-    media_id: media::CreateMediaResponse,
+    media_id: SocketInfo<MediaId>,
     rtcp_id: SocketInfo<RtcpId>,
 }
 
@@ -308,8 +308,8 @@ async fn create_constraints(
                 MediaParams {
                     band_width: params.band_width,
                     codec: params.codec,
-                    media_id: media_response.media_id,
-                    rtcp_id: Some(rtcp_response.get_id().expect("no id")),
+                    media_id: media_response.get_id().expect("no media_id"),
+                    rtcp_id: Some(rtcp_response.get_id().expect("no rtcp_id")),
                     payload_type: Some(params.payload_type),
                     sampling_rate: Some(params.sampling_rate),
                 }
@@ -336,7 +336,7 @@ async fn create_constraints(
                 MediaParams {
                     band_width: params.band_width,
                     codec: params.codec,
-                    media_id: media_response.media_id,
+                    media_id: media_response.get_id().expect("no media_id"),
                     rtcp_id: Some(rtcp_response.get_id().expect("no id")),
                     payload_type: Some(params.payload_type),
                     sampling_rate: Some(params.sampling_rate),

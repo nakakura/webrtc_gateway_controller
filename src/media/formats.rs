@@ -16,6 +16,27 @@ impl MediaId {
     }
 }
 
+impl SerializableId for MediaId {
+    fn new(id: Option<String>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        id.map(|id| MediaId(id))
+    }
+
+    fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    fn id(&self) -> String {
+        self.0.clone()
+    }
+
+    fn key(&self) -> &'static str {
+        "media_id"
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct RtcpId(pub String);
 
@@ -66,14 +87,6 @@ impl MediaConnectionId {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CreateMediaOptions {
     pub is_video: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct CreateMediaResponse {
-    pub media_id: MediaId,
-    pub port: u16,
-    pub ip_v4: Option<String>,
-    pub ip_v6: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

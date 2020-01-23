@@ -13,11 +13,11 @@ use crate::error;
 pub(crate) async fn create_media(
     base_url: &str,
     is_video: bool,
-) -> Result<CreateMediaResponse, error::Error> {
+) -> Result<SocketInfo<MediaId>, error::Error> {
     let api_url = format!("{}/media", base_url);
     let option = CreateMediaOptions { is_video: is_video };
     let api_call = || Client::new().post(&api_url).json(&option).send();
-    let parser = |r: reqwest::Response| r.json::<CreateMediaResponse>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<SocketInfo<MediaId>>().map_err(Into::into);
     common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 

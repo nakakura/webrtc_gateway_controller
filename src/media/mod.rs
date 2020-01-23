@@ -9,8 +9,8 @@ use crate::error;
 
 pub use formats::{
     AnswerParameters, AnswerResponse, AnswerResponseParams, CallParameters, CallResponse,
-    Constraints, CreateMediaOptions, CreateMediaResponse, MediaConnectionEventEnum,
-    MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams, RedirectParameters, SsrcPair,
+    Constraints, CreateMediaOptions, MediaConnectionEventEnum, MediaConnectionIdWrapper,
+    MediaConnectionStatus, MediaParams, RedirectParameters, SsrcPair,
 };
 use formats::{MediaConnectionId, MediaId, RtcpId};
 
@@ -22,7 +22,7 @@ pub enum MediaConnectionEvents {
     ERROR((MediaConnectionId, String)),
 }
 
-pub async fn open_media_socket(is_video: bool) -> Result<CreateMediaResponse, error::Error> {
+pub async fn open_media_socket(is_video: bool) -> Result<SocketInfo<MediaId>, error::Error> {
     let base_url = super::base_url();
     api::create_media(base_url, is_video).await
 }

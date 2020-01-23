@@ -8,9 +8,7 @@ use crate::data::formats::*;
 use crate::error;
 use formats::DataConnectionId;
 
-pub use formats::{
-    CreateDataConnectionQuery, CreatedResponse, DataIdWrapper, RedirectDataParams, RedirectParams,
-};
+pub use formats::{CreateDataConnectionQuery, CreatedResponse, DataIdWrapper, RedirectDataParams};
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {

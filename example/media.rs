@@ -370,29 +370,26 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
     };
     if media_params.video_redirect.is_some() {
         let params = media_params.video_redirect.unwrap();
-        redirect_params.video = Some(RedirectParams {
-            ip_v4: Some(params.media_ip),
-            ip_v6: None,
-            port: params.media_port,
-        });
-        redirect_params.video_rtcp = Some(RedirectParams {
-            ip_v4: Some(params.rtcp_ip),
-            ip_v6: None,
-            port: params.rtcp_port,
-        });
+
+        redirect_params.video = Some(
+            SocketInfo::try_create(&params.media_ip, params.media_port)
+                .expect("invalid video redirect parameter"),
+        );
+        redirect_params.video_rtcp = Some(
+            SocketInfo::try_create(&params.rtcp_ip, params.rtcp_port)
+                .expect("invalid video_rtcp redirect parameter"),
+        );
     }
     if media_params.audio_redirect.is_some() {
         let params = media_params.audio_redirect.unwrap();
-        redirect_params.audio = Some(RedirectParams {
-            ip_v4: Some(params.media_ip),
-            ip_v6: None,
-            port: params.media_port,
-        });
-        redirect_params.audio_rtcp = Some(RedirectParams {
-            ip_v4: Some(params.rtcp_ip),
-            ip_v6: None,
-            port: params.rtcp_port,
-        });
+        redirect_params.audio = Some(
+            SocketInfo::try_create(&params.media_ip, params.media_port)
+                .expect("invalid video redirect parameter"),
+        );
+        redirect_params.audio_rtcp = Some(
+            SocketInfo::try_create(&params.rtcp_ip, params.rtcp_port)
+                .expect("invalid video_rtcp redirect parameter"),
+        );
     }
     redirect_params
 }

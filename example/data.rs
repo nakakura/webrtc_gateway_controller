@@ -13,8 +13,7 @@ use futures::prelude::*;
 use log::{info, warn};
 use serde_derive::Deserialize;
 
-use std::net::SocketAddr;
-use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper, RedirectParams};
+use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper};
 use webrtc_gateway_controller::*;
 
 // Wrap user input strings with New-Type pattern
@@ -93,13 +92,6 @@ fn read_config(path: &'static str) -> Config {
 
 #[tokio::main]
 async fn main() {
-    let x: SocketAddr = "[2001:DB8:0:0:8:800:200C:417A]:8000".parse().unwrap();
-    let x = common::SocketInfo(x);
-    let json = serde_json::to_string(&x).unwrap();
-    println!("{:?}", json);
-    let item: common::SocketInfo = serde_json::from_str(&json).unwrap();
-    println!("{:?}", item);
-
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
     }
@@ -254,21 +246,21 @@ async fn on_peer_key_events(
 // This struct shows the previous state.
 #[derive(Clone, Default)]
 struct DataConnectionState(
-    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<RedirectParams>)>,
+    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo>)>,
 );
 
 // This struct has only setter and getter.
 impl DataConnectionState {
     pub fn data_connection_id_iter(
         &self,
-    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<RedirectParams>)> {
+    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo>)> {
         self.0.keys()
     }
 
     pub fn insert_data_connection_id(
         &mut self,
         data_connection_id: DataConnectionId,
-        value: (Option<CreatedResponse>, Option<RedirectParams>),
+        value: (Option<CreatedResponse>, Option<SocketInfo>),
     ) {
         let _ = self.0.insert(data_connection_id, value);
     }
@@ -284,7 +276,7 @@ impl DataConnectionState {
     pub fn get(
         &self,
         data_connection_id: &DataConnectionId,
-    ) -> Option<&(Option<CreatedResponse>, Option<RedirectParams>)> {
+    ) -> Option<&(Option<CreatedResponse>, Option<SocketInfo>)> {
         self.0.get(data_connection_id)
     }
 }
@@ -305,11 +297,7 @@ async fn connect(
 
     // Data received from DataConnection will be redirected according to this information.
     let redirect_info = params.socket_config().map(|socket_config| {
-        RedirectParams {
-            ip_v4: Some(socket_config.ip),
-            ip_v6: None, //FIXME
-            port: socket_config.port,
-        }
+        SocketInfo::try_create(&socket_config.ip, socket_config.port).expect("invalid data port")
     });
 
     // set up query and access to connect API.
@@ -364,11 +352,7 @@ async fn redirect(
     // If there is no redirect infor in config.toml, redirect info will be None.
     // In this case, the data channel is virtually sendonly.
     let redirect_info = params.socket_config().map(|socket_config| {
-        RedirectParams {
-            ip_v4: Some(socket_config.ip),
-            ip_v6: None, //FIXME
-            port: socket_config.port,
-        }
+        SocketInfo::try_create(&socket_config.ip, socket_config.port).expect("invalid data port")
     });
     let redirect_params = data::RedirectDataParams {
         feed_params: Some(DataIdWrapper {

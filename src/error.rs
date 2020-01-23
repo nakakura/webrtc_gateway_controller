@@ -35,6 +35,8 @@ pub enum Error {
     Utf8Error { error: ::std::str::Utf8Error },
     #[fail(display = "ReqwestError: {:?}", error)]
     ReqwestError { error: ReqwestError },
+    #[fail(display = "AddrParseError: {:?}", error)]
+    AddrParseError { error: std::net::AddrParseError },
     #[fail(display = "Utf8Error: {:?}", error)]
     MyError { error: String },
 }
@@ -98,6 +100,12 @@ impl PartialEq for ReqwestError {
 impl From<serde_json::Error> for Error {
     fn from(error: serde_json::Error) -> Error {
         Error::Serde { error: error }
+    }
+}
+
+impl From<std::net::AddrParseError> for Error {
+    fn from(error: std::net::AddrParseError) -> Error {
+        Error::AddrParseError { error: error }
     }
 }
 

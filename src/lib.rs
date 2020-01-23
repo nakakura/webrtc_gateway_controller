@@ -29,6 +29,7 @@ pub(crate) fn base_url() -> &'static str {
     }
 }
 
+pub use common::SocketInfo;
 pub use data::formats::{DataConnectionId, DataId};
 pub use media::formats::{MediaConnectionId, MediaId, RtcpId};
 pub use peer::formats::{PeerEventEnum, PeerId, PeerInfo, Token};

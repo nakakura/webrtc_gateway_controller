@@ -56,8 +56,16 @@ where
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SocketInfo(pub SocketAddr);
+
+impl SocketInfo {
+    pub fn try_create(ip: &str, port: u16) -> Result<Self, error::Error> {
+        let ip: IpAddr = ip.parse()?;
+        let socket = SocketAddr::new(ip, port);
+        Ok(socket.into())
+    }
+}
 
 impl Deref for SocketInfo {
     type Target = SocketAddr;

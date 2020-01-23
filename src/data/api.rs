@@ -1073,7 +1073,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,
@@ -1130,7 +1130,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,
@@ -1177,7 +1177,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,
@@ -1224,7 +1224,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,
@@ -1271,7 +1271,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,
@@ -1318,7 +1318,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,
@@ -1366,7 +1366,7 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = RedirectParams {
+        let redirect_params = SocketInfo {
             ip_v4: Some(ip_v4.to_string()),
             ip_v6: None,
             port: port,

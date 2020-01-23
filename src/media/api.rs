@@ -3,7 +3,7 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common;
+use crate::common::{self, SocketInfo};
 use crate::error;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
@@ -107,7 +107,7 @@ pub(crate) async fn answer(
 pub(crate) async fn pli(
     base_url: &str,
     media_connection_id: &str,
-    params: &RedirectParams,
+    params: &SocketInfo,
 ) -> Result<(), error::Error> {
     let api_url = format!("{}/media/connections/{}/pli", base_url, media_connection_id);
     let api_call = || Client::new().post(&api_url).json(params).send();
@@ -1892,7 +1892,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,
@@ -1935,7 +1935,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,
@@ -1971,7 +1971,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,
@@ -2007,7 +2007,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,
@@ -2043,7 +2043,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,
@@ -2079,7 +2079,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,
@@ -2115,7 +2115,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = RedirectParams {
+        let params = SocketInfo {
             port: 10001,
             ip_v4: Some("127.0.0.1".to_string()),
             ip_v6: None,

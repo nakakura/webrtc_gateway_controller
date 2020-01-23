@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+use crate::common::SocketInfo;
 use crate::{PeerId, Token};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CreatedResponse {
     pub data_id: DataId,
     pub port: u16,
@@ -10,17 +11,17 @@ pub struct CreatedResponse {
     pub ip_v6: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CreateDataConnectionQuery {
     pub peer_id: PeerId,
     pub token: Token,
     pub options: Option<DataConnectionParameters>,
     pub target_id: PeerId,
     pub params: Option<DataIdWrapper>,
-    pub redirect_params: Option<RedirectParams>,
+    pub redirect_params: Option<SocketInfo>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[allow(non_snake_case)]
 pub struct DataConnectionParameters {
     pub metadata: String,
@@ -28,7 +29,7 @@ pub struct DataConnectionParameters {
     pub dcInit: DcInit,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[allow(non_snake_case)]
 pub struct DcInit {
     pub ordered: bool,
@@ -40,7 +41,7 @@ pub struct DcInit {
     pub priority: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct DataId(pub String);
 
 impl DataId {
@@ -53,7 +54,7 @@ impl DataId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DataIdWrapper {
     pub data_id: DataId,
 }
@@ -71,37 +72,30 @@ impl DataConnectionId {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CreateDataConnectionResponse {
     pub command_type: String,
     pub params: DataConnectionIdWrapper,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DataConnectionIdWrapper {
     pub data_connection_id: DataConnectionId,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-pub struct RedirectParams {
-    pub ip_v4: Option<String>,
-    pub ip_v6: Option<String>,
-    pub port: u16,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectDataParams {
     pub feed_params: Option<DataIdWrapper>,
-    pub redirect_params: Option<RedirectParams>,
+    pub redirect_params: Option<SocketInfo>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectDataResponse {
     pub command_type: String,
     pub data_id: DataId,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DataConnectionStatus {
     pub remote_id: String,
     pub buffersize: usize,
@@ -113,7 +107,7 @@ pub struct DataConnectionStatus {
     r#type: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "event")]
 pub enum DataConnectionEventEnum {
     OPEN,
@@ -122,9 +116,9 @@ pub enum DataConnectionEventEnum {
     TIMEOUT,
 }
 
-#[derive(Debug, PartialOrd, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct OnOpenTxParameters(pub DataConnectionId);
-#[derive(Debug, PartialOrd, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct OnCloseTxParameters(pub DataConnectionId);
-#[derive(Debug, PartialOrd, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct OnErrorTxParameters(pub DataConnectionId, pub String);

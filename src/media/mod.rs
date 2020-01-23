@@ -4,13 +4,14 @@ pub(crate) mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
+use crate::common::SocketInfo;
 use crate::error;
 
 pub use formats::{
     AnswerParameters, AnswerResponse, AnswerResponseParams, CallParameters, CallResponse,
     Constraints, CreateMediaOptions, CreateMediaResponse, CreateRtcpResponse,
     MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams,
-    RedirectParameters, RedirectParams, SsrcPair,
+    RedirectParameters, SsrcPair,
 };
 use formats::{MediaConnectionId, MediaId, RtcpId};
 
@@ -62,7 +63,7 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 
 pub async fn send_pli(
     media_connection_id: &MediaConnectionId,
-    params: &RedirectParams,
+    params: &SocketInfo,
 ) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::pli(base_url, media_connection_id.as_str(), params).await

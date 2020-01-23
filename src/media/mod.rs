@@ -4,7 +4,7 @@ pub(crate) mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::SocketInfo;
+use crate::common::{PhantomId, SocketInfo};
 use crate::error;
 
 pub use formats::{
@@ -63,7 +63,7 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 
 pub async fn send_pli(
     media_connection_id: &MediaConnectionId,
-    params: &SocketInfo,
+    params: &SocketInfo<PhantomId>,
 ) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::pli(base_url, media_connection_id.as_str(), params).await

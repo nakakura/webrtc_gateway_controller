@@ -246,21 +246,21 @@ async fn on_peer_key_events(
 // This struct shows the previous state.
 #[derive(Clone, Default)]
 struct DataConnectionState(
-    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo>)>,
+    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)>,
 );
 
 // This struct has only setter and getter.
 impl DataConnectionState {
     pub fn data_connection_id_iter(
         &self,
-    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo>)> {
+    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
         self.0.keys()
     }
 
     pub fn insert_data_connection_id(
         &mut self,
         data_connection_id: DataConnectionId,
-        value: (Option<CreatedResponse>, Option<SocketInfo>),
+        value: (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>),
     ) {
         let _ = self.0.insert(data_connection_id, value);
     }
@@ -276,7 +276,7 @@ impl DataConnectionState {
     pub fn get(
         &self,
         data_connection_id: &DataConnectionId,
-    ) -> Option<&(Option<CreatedResponse>, Option<SocketInfo>)> {
+    ) -> Option<&(Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
         self.0.get(data_connection_id)
     }
 }
@@ -297,7 +297,8 @@ async fn connect(
 
     // Data received from DataConnection will be redirected according to this information.
     let redirect_info = params.socket_config().map(|socket_config| {
-        SocketInfo::try_create(&socket_config.ip, socket_config.port).expect("invalid data port")
+        SocketInfo::<PhantomId>::try_create(None, &socket_config.ip, socket_config.port)
+            .expect("invalid data port")
     });
 
     // set up query and access to connect API.
@@ -352,7 +353,8 @@ async fn redirect(
     // If there is no redirect infor in config.toml, redirect info will be None.
     // In this case, the data channel is virtually sendonly.
     let redirect_info = params.socket_config().map(|socket_config| {
-        SocketInfo::try_create(&socket_config.ip, socket_config.port).expect("invalid data port")
+        SocketInfo::<PhantomId>::try_create(None, &socket_config.ip, socket_config.port)
+            .expect("invalid data port")
     });
     let redirect_params = data::RedirectDataParams {
         feed_params: Some(DataIdWrapper {

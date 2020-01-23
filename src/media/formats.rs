@@ -1,5 +1,7 @@
-use crate::{PeerId, SocketInfo, Token};
 use serde::{Deserialize, Serialize};
+
+use crate::common::{PhantomId, SocketInfo};
+use crate::{PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct MediaId(pub String);
@@ -93,10 +95,10 @@ pub struct MediaParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectParameters {
-    pub video: Option<SocketInfo>,
-    pub video_rtcp: Option<SocketInfo>,
-    pub audio: Option<SocketInfo>,
-    pub audio_rtcp: Option<SocketInfo>,
+    pub video: Option<SocketInfo<PhantomId>>,
+    pub video_rtcp: Option<SocketInfo<PhantomId>>,
+    pub audio: Option<SocketInfo<PhantomId>>,
+    pub audio_rtcp: Option<SocketInfo<PhantomId>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

@@ -18,6 +18,7 @@ pub fn initialize(base_url: impl Into<String>) {
     }
 }
 
+//use crate::common::{MyId, MySocket, PhantomId};
 pub(crate) fn base_url() -> &'static str {
     unsafe {
         INIT_CHECK.call_once(|| {
@@ -29,7 +30,7 @@ pub(crate) fn base_url() -> &'static str {
     }
 }
 
-pub use common::SocketInfo;
+pub use common::{PhantomId, SerializableSocket, SocketInfo};
 pub use data::formats::{DataConnectionId, DataId};
 pub use media::formats::{MediaConnectionId, MediaId, RtcpId};
 pub use peer::formats::{PeerEventEnum, PeerId, PeerInfo, Token};

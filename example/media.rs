@@ -372,22 +372,22 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
         let params = media_params.video_redirect.unwrap();
 
         redirect_params.video = Some(
-            SocketInfo::try_create(&params.media_ip, params.media_port)
+            SocketInfo::try_create(None, &params.media_ip, params.media_port)
                 .expect("invalid video redirect parameter"),
         );
         redirect_params.video_rtcp = Some(
-            SocketInfo::try_create(&params.rtcp_ip, params.rtcp_port)
+            SocketInfo::try_create(None, &params.rtcp_ip, params.rtcp_port)
                 .expect("invalid video_rtcp redirect parameter"),
         );
     }
     if media_params.audio_redirect.is_some() {
         let params = media_params.audio_redirect.unwrap();
         redirect_params.audio = Some(
-            SocketInfo::try_create(&params.media_ip, params.media_port)
+            SocketInfo::try_create(None, &params.media_ip, params.media_port)
                 .expect("invalid video redirect parameter"),
         );
         redirect_params.audio_rtcp = Some(
-            SocketInfo::try_create(&params.rtcp_ip, params.rtcp_port)
+            SocketInfo::try_create(None, &params.rtcp_ip, params.rtcp_port)
                 .expect("invalid video_rtcp redirect parameter"),
         );
     }

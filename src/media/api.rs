@@ -3,7 +3,7 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common::{self, SocketInfo};
+use crate::common::{self, PhantomId, SocketInfo};
 use crate::error;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
@@ -107,7 +107,7 @@ pub(crate) async fn answer(
 pub(crate) async fn pli(
     base_url: &str,
     media_connection_id: &str,
-    params: &SocketInfo,
+    params: &SocketInfo<PhantomId>,
 ) -> Result<(), error::Error> {
     let api_url = format!("{}/media/connections/{}/pli", base_url, media_connection_id);
     let api_call = || Client::new().post(&api_url).json(params).send();

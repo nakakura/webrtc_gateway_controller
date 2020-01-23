@@ -3,7 +3,6 @@ use reqwest;
 
 use std::fmt;
 use std::net::{IpAddr, SocketAddr};
-use std::ops::Deref;
 
 use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
@@ -57,53 +56,114 @@ where
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct SocketInfo(pub SocketAddr);
+pub struct PhantomId(String);
 
-impl SocketInfo {
-    pub fn try_create(ip: &str, port: u16) -> Result<Self, error::Error> {
+impl SerializableId for PhantomId {
+    fn new(_id: Option<String>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        None
+    }
+
+    fn as_str(&self) -> &str {
+        ""
+    }
+
+    fn id(&self) -> (&'static str, String) {
+        ("", String::from(""))
+    }
+}
+
+pub trait SerializableId {
+    fn new(id: Option<String>) -> Option<Self>
+    where
+        Self: Sized;
+    fn as_str(&self) -> &str;
+    fn id(&self) -> (&'static str, String);
+}
+
+pub trait SerializableSocket {
+    fn new(id: Option<String>, socket: SocketAddr) -> Self;
+    fn try_create(id: Option<String>, ip: &str, port: u16) -> Result<Self, error::Error>
+    where
+        Self: Sized;
+    fn id(&self) -> (&'static str, String);
+    fn ip(&self) -> IpAddr;
+    fn port(&self) -> u16;
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct SocketInfo<T: SerializableId> {
+    id: Option<T>,
+    socket: SocketAddr,
+}
+
+impl<T: SerializableId> SerializableSocket for SocketInfo<T> {
+    fn new(id: Option<String>, socket: SocketAddr) -> Self {
+        Self {
+            id: T::new(id),
+            socket: socket,
+        }
+    }
+
+    fn try_create(id: Option<String>, ip: &str, port: u16) -> Result<Self, error::Error> {
         let ip: IpAddr = ip.parse()?;
         let socket = SocketAddr::new(ip, port);
-        Ok(socket.into())
+        Ok(Self::new(id, socket))
+    }
+
+    fn id(&self) -> (&'static str, String) {
+        match self.id {
+            Some(ref id) => id.id(),
+            None => ("", String::from("")),
+        }
+    }
+
+    fn ip(&self) -> IpAddr {
+        self.socket.ip()
+    }
+
+    fn port(&self) -> u16 {
+        self.socket.port()
     }
 }
 
-impl Deref for SocketInfo {
-    type Target = SocketAddr;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<SocketAddr> for SocketInfo {
-    fn from(item: SocketAddr) -> Self {
-        SocketInfo(item)
-    }
-}
-
-impl Serialize for SocketInfo {
+impl<T: SerializableId> Serialize for SocketInfo<T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut rgb = serializer.serialize_struct("SocketAddr", 2)?;
-        if self.is_ipv4() {
-            rgb.serialize_field("ip_v4", &self.ip().to_string())?;
+        let (key, id) = self.id();
+        let mut serial;
+        if key.len() == 0 {
+            serial = serializer.serialize_struct("SocketAddr", 2)?
         } else {
-            rgb.serialize_field("ip_v6", &self.ip().to_string())?;
+            serial = serializer.serialize_struct("SocketAddr", 3)?;
+            serial.serialize_field(key, &id)?;
+        };
+
+        let ip = self.ip();
+        if ip.is_ipv4() {
+            serial.serialize_field("ip_v4", &ip.to_string())?;
+        } else {
+            serial.serialize_field("ip_v6", &ip.to_string())?;
         }
-        rgb.serialize_field("port", &self.port())?;
-        rgb.end()
+        serial.serialize_field("port", &self.port())?;
+        serial.end()
     }
 }
 
-impl<'de> Deserialize<'de> for SocketInfo {
+impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
+        use std::marker::PhantomData;
         enum Field {
             IP,
             PORT,
+            ID,
         };
 
         impl<'de> Deserialize<'de> for Field {
@@ -117,7 +177,7 @@ impl<'de> Deserialize<'de> for SocketInfo {
                     type Value = Field;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        formatter.write_str("`ip_v4` or `ip_v6` or `port`")
+                        formatter.write_str("`ip_v4` or `ip_v6` or `port` or `*_id`")
                     }
 
                     fn visit_str<E>(self, value: &str) -> Result<Field, E>
@@ -128,6 +188,7 @@ impl<'de> Deserialize<'de> for SocketInfo {
                             "ip_v4" => Ok(Field::IP),
                             "ip_v6" => Ok(Field::IP),
                             "port" => Ok(Field::PORT),
+                            id if id.ends_with("_id") => Ok(Field::ID),
                             _ => Err(de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -137,20 +198,21 @@ impl<'de> Deserialize<'de> for SocketInfo {
             }
         }
 
-        struct SocketInfoVisitor;
+        struct SocketInfoVisitor<T>(PhantomData<T>);
 
-        impl<'de> Visitor<'de> for SocketInfoVisitor {
-            type Value = SocketInfo;
+        impl<'de, T: SerializableId> Visitor<'de> for SocketInfoVisitor<T> {
+            type Value = SocketInfo<T>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("struct SocketAddr")
             }
 
-            fn visit_map<V>(self, mut map: V) -> Result<SocketInfo, V::Error>
+            fn visit_map<V>(self, mut map: V) -> Result<SocketInfo<T>, V::Error>
             where
                 V: MapAccess<'de>,
             {
                 let mut ip: Option<String> = None;
+                let mut id: Option<String> = None;
                 let mut port: Option<u16> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -168,18 +230,25 @@ impl<'de> Deserialize<'de> for SocketInfo {
                             ip = Some(map.next_value()?);
                             println!("{:?}", ip);
                         }
+                        Field::ID => {
+                            if id.is_some() {
+                                return Err(de::Error::duplicate_field("id"));
+                            }
+                            id = Some(map.next_value()?);
+                            println!("{:?}", id);
+                        }
                     }
                 }
                 let ip = ip.ok_or_else(|| de::Error::missing_field("ip_v4 or ip_v6"))?;
                 let ip: IpAddr = ip.parse().expect("ip field parse error");
                 let port = port.ok_or_else(|| de::Error::missing_field("port"))?;
                 let socket = SocketAddr::new(ip, port);
-                Ok(socket.into())
+                Ok(SocketInfo::<T>::new(id, socket))
             }
         }
 
-        const FIELDS: &'static [&'static str] = &["ip_v4", "ip_v6", "port"];
-        deserializer.deserialize_struct("SocketAddr", FIELDS, SocketInfoVisitor)
+        const FIELDS: &'static [&'static str] = &["ip_v4", "ip_v6", "port", "*_id"];
+        deserializer.deserialize_struct("SocketAddr", FIELDS, SocketInfoVisitor(PhantomData))
     }
 }
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::SocketInfo;
+use crate::common::{PhantomId, SocketInfo};
 use crate::{PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -18,7 +18,7 @@ pub struct CreateDataConnectionQuery {
     pub options: Option<DataConnectionParameters>,
     pub target_id: PeerId,
     pub params: Option<DataIdWrapper>,
-    pub redirect_params: Option<SocketInfo>,
+    pub redirect_params: Option<SocketInfo<PhantomId>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -86,7 +86,7 @@ pub struct DataConnectionIdWrapper {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectDataParams {
     pub feed_params: Option<DataIdWrapper>,
-    pub redirect_params: Option<SocketInfo>,
+    pub redirect_params: Option<SocketInfo<PhantomId>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

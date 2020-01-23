@@ -36,10 +36,10 @@ pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), e
 /// If the API returns values with 201 Created, it returns CreateRtcpResponse
 /// If server returns 400, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_create
-pub(crate) async fn create_rtcp(base_url: &str) -> Result<CreateRtcpResponse, error::Error> {
+pub(crate) async fn create_rtcp(base_url: &str) -> Result<SocketInfo<RtcpId>, error::Error> {
     let api_url = format!("{}/media/rtcp", base_url);
     let api_call = || Client::new().post(&api_url).send();
-    let parser = |r: reqwest::Response| r.json::<CreateRtcpResponse>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<SocketInfo<RtcpId>>().map_err(Into::into);
     common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 

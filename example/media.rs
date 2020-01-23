@@ -59,7 +59,7 @@ impl PeerFoldState {
 #[derive(Clone, Debug, Deserialize)]
 struct MediaPair {
     media_id: media::CreateMediaResponse,
-    rtcp_id: media::CreateRtcpResponse,
+    rtcp_id: SocketInfo<RtcpId>,
 }
 
 // It shows config toml formats
@@ -309,7 +309,7 @@ async fn create_constraints(
                     band_width: params.band_width,
                     codec: params.codec,
                     media_id: media_response.media_id,
-                    rtcp_id: Some(rtcp_response.rtcp_id),
+                    rtcp_id: Some(rtcp_response.get_id().expect("no id")),
                     payload_type: Some(params.payload_type),
                     sampling_rate: Some(params.sampling_rate),
                 }
@@ -337,7 +337,7 @@ async fn create_constraints(
                     band_width: params.band_width,
                     codec: params.codec,
                     media_id: media_response.media_id,
-                    rtcp_id: Some(rtcp_response.rtcp_id),
+                    rtcp_id: Some(rtcp_response.get_id().expect("no id")),
                     payload_type: Some(params.payload_type),
                     sampling_rate: Some(params.sampling_rate),
                 }

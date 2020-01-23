@@ -9,9 +9,8 @@ use crate::error;
 
 pub use formats::{
     AnswerParameters, AnswerResponse, AnswerResponseParams, CallParameters, CallResponse,
-    Constraints, CreateMediaOptions, CreateMediaResponse, CreateRtcpResponse,
-    MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams,
-    RedirectParameters, SsrcPair,
+    Constraints, CreateMediaOptions, CreateMediaResponse, MediaConnectionEventEnum,
+    MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams, RedirectParameters, SsrcPair,
 };
 use formats::{MediaConnectionId, MediaId, RtcpId};
 
@@ -33,7 +32,7 @@ pub async fn delete_media(media_id: &MediaId) -> Result<(), error::Error> {
     api::delete_media(base_url, media_id.as_str()).await
 }
 
-pub async fn open_rtcp_socket() -> Result<CreateRtcpResponse, error::Error> {
+pub async fn open_rtcp_socket() -> Result<SocketInfo<RtcpId>, error::Error> {
     let base_url = super::base_url();
     api::create_rtcp(base_url).await
 }

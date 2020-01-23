@@ -1352,7 +1352,6 @@ mod test_redirect_data_connection {
         let port = 10001;
 
         let server = server::http(move |req| async move {
-            println!("req.uri {:?}", req.uri());
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
                 let json = json!({});
                 http::Response::builder()

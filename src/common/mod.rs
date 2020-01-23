@@ -70,25 +70,31 @@ impl SerializableId for PhantomId {
         ""
     }
 
-    fn id(&self) -> (&'static str, String) {
-        ("", String::from(""))
+    fn id(&self) -> String {
+        String::from("")
+    }
+
+    fn key(&self) -> &'static str {
+        ""
     }
 }
 
-pub trait SerializableId {
+pub trait SerializableId: Clone {
     fn new(id: Option<String>) -> Option<Self>
     where
         Self: Sized;
     fn as_str(&self) -> &str;
-    fn id(&self) -> (&'static str, String);
+    fn id(&self) -> String;
+    fn key(&self) -> &'static str;
 }
 
-pub trait SerializableSocket {
+pub trait SerializableSocket<T> {
     fn new(id: Option<String>, socket: SocketAddr) -> Self;
     fn try_create(id: Option<String>, ip: &str, port: u16) -> Result<Self, error::Error>
     where
         Self: Sized;
-    fn id(&self) -> (&'static str, String);
+    fn get_id(&self) -> Option<T>;
+    fn key(&self) -> &'static str;
     fn ip(&self) -> IpAddr;
     fn port(&self) -> u16;
 }
@@ -99,7 +105,7 @@ pub struct SocketInfo<T: SerializableId> {
     socket: SocketAddr,
 }
 
-impl<T: SerializableId> SerializableSocket for SocketInfo<T> {
+impl<T: SerializableId> SerializableSocket<T> for SocketInfo<T> {
     fn new(id: Option<String>, socket: SocketAddr) -> Self {
         Self {
             id: T::new(id),
@@ -113,10 +119,14 @@ impl<T: SerializableId> SerializableSocket for SocketInfo<T> {
         Ok(Self::new(id, socket))
     }
 
-    fn id(&self) -> (&'static str, String) {
+    fn get_id(&self) -> Option<T> {
+        self.id.clone()
+    }
+
+    fn key(&self) -> &'static str {
         match self.id {
-            Some(ref id) => id.id(),
-            None => ("", String::from("")),
+            Some(ref id) => id.key(),
+            None => "",
         }
     }
 
@@ -134,13 +144,14 @@ impl<T: SerializableId> Serialize for SocketInfo<T> {
     where
         S: Serializer,
     {
-        let (key, id) = self.id();
+        let key = self.key();
+        let id = self.get_id();
         let mut serial;
         if key.len() == 0 {
             serial = serializer.serialize_struct("SocketAddr", 2)?
         } else {
             serial = serializer.serialize_struct("SocketAddr", 3)?;
-            serial.serialize_field(key, &id)?;
+            serial.serialize_field(key, &(id.expect("no id")).id())?;
         };
 
         let ip = self.ip();
@@ -221,21 +232,18 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
                                 return Err(de::Error::duplicate_field("port"));
                             }
                             port = Some(map.next_value()?);
-                            println!("{:?}", port);
                         }
                         Field::IP => {
                             if ip.is_some() {
                                 return Err(de::Error::duplicate_field("ip_v4"));
                             }
                             ip = Some(map.next_value()?);
-                            println!("{:?}", ip);
                         }
                         Field::ID => {
                             if id.is_some() {
                                 return Err(de::Error::duplicate_field("id"));
                             }
                             id = Some(map.next_value()?);
-                            println!("{:?}", id);
                         }
                     }
                 }

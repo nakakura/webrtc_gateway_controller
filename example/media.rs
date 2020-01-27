@@ -57,11 +57,12 @@ impl PeerFoldState {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct MediaPair {
-    media_id: SocketInfo<MediaId>,
-    rtcp_id: SocketInfo<RtcpId>,
+struct MediaSrcSockets {
+    media_socket: SocketInfo<MediaId>,
+    rtcp_socket: SocketInfo<RtcpId>,
 }
 
+//==================== for parsing media.toml ====================
 // It shows config toml formats
 #[derive(Clone, Debug, Deserialize)]
 struct Config {
@@ -113,22 +114,6 @@ struct MediaParamConfig {
     pub sampling_rate: usize,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-struct MediaSocketInfo {
-    pub media_id: MediaId,
-    pub ip_v4: Option<String>,
-    pub ip_v6: Option<String>,
-    pub port: u16,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct RtcpSocketInfo {
-    pub rtcp_id: RtcpId,
-    pub ip_v4: Option<String>,
-    pub ip_v6: Option<String>,
-    pub port: u16,
-}
-
 // read config from toml file
 fn read_config(path: &'static str) -> Config {
     let mut file_content = String::new();
@@ -142,17 +127,22 @@ fn read_config(path: &'static str) -> Config {
     toml::from_str(&file_content).expect("toml parse error")
 }
 
+//==================== main ====================
+
+// Main function creates a peer object and start listening peer events and keyboard events.
+// Further processes are triggered by these events.
 #[tokio::main]
 async fn main() {
+    // initialize logger
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
+        info!("RUST_LOG is not set. So it works as info mode.")
     }
     env_logger::init();
 
     //load and set parameters
-    let config = read_config("example/media.toml");
-
     let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
+    let config = read_config("example/media.toml");
     let domain = config.peer.domain;
     let peer_id = PeerId::new(config.peer.peer_id);
     let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
@@ -177,11 +167,17 @@ async fn main() {
     let fold_fut = peer_event_stream
         .fold(
             // before receiving Peer::OPEN event, peer object might not be created.
-            // So I set None for PeerInfo.
+            // So None is set for Option<PeerInfo>.
             PeerFoldState((None, config.media, vec![])),
-            |sum, acc| async move {
-                let sum = on_peer_events(sum, acc).await.expect("error");
-                sum
+            |state, event| async move {
+                match event {
+                    Either::Left(api_events) => on_peer_api_events(state, api_events)
+                        .await
+                        .expect("error in on_peer_api_events"),
+                    Either::Right(key_events) => on_peer_key_events(state, key_events)
+                        .await
+                        .expect("error in on_peer_key_events"),
+                }
             },
         )
         .map(|_| futures::future::ok::<(), error::Error>(()));
@@ -192,23 +188,15 @@ async fn main() {
     info!("All the futures are finished. They stopped with these status\nfold: {:?}\nevent: {:?}\nkey:{:?}", fold_fut_result, event_fut_result, key_fut_reult);
 }
 
-// This function is called in a fold of User Input and Peer Event streams.
-// It parse the stream and process them with its internal functions
-async fn on_peer_events(
-    status: PeerFoldState,
-    event: Either<PeerEventEnum, String>,
-) -> Result<PeerFoldState, error::Error> {
-    match event {
-        Either::Left(api_events) => on_peer_api_events(status, api_events).await,
-        Either::Right(key_events) => on_peer_key_events(status, key_events).await,
-    }
-}
+//==================== process events for peer ====================
 
 // This function process events from Peer Object
 async fn on_peer_api_events(
     params: PeerFoldState,
     event: PeerEventEnum,
 ) -> Result<PeerFoldState, error::Error> {
+    // FIXME: process CALL and ERROR
+    // CONNECTION is not needed for this program.
     match event {
         PeerEventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
@@ -263,6 +251,7 @@ async fn on_peer_key_events(
             Ok(params)
         }
         message if message.starts_with("disconnect ") => {
+            // FIXME: parse its argument and call proper one
             // Disconnect P2P link
             // This function expects "connect DATA_CONNECTION_ID".
             let notifiers = params.control_message_notifier();
@@ -288,154 +277,10 @@ async fn on_peer_key_events(
     }
 }
 
-async fn create_constraints(
-    media_params: &MediaConfig,
-) -> Result<(Option<MediaPair>, Option<MediaPair>, Constraints), error::Error> {
-    let video_constraints = if media_params.video {
-        let video_response = media::open_media_socket(true).await?;
-        let rtcp_response = media::open_rtcp_socket().await?;
-        let media_pair = MediaPair {
-            media_id: video_response.clone(),
-            rtcp_id: rtcp_response.clone(),
-        };
-        (
-            Some(media_pair),
-            Some((video_response, rtcp_response)).map(|(media_response, rtcp_response)| {
-                let params = media_params
-                    .clone()
-                    .video_params
-                    .expect("video params should be set");
-                MediaParams {
-                    band_width: params.band_width,
-                    codec: params.codec,
-                    media_id: media_response.get_id().expect("no media_id"),
-                    rtcp_id: Some(rtcp_response.get_id().expect("no rtcp_id")),
-                    payload_type: Some(params.payload_type),
-                    sampling_rate: Some(params.sampling_rate),
-                }
-            }),
-        )
-    } else {
-        (None, None)
-    };
-
-    let audio_constraints = if media_params.audio {
-        let audio_response = media::open_media_socket(false).await?;
-        let rtcp_response = media::open_rtcp_socket().await?;
-        let media_pair = MediaPair {
-            media_id: audio_response.clone(),
-            rtcp_id: rtcp_response.clone(),
-        };
-        (
-            Some(media_pair),
-            Some((audio_response, rtcp_response)).map(|(media_response, rtcp_response)| {
-                let params = media_params
-                    .clone()
-                    .audio_params
-                    .expect("video params should be set");
-                MediaParams {
-                    band_width: params.band_width,
-                    codec: params.codec,
-                    media_id: media_response.get_id().expect("no media_id"),
-                    rtcp_id: Some(rtcp_response.get_id().expect("no id")),
-                    payload_type: Some(params.payload_type),
-                    sampling_rate: Some(params.sampling_rate),
-                }
-            }),
-        )
-    } else {
-        (None, None)
-    };
-
-    Ok((
-        video_constraints.0,
-        audio_constraints.0,
-        Constraints {
-            video: media_params.video,
-            videoReceiveEnabled: Some(media_params.video_redirect.is_some()),
-            audio: media_params.audio,
-            audioReceiveEnabled: Some(media_params.audio_redirect.is_some()),
-            video_params: video_constraints.1,
-            audio_params: audio_constraints.1,
-        },
-    ))
-}
-
-fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
-    let mut redirect_params = RedirectParameters {
-        video: None,
-        video_rtcp: None,
-        audio: None,
-        audio_rtcp: None,
-    };
-    if media_params.video_redirect.is_some() {
-        let params = media_params.video_redirect.unwrap();
-
-        redirect_params.video = Some(
-            SocketInfo::try_create(None, &params.media_ip, params.media_port)
-                .expect("invalid video redirect parameter"),
-        );
-        redirect_params.video_rtcp = Some(
-            SocketInfo::try_create(None, &params.rtcp_ip, params.rtcp_port)
-                .expect("invalid video_rtcp redirect parameter"),
-        );
-    }
-    if media_params.audio_redirect.is_some() {
-        let params = media_params.audio_redirect.unwrap();
-        redirect_params.audio = Some(
-            SocketInfo::try_create(None, &params.media_ip, params.media_port)
-                .expect("invalid video redirect parameter"),
-        );
-        redirect_params.audio_rtcp = Some(
-            SocketInfo::try_create(None, &params.rtcp_ip, params.rtcp_port)
-                .expect("invalid video_rtcp redirect parameter"),
-        );
-    }
-    redirect_params
-}
-
-// Process for MediaConnection reacts to fold stream of MediaConnection events and UserInput streams.
-// This struct shows the previous state.
-#[derive(Clone, Default)]
-struct MediaConnectionState(
-    HashMap<MediaConnectionId, (Option<MediaPair>, Option<MediaPair>, RedirectParameters)>,
-);
-
-// This struct has only setter and getter.
-impl MediaConnectionState {
-    pub fn media_connection_id_iter(
-        &self,
-    ) -> Keys<MediaConnectionId, (Option<MediaPair>, Option<MediaPair>, RedirectParameters)> {
-        self.0.keys()
-    }
-
-    pub fn insert_media_connection_id(
-        &mut self,
-        media_connection_id: MediaConnectionId,
-        value: (Option<MediaPair>, Option<MediaPair>, RedirectParameters),
-    ) {
-        let _ = self.0.insert(media_connection_id, value);
-    }
-
-    pub fn remove_media_connection_id(&mut self, media_connection_id: &MediaConnectionId) {
-        let _ = self.0.remove(&media_connection_id);
-    }
-
-    pub fn contains(&self, media_connection_id: &MediaConnectionId) -> bool {
-        self.0.contains_key(media_connection_id)
-    }
-
-    pub fn get(
-        &self,
-        media_connection_id: &MediaConnectionId,
-    ) -> Option<&(Option<MediaPair>, Option<MediaPair>, RedirectParameters)> {
-        self.0.get(media_connection_id)
-    }
-}
-
+//==================== call and answer to establish media connection ====================
 // start establishing MediaConnection to an neighbour
 async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldState, error::Error> {
-    // Notify which peer object needs to establish P2P link to WebRTC Gateway.
+    // To show which peer object needs to establish P2P link, it will be sent to WebRTC Gateway.
     let peer_info = params
         .peer_info()
         .clone()
@@ -443,23 +288,28 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
 
     let media_params = params.pop_media_config();
     if media_params.is_none() {
+        info!("Call request with no media and no redirect is ignored");
         return Ok(params);
     }
     let media_config = media_params.unwrap();
-    let constraints = create_constraints(&media_config).await?;
+    // In creating constraints process, source sockets of media and rtcp are opened.
+    // It is necessary to store the sockets' information.
+    let (video_src_socket, audio_src_socket, constraints) =
+        create_media_connect_options(&media_config).await?;
     let redirect_params = create_redirect(media_config);
 
     let call_params = CallParameters {
         peer_id: peer_info.peer_id,
         token: peer_info.token,
         target_id: target_id,
-        constraints: Some(constraints.2),
+        constraints: Some(constraints),
         redirect_params: Some(redirect_params.clone()),
     };
 
+    // call to neighbour
     let media_connection_id = media::call(&call_params).await?.params.media_connection_id;
 
-    // Notify keyboard inputs to the sub-task with this channel
+    // This channel is for redirecting keyboard inputs from PeerFold future to MediaFold future
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
@@ -472,32 +322,151 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
         mc_event_observer.map(|event| Either::Left(event)),
         control_message_observer.map(|event| Either::Right(event)),
     );
+    // Create initial state of fold future of media events
     let mut state = MediaConnectionState::default();
     state.insert_media_connection_id(
         media_connection_id,
-        (constraints.0, constraints.1, redirect_params),
+        (video_src_socket, audio_src_socket, redirect_params),
     );
-    let fold_fut = stream.fold(state, |sum, acc| async move {
-        on_media_events(sum, acc).await.expect("error")
+    let fold_fut = stream.fold(state, |state, event| async move {
+        match event {
+            Either::Left(event) => on_media_api_events(state, event)
+                .await
+                .expect("error in on_media_and_api_events"),
+            Either::Right(event) => on_media_key_events(state, event)
+                .await
+                .expect("error in on_media_key_events"),
+        }
     });
     tokio::spawn(fold_fut);
 
-    // hold notifier
+    // hold keybord events notifier
     params.set_control_message_notifier(control_message_notifier);
     Ok(params)
 }
 
-// This function is called in a fold of User Input and MediaConnection Event streams.
-// It parse the stream and process them with its internal functions
-async fn on_media_events(
-    state: MediaConnectionState,
-    event: Either<media::MediaConnectionEvents, ControlMessage>,
-) -> Result<MediaConnectionState, error::Error> {
-    match event {
-        Either::Left(event) => on_media_api_events(state, event).await,
-        Either::Right(event) => on_media_key_events(state, event).await,
-    }
+//==================== create query for call and answer ====================
+
+// Open some sockets to create constraints object, and return these information for call and answer
+async fn create_media_connect_options(
+    media_params: &MediaConfig,
+) -> Result<
+    (
+        Option<MediaSrcSockets>,
+        Option<MediaSrcSockets>,
+        Constraints,
+    ),
+    error::Error,
+> {
+    let (video_src_sockets, video_constraints) = if media_params.video
+        && media_params.video_params.is_some()
+    {
+        // open video and video rtcp port
+        let video_src_socket = media::open_media_socket(true).await?;
+        let rtcp_src_socket = media::open_rtcp_socket().await?;
+        //return tuple of socket information and constraints
+        (
+            Some(MediaSrcSockets {
+                media_socket: video_src_socket.clone(),
+                rtcp_socket: rtcp_src_socket.clone(),
+            }),
+            Some((video_src_socket, rtcp_src_socket)).map(|(video_src_socket, rtcp_src_socket)| {
+                let params = media_params.clone().video_params.unwrap();
+                MediaParams {
+                    band_width: params.band_width,
+                    codec: params.codec,
+                    media_id: video_src_socket.get_id().expect("no media_id"),
+                    rtcp_id: Some(rtcp_src_socket.get_id().expect("no rtcp_id")),
+                    payload_type: Some(params.payload_type),
+                    sampling_rate: Some(params.sampling_rate),
+                }
+            }),
+        )
+    } else {
+        // if video is not needed or config toml is not properly written,
+        // these fields are not created
+        (None, None)
+    };
+
+    let (audio_src_sockets, audio_constraints) = if media_params.audio
+        && media_params.audio_params.is_some()
+    {
+        // open audio and audio rtcp port
+        let audio_src_socket = media::open_media_socket(false).await?;
+        let rtcp_src_socket = media::open_rtcp_socket().await?;
+        //return tuple of socket information and constraints
+        (
+            Some(MediaSrcSockets {
+                media_socket: audio_src_socket.clone(),
+                rtcp_socket: rtcp_src_socket.clone(),
+            }),
+            Some((audio_src_socket, rtcp_src_socket)).map(|(audio_src_socket, rtcp_src_socket)| {
+                let params = media_params
+                    .clone()
+                    .audio_params
+                    .expect("video params should be set");
+                MediaParams {
+                    band_width: params.band_width,
+                    codec: params.codec,
+                    media_id: audio_src_socket.get_id().expect("no media_id"),
+                    rtcp_id: Some(rtcp_src_socket.get_id().expect("no id")),
+                    payload_type: Some(params.payload_type),
+                    sampling_rate: Some(params.sampling_rate),
+                }
+            }),
+        )
+    } else {
+        // if audio is not needed or config toml is not properly written,
+        // these fields are not created
+        (None, None)
+    };
+
+    Ok((
+        video_src_sockets,
+        audio_src_sockets,
+        Constraints {
+            video: media_params.video,
+            videoReceiveEnabled: Some(media_params.video_redirect.is_some()),
+            audio: media_params.audio,
+            audioReceiveEnabled: Some(media_params.audio_redirect.is_some()),
+            video_params: video_constraints,
+            audio_params: audio_constraints,
+        },
+    ))
 }
+
+// create redirect information for call and answer
+fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
+    let mut redirect_params = RedirectParameters {
+        video: None,
+        video_rtcp: None,
+        audio: None,
+        audio_rtcp: None,
+    };
+    if let Some(ref params) = media_params.video_redirect {
+        redirect_params.video = Some(
+            SocketInfo::try_create(None, &params.media_ip, params.media_port)
+                .expect("invalid video redirect parameter"),
+        );
+        redirect_params.video_rtcp = Some(
+            SocketInfo::try_create(None, &params.rtcp_ip, params.rtcp_port)
+                .expect("invalid video_rtcp redirect parameter"),
+        );
+    }
+    if let Some(params) = media_params.audio_redirect {
+        redirect_params.audio = Some(
+            SocketInfo::try_create(None, &params.media_ip, params.media_port)
+                .expect("invalid video redirect parameter"),
+        );
+        redirect_params.audio_rtcp = Some(
+            SocketInfo::try_create(None, &params.rtcp_ip, params.rtcp_port)
+                .expect("invalid video_rtcp redirect parameter"),
+        );
+    }
+    redirect_params
+}
+
+//==================== process events for media ====================
 
 // This function process MediaConnection events
 async fn on_media_api_events(
@@ -577,5 +546,69 @@ async fn on_media_key_events(
             Ok(state)
         }
         _ => Ok::<_, error::Error>(state),
+    }
+}
+
+// Process for MediaConnection reacts to fold stream of MediaConnection events and UserInput streams.
+// This struct shows the previous state.
+#[derive(Clone, Default)]
+struct MediaConnectionState(
+    HashMap<
+        MediaConnectionId,
+        (
+            // video src sockets
+            Option<MediaSrcSockets>,
+            // audio src sockets
+            Option<MediaSrcSockets>,
+            // redirect information
+            RedirectParameters,
+        ),
+    >,
+);
+
+// This struct has only setter and getter.
+impl MediaConnectionState {
+    pub fn media_connection_id_iter(
+        &self,
+    ) -> Keys<
+        MediaConnectionId,
+        (
+            Option<MediaSrcSockets>,
+            Option<MediaSrcSockets>,
+            RedirectParameters,
+        ),
+    > {
+        self.0.keys()
+    }
+
+    pub fn insert_media_connection_id(
+        &mut self,
+        media_connection_id: MediaConnectionId,
+        value: (
+            Option<MediaSrcSockets>,
+            Option<MediaSrcSockets>,
+            RedirectParameters,
+        ),
+    ) {
+        let _ = self.0.insert(media_connection_id, value);
+    }
+
+    pub fn remove_media_connection_id(&mut self, media_connection_id: &MediaConnectionId) {
+        let _ = self.0.remove(&media_connection_id);
+    }
+
+    pub fn contains(&self, media_connection_id: &MediaConnectionId) -> bool {
+        self.0.contains_key(media_connection_id)
+    }
+
+    pub fn get(
+        &self,
+        media_connection_id: &MediaConnectionId,
+    ) -> Option<&(
+        Option<MediaSrcSockets>,
+        Option<MediaSrcSockets>,
+        RedirectParameters,
+    )> {
+        self.0.get(media_connection_id)
     }
 }

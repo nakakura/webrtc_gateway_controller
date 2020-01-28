@@ -199,7 +199,7 @@ async fn on_peer_api_events(
     event: PeerEventEnum,
 ) -> Result<PeerFoldState, error::Error> {
     // CONNECTION is not needed for this program.
-    match event {
+    let status = match event {
         PeerEventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
             // Hold PeerInfo for further process.
@@ -234,7 +234,9 @@ async fn on_peer_api_events(
             Ok(status)
         }
         _ => Ok(status),
-    }
+    };
+    print_commands();
+    status
 }
 
 // This function works according to User Keyboard Input
@@ -242,7 +244,7 @@ async fn on_peer_key_events(
     mut status: PeerFoldState,
     message: String,
 ) -> Result<PeerFoldState, error::Error> {
-    match message.as_str() {
+    let status = match message.as_str() {
         "exit" => {
             // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
             // Content Socket will be automaticall released, so it is not necessary to release them manually.
@@ -301,7 +303,7 @@ async fn on_peer_key_events(
             }
             Ok(status)
         }
-        message if message.starts_with("connect ") => {
+        message if message.starts_with("call ") => {
             // Establish P2P datachannel to an neighbour.
             // This function expects "connect TARGET_ID".
             let mut args = message.split_whitespace();
@@ -310,12 +312,14 @@ async fn on_peer_key_events(
                 let target_id = PeerId::new(target_id);
                 Ok(call(status, target_id).await.expect("error at line 163"))
             } else {
-                warn!("input \"connect TARGET_PEER_ID\"");
+                warn!("input \"call TARGET_PEER_ID\"");
                 Ok(status)
             }
         }
         _ => Ok(status),
-    }
+    };
+    print_commands();
+    status
 }
 
 //==================== call and answer to establish media connection ====================
@@ -650,7 +654,7 @@ async fn on_media_api_events(
     state: MediaConnectionState,
     event: media::MediaConnectionEvents,
 ) -> Result<MediaConnectionState, error::Error> {
-    match event {
+    let status = match event {
         media::MediaConnectionEvents::READY(media_connection_id) => {
             let mut message = format!(
                 "====================\nMediaConnection {} is ready to send-recv media",
@@ -687,7 +691,9 @@ async fn on_media_api_events(
             );
             Ok(state)
         }
-    }
+    };
+    print_commands();
+    status
 }
 
 // This function process Keyboard Inputs
@@ -695,7 +701,7 @@ async fn on_media_key_events(
     mut state: MediaConnectionState,
     ControlMessage(message): ControlMessage,
 ) -> Result<MediaConnectionState, error::Error> {
-    match message.as_str() {
+    let status = match message.as_str() {
         "status" => {
             // prinnts all MediaConnection status
             for media_connection_id in state.media_connection_id_iter() {
@@ -786,7 +792,9 @@ async fn on_media_key_events(
             Ok(state)
         }
         _ => Ok::<_, error::Error>(state),
-    }
+    };
+    print_commands();
+    status
 }
 
 // Process for MediaConnection reacts to fold stream of MediaConnection events and UserInput streams.
@@ -851,4 +859,16 @@ impl MediaConnectionState {
     )> {
         self.0.get(media_connection_id)
     }
+}
+
+fn print_commands() {
+    let message = "exit\n\
+    call PEER_ID\n\
+    status\n\
+    disconnect MEDIA_CONNECTION_ID";
+
+    println!(
+        "====================\ninput following commands\n{}\n====================",
+        message
+    );
 }

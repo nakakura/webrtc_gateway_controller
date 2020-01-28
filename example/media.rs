@@ -10,7 +10,7 @@ use either::Either;
 use futures::channel::mpsc;
 use futures::future::FutureExt;
 use futures::prelude::*;
-use log::{info, warn};
+use log::{error, info, warn};
 use serde_derive::Deserialize;
 
 use media::*;
@@ -650,13 +650,10 @@ async fn on_media_api_events(
     state: MediaConnectionState,
     event: media::MediaConnectionEvents,
 ) -> Result<MediaConnectionState, error::Error> {
-    //FIXME not enough
     match event {
         media::MediaConnectionEvents::READY(media_connection_id) => {
-            let mut message = String::from("====================");
-            message = format!(
-                "{}\nMediaConnection {} is ready to send-recv media",
-                message,
+            let mut message = format!(
+                "====================\nMediaConnection {} is ready to send-recv media",
                 media_connection_id.as_str()
             );
             let value = state
@@ -674,7 +671,22 @@ async fn on_media_api_events(
             );
             Ok(state)
         }
-        _ => Ok::<_, error::Error>(state),
+        media::MediaConnectionEvents::STREAM(media_connection_id) => {
+            let message = format!(
+                "====================\nRecv stream from MediaConnection {}",
+                media_connection_id.as_str()
+            );
+            info!("{}", message);
+            Ok(state)
+        }
+        media::MediaConnectionEvents::ERROR((media_connection_id, message)) => {
+            error!(
+                "error {:?} in MediaConnection {}",
+                message,
+                media_connection_id.as_str()
+            );
+            Ok(state)
+        }
     }
 }
 

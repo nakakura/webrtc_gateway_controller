@@ -230,7 +230,7 @@ async fn on_peer_api_events(
             Ok(status)
         }
         PeerEventEnum::ERROR(event) => {
-            log::error!("error {:?} occurs in on_peer_api_events", event);
+            error!("error {:?} occurs in on_peer_api_events", event);
             Ok(status)
         }
         _ => Ok(status),
@@ -860,6 +860,8 @@ impl MediaConnectionState {
         self.0.get(media_connection_id)
     }
 }
+
+//==================== helper ====================
 
 fn print_commands() {
     let message = "exit\n\

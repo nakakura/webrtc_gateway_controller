@@ -10,11 +10,109 @@ use either::Either;
 use futures::channel::mpsc;
 use futures::future::FutureExt;
 use futures::prelude::*;
-use log::{info, warn};
+use log::{error, info, warn};
 use serde_derive::Deserialize;
 
 use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper};
 use webrtc_gateway_controller::*;
+
+//==================== for parsing data.toml ====================
+
+// It shows config toml formats
+#[derive(Debug, Deserialize)]
+struct Config {
+    peer: PeerConfig,
+    gateway: SocketConfig,
+    redirects: Vec<SocketConfig>,
+}
+
+// It is internal format for config toml
+#[derive(Debug, Deserialize)]
+struct PeerConfig {
+    peer_id: String,
+    domain: String,
+}
+
+// It is internal format for config toml
+#[derive(Debug, Deserialize)]
+struct SocketConfig {
+    ip: String,
+    port: u16,
+}
+
+// read config from toml file
+fn read_config(path: &'static str) -> Config {
+    let mut file_content = String::new();
+
+    let mut fr = fs::File::open(path)
+        .map(|f| BufReader::new(f))
+        .expect("file open error");
+
+    fr.read_to_string(&mut file_content)
+        .expect("file read error");
+    toml::from_str(&file_content).expect("toml parse error")
+}
+
+//==================== main ====================
+
+// Main function creates a peer object and start listening peer events and keyboard events.
+// Further processes are triggered by these events.
+#[tokio::main]
+async fn main() {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+
+    //load and set parameters
+    let config = read_config("example/data.toml");
+    let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
+    let domain = config.peer.domain;
+    let peer_id = PeerId::new(config.peer.peer_id);
+    let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
+    webrtc_gateway_controller::initialize(base_url);
+
+    //observe keyboard events
+    let (key_notifier, key_observer) = mpsc::channel::<String>(0);
+    let key_fut = terminal::read(key_notifier);
+
+    //create peer and observe peer events
+    let create_peer_future = peer::create(api_key, domain, peer_id, true);
+    let peer_info = create_peer_future.await.expect("create peer failed");
+    let (peer_event_notifier, peer_event_observer) = mpsc::channel::<PeerEventEnum>(0);
+    let event_future = peer::listen_events(&peer_info, peer_event_notifier);
+
+    //this program reacts only to user input and peer events.
+    //merge these two event streams, and fold current status
+    let peer_event_stream = futures::stream::select(
+        peer_event_observer.map(|e| Either::Left(e)),
+        key_observer.map(|e| Either::Right(e)),
+    );
+    let fold_fut = peer_event_stream
+        .fold(
+            // before receiving Peer::OPEN event, peer object might not be created.
+            // So I set None for PeerInfo.
+            PeerFoldState((None, config.redirects, vec![])),
+            |status, event| async move {
+                match event {
+                    Either::Left(api_events) => on_peer_api_events(status, api_events)
+                        .await
+                        .expect("error in on_peer_api_events"),
+                    Either::Right(key_events) => on_peer_key_events(status, key_events)
+                        .await
+                        .expect("error in on_peer_key_events"),
+                }
+            },
+        )
+        .map(|_| futures::future::ok::<(), error::Error>(()));
+
+    //execute all the futures
+    let (fold_fut_result, event_fut_result, key_fut_reult) =
+        futures::future::join3(fold_fut, event_future, key_fut).await;
+    info!("All the futures are finished. They stopped with these status\nfold: {:?}\nevent: {:?}\nkey:{:?}", fold_fut_result, event_fut_result, key_fut_reult);
+}
+
+//==================== materials for PeerFold ====================
 
 // Wrap user input strings with New-Type pattern
 #[derive(Debug)]
@@ -55,175 +153,108 @@ impl PeerFoldState {
     }
 }
 
-// It shows config toml formats
-#[derive(Debug, Deserialize)]
-struct Config {
-    peer: PeerConfig,
-    gateway: SocketConfig,
-    redirects: Vec<SocketConfig>,
-}
-
-// It is internal format for config toml
-#[derive(Debug, Deserialize)]
-struct PeerConfig {
-    peer_id: String,
-    domain: String,
-}
-
-// It is internal format for config toml
-#[derive(Debug, Deserialize)]
-struct SocketConfig {
-    ip: String,
-    port: u16,
-}
-
-// read config from toml file
-fn read_config(path: &'static str) -> Config {
-    let mut file_content = String::new();
-
-    let mut fr = fs::File::open(path)
-        .map(|f| BufReader::new(f))
-        .expect("file open error");
-
-    fr.read_to_string(&mut file_content)
-        .expect("file read error");
-    toml::from_str(&file_content).expect("toml parse error")
-}
-
-#[tokio::main]
-async fn main() {
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
-    }
-    env_logger::init();
-
-    //load and set parameters
-    let config = read_config("example/data.toml");
-    let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
-    let domain = config.peer.domain;
-    let peer_id = PeerId::new(config.peer.peer_id);
-    let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
-    webrtc_gateway_controller::initialize(base_url);
-
-    //observe keyboard events
-    let (key_notifier, key_observer) = mpsc::channel::<String>(0);
-    let key_fut = terminal::read(key_notifier);
-
-    //create peer and observe peer events
-    let create_peer_future = peer::create(api_key, domain, peer_id, true);
-    let peer_info = create_peer_future.await.expect("create peer failed");
-    let (peer_event_notifier, peer_event_observer) = mpsc::channel::<PeerEventEnum>(0);
-    let event_future = peer::listen_events(&peer_info, peer_event_notifier);
-
-    //this program reacts only to user input and peer events.
-    //merge these two event streams, and fold current status
-    let peer_event_stream = futures::stream::select(
-        peer_event_observer.map(|e| Either::Left(e)),
-        key_observer.map(|e| Either::Right(e)),
-    );
-    let fold_fut = peer_event_stream
-        .fold(
-            // before receiving Peer::OPEN event, peer object might not be created.
-            // So I set None for PeerInfo.
-            PeerFoldState((None, config.redirects, vec![])),
-            |sum, acc| async move {
-                let sum = on_peer_events(sum, acc).await.expect("error");
-                sum
-            },
-        )
-        .map(|_| futures::future::ok::<(), error::Error>(()));
-
-    //execute all the futures
-    let (fold_fut_result, event_fut_result, key_fut_reult) =
-        futures::future::join3(fold_fut, event_future, key_fut).await;
-    info!("All the futures are finished. They stopped with these status\nfold: {:?}\nevent: {:?}\nkey:{:?}", fold_fut_result, event_fut_result, key_fut_reult);
-}
-
-// This function is called in a fold of User Input and Peer Event streams.
-// It parse the stream and process them with its internal functions
-async fn on_peer_events(
-    status: PeerFoldState,
-    event: Either<PeerEventEnum, String>,
-) -> Result<PeerFoldState, error::Error> {
-    match event {
-        Either::Left(api_events) => on_peer_api_events(status, api_events).await,
-        Either::Right(key_events) => on_peer_key_events(status, key_events).await,
-    }
-}
+//==================== process events for peer ====================
 
 // This function process events from Peer Object
 async fn on_peer_api_events(
-    params: PeerFoldState,
+    status: PeerFoldState,
     event: PeerEventEnum,
 ) -> Result<PeerFoldState, error::Error> {
-    match event {
+    let status = match event {
         PeerEventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
             // Hold PeerInfo for further process.
-            info!("Peer {:?} is created", event.params);
-            let params = params.set_peer_info(Some(event.params));
+            info!(
+                "====================\nPeerObject is created. Its PeerId is {} and Token is {}",
+                event.params.peer_id.as_str(),
+                event.params.token.as_str()
+            );
+            let params = status.set_peer_info(Some(event.params));
             Ok(params)
         }
         PeerEventEnum::CLOSE(event) => {
             // PeerObject notify that it has already been deleted.
             // Erase old PeerInfo.
-            info!("Peer {:?} is closed", event.params);
-            let params = params.set_peer_info(None);
+            info!(
+                "====================\nPeerObject of {} is closed",
+                event.params.peer_id.as_str()
+            );
+            let params = status.set_peer_info(None);
             Ok(params)
         }
         PeerEventEnum::CONNECTION(event) => {
             // In this timing, DataChannel itself has already been established.
             // To send and recv data, call redirect API.
-            println!("event {:?}", event);
-            redirect(params, event.data_params.data_connection_id).await
+            info!(
+                "====================\nconnection is established by neighbour. Its DataConnectionId is {}",
+                event.data_params.data_connection_id.as_str()
+            );
+            redirect(status, event.data_params.data_connection_id).await
         }
-        _ => Ok(params),
-    }
+        PeerEventEnum::ERROR(event) => {
+            error!("error {:?} occurs in on_peer_api_events", event);
+            Ok(status)
+        }
+        _ => Ok(status),
+    };
+    print_commands();
+    status
 }
 
 // This function works according to User Keyboard Input
 async fn on_peer_key_events(
-    mut params: PeerFoldState,
+    mut status: PeerFoldState,
     message: String,
 ) -> Result<PeerFoldState, error::Error> {
-    println!("recv {} in peer key events", message);
-    match message.as_str() {
+    let status = match message.as_str() {
         "exit" => {
             // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
             // Content Socket will be automaticall released, so it is not necessary to release them manually.
             // https://github.com/skyway/skyway-webrtc-gateway/blob/master/docs/release_process.md
-            let notifiers = params.control_message_notifier();
+            let notifiers = status.control_message_notifier();
             for notifier in notifiers {
                 let _ = notifier
                     .send(ControlMessage(String::from("disconnect_all")))
                     .await;
             }
-            if let Some(peer_info) = params.peer_info() {
+            if let Some(peer_info) = status.peer_info() {
                 let _unit = peer::delete(&peer_info).await?;
             }
-            let params = params.set_peer_info(None);
+            let params = status.set_peer_info(None);
             Ok(params)
         }
         "status" => {
             // Show status of PeerObject and DataConnection
-            if let Some(ref peer_info) = params.peer_info() {
+            if let Some(ref peer_info) = status.peer_info() {
                 let status = peer::status(peer_info).await?;
-                info!("Peer {:?} is now {:?}", peer_info, status);
+                let mut message = String::from("====================\nShow Status");
+                message = format!(
+                    "{}\nMy PeerId is {} and Token is {}. It is {} now.",
+                    message,
+                    peer_info.peer_id.as_str(),
+                    peer_info.token.as_str(),
+                    if !status.disconnected {
+                        "connected to Server."
+                    } else {
+                        "not connected to Server."
+                    }
+                );
+                info!("{}", message);
             }
-            let notifiers = params.control_message_notifier();
+            let notifiers = status.control_message_notifier();
             for notifier in notifiers {
                 let _ = notifier.send(ControlMessage(String::from("status"))).await;
             }
-            Ok(params)
+            Ok(status)
         }
         message if message.starts_with("disconnect ") => {
             // Disconnect P2P link
             // This function expects "connect DATA_CONNECTION_ID".
-            let notifiers = params.control_message_notifier();
+            let notifiers = status.control_message_notifier();
             for notifier in notifiers {
                 let _ = notifier.send(ControlMessage(String::from(message))).await;
             }
-            Ok(params)
+            Ok(status)
         }
         message if message.starts_with("connect ") => {
             // Establish P2P datachannel to an neighbour.
@@ -232,54 +263,19 @@ async fn on_peer_key_events(
             let _ = args.next();
             if let Some(target_id) = args.next() {
                 let target_id = PeerId::new(target_id);
-                Ok(connect(params, target_id).await.expect("error at line 163"))
+                Ok(connect(status, target_id).await.expect("error at line 163"))
             } else {
                 warn!("input \"connect TARGET_PEER_ID\"");
-                Ok(params)
+                Ok(status)
             }
         }
-        _ => Ok(params),
-    }
+        _ => Ok(status),
+    };
+    print_commands();
+    status
 }
 
-// Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
-// This struct shows the previous state.
-#[derive(Clone, Default)]
-struct DataConnectionState(
-    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)>,
-);
-
-// This struct has only setter and getter.
-impl DataConnectionState {
-    pub fn data_connection_id_iter(
-        &self,
-    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
-        self.0.keys()
-    }
-
-    pub fn insert_data_connection_id(
-        &mut self,
-        data_connection_id: DataConnectionId,
-        value: (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>),
-    ) {
-        let _ = self.0.insert(data_connection_id, value);
-    }
-
-    pub fn remove_data_connection_id(&mut self, data_connection_id: &DataConnectionId) {
-        let _ = self.0.remove(&data_connection_id);
-    }
-
-    pub fn contains(&self, data_connection_id: &DataConnectionId) -> bool {
-        self.0.contains_key(data_connection_id)
-    }
-
-    pub fn get(
-        &self,
-        data_connection_id: &DataConnectionId,
-    ) -> Option<&(Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
-        self.0.get(data_connection_id)
-    }
-}
+//==================== connect and redirect to establish data connection ====================
 
 // start establishing DataConnection to an neighbour
 async fn connect(
@@ -334,8 +330,15 @@ async fn connect(
         data_connection_id,
         (Some(data_socket_created_response), redirect_info),
     );
-    let fold_fut = stream.fold(state, |sum, acc| async move {
-        on_data_events(sum, acc).await.expect("error")
+    let fold_fut = stream.fold(state, |state, event| async move {
+        match event {
+            Either::Left(event) => on_data_api_events(state, event)
+                .await
+                .expect("error in on_data_api_events"),
+            Either::Right(event) => on_data_key_events(state, event)
+                .await
+                .expect("error in on_data_key_events"),
+        }
     });
     tokio::spawn(fold_fut);
 
@@ -386,24 +389,59 @@ async fn redirect(
         data_connection_id,
         (Some(data_socket_created_response), redirect_info),
     );
-    let fold_fut = stream.fold(state, |sum, acc| async move {
-        let result = on_data_events(sum, acc).await.expect("error");
-        result
+    let fold_fut = stream.fold(state, |state, event| async move {
+        match event {
+            Either::Left(event) => on_data_api_events(state, event)
+                .await
+                .expect("error in on_data_api_events"),
+            Either::Right(event) => on_data_key_events(state, event)
+                .await
+                .expect("error in on_data_key_events"),
+        }
     });
     tokio::spawn(fold_fut);
 
     Ok(params)
 }
 
-// This function is called in a fold of User Input and DataConnection Event streams.
-// It parse the stream and process them with its internal functions
-async fn on_data_events(
-    sum: DataConnectionState,
-    event: Either<data::DataConnectionEventEnum, ControlMessage>,
-) -> Result<DataConnectionState, error::Error> {
-    match event {
-        Either::Left(event) => on_data_api_events(sum, event).await,
-        Either::Right(event) => on_data_key_events(sum, event).await,
+//==================== process events for data ====================
+
+// Process for DataConnection reacts to fold stream of DataConnection events and UserInput streams.
+// This struct shows the previous state.
+#[derive(Clone, Default)]
+struct DataConnectionState(
+    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)>,
+);
+
+// This struct has only setter and getter.
+impl DataConnectionState {
+    pub fn data_connection_id_iter(
+        &self,
+    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
+        self.0.keys()
+    }
+
+    pub fn insert_data_connection_id(
+        &mut self,
+        data_connection_id: DataConnectionId,
+        value: (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>),
+    ) {
+        let _ = self.0.insert(data_connection_id, value);
+    }
+
+    pub fn remove_data_connection_id(&mut self, data_connection_id: &DataConnectionId) {
+        let _ = self.0.remove(&data_connection_id);
+    }
+
+    pub fn contains(&self, data_connection_id: &DataConnectionId) -> bool {
+        self.0.contains_key(data_connection_id)
+    }
+
+    pub fn get(
+        &self,
+        data_connection_id: &DataConnectionId,
+    ) -> Option<&(Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
+        self.0.get(data_connection_id)
     }
 }
 
@@ -413,7 +451,7 @@ async fn on_data_api_events(
     event: data::DataConnectionEventEnum,
 ) -> Result<DataConnectionState, error::Error> {
     //FIXME not enough
-    match event {
+    let status = match event {
         data::DataConnectionEventEnum::OPEN(date_connection_id) => {
             info!("{:?} is opend", date_connection_id);
             let value = state.get(&date_connection_id).expect("socket info not set");
@@ -427,7 +465,9 @@ async fn on_data_api_events(
             Ok(state)
         }
         _ => Ok(state),
-    }
+    };
+    print_commands();
+    status
 }
 
 // This function process Keyboard Inputs
@@ -436,7 +476,7 @@ async fn on_data_key_events(
     ControlMessage(message): ControlMessage,
 ) -> Result<DataConnectionState, error::Error> {
     //FIXME not enough
-    match message.as_str() {
+    let status = match message.as_str() {
         "status" => {
             // prinnts all DataConnection status
             for data_connection_id in state.data_connection_id_iter() {
@@ -477,5 +517,21 @@ async fn on_data_key_events(
             Ok(state)
         }
         _ => Ok(state),
-    }
+    };
+    print_commands();
+    status
+}
+
+//==================== helper ====================
+
+fn print_commands() {
+    let message = "exit\n\
+    connect PEER_ID\n\
+    status\n\
+    disconnect MEDIA_CONNECTION_ID";
+
+    println!(
+        "====================\ninput following commands\n{}\n====================",
+        message
+    );
 }

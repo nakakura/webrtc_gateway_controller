@@ -283,10 +283,18 @@ async fn on_peer_key_events(
             }
             Ok(status)
         }
+        message if message.starts_with("pli ") => {
+            // Send a Pli Packet
+            // This function expects "pli MEDIA_CONNECTION_ID".
+            let notifiers = status.control_message_notifier();
+            for notifier in notifiers {
+                let _ = notifier.send(ControlMessage(String::from(message))).await;
+            }
+            Ok(status)
+        }
         message if message.starts_with("disconnect ") => {
-            // FIXME: parse its argument and call proper one
             // Disconnect P2P link
-            // This function expects "connect DATA_CONNECTION_ID".
+            // This function expects "connect MEDIA_CONNECTION_ID".
             let notifiers = status.control_message_notifier();
             for notifier in notifiers {
                 let _ = notifier.send(ControlMessage(String::from(message))).await;
@@ -675,7 +683,6 @@ async fn on_media_key_events(
     mut state: MediaConnectionState,
     ControlMessage(message): ControlMessage,
 ) -> Result<MediaConnectionState, error::Error> {
-    //FIXME not enough
     match message.as_str() {
         "status" => {
             // prinnts all MediaConnection status
@@ -702,6 +709,39 @@ async fn on_media_key_events(
                     message, tmp_message
                 );
                 info!("{}", message);
+            }
+            Ok(state)
+        }
+        message if message.starts_with("pli ") => {
+            // close P2P link
+            let mut args = message.split_whitespace();
+            let _ = args.next();
+            if let Some(media_connection_id) = args.next() {
+                let media_connection_id = MediaConnectionId::new(media_connection_id);
+                if state.contains(&media_connection_id) {
+                    //FIXME: always send pli for video
+                    if let Some((_, _, Some(redirect))) = state.get(&media_connection_id) {
+                        let socket = redirect.video.clone().unwrap();
+                        let result = media::send_pli(&media_connection_id, &socket).await;
+                        if result.is_ok() {
+                            info!("====================\npli send OK");
+                        } else {
+                            info!("====================\npli send Error {:?}", result.err());
+                        }
+                    } else {
+                        warn!(
+                            "{:?} is not a valid Media Connection Id",
+                            media_connection_id
+                        );
+                    }
+                } else {
+                    warn!(
+                        "{:?} is not a valid Media Connection Id",
+                        media_connection_id
+                    );
+                }
+            } else {
+                warn!("input \"pli MEDIA_CONNECTION_ID\"");
             }
             Ok(state)
         }

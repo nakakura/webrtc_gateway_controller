@@ -203,19 +203,29 @@ async fn on_peer_api_events(
         PeerEventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
             // Hold PeerInfo for further process.
-            info!("Peer {:?} is created", event.params);
+            info!(
+                "====================\nPeerObject is created. Its PeerId is {} and Token is {}",
+                event.params.peer_id.as_str(),
+                event.params.token.as_str()
+            );
             let params = status.set_peer_info(Some(event.params));
             Ok(params)
         }
         PeerEventEnum::CLOSE(event) => {
             // PeerObject notify that it has already been deleted.
             // Erase old PeerInfo.
-            info!("Peer {:?} is closed", event.params);
+            info!(
+                "====================\nPeerObject of {} is closed",
+                event.params.peer_id.as_str()
+            );
             let params = status.set_peer_info(None);
             Ok(params)
         }
         PeerEventEnum::CALL(event) => {
-            println!("on call {:?}", event);
+            info!(
+                "====================\nreceive call request. Its MediaConnectionId is {}",
+                event.call_params.media_connection_id.as_str()
+            );
             let status = answer(status, event).await?;
             Ok(status)
         }
@@ -253,7 +263,19 @@ async fn on_peer_key_events(
             // Show status of PeerObject and MediaConnection
             if let Some(ref peer_info) = status.peer_info() {
                 let status = peer::status(peer_info).await?;
-                info!("Peer {:?} is now {:?}", peer_info, status);
+                let mut message = String::from("====================\nShow Status");
+                message = format!(
+                    "{}\nMy PeerId is {} and Token is {}. It is {} now.",
+                    message,
+                    peer_info.peer_id.as_str(),
+                    peer_info.token.as_str(),
+                    if !status.disconnected {
+                        "connected to Server."
+                    } else {
+                        "not connected to Server."
+                    }
+                );
+                info!("{}", message);
             }
             let notifiers = status.control_message_notifier();
             for notifier in notifiers {
@@ -337,7 +359,7 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
     let mut state = MediaConnectionState::default();
     state.insert_media_connection_id(
         media_connection_id,
-        (video_src_socket, audio_src_socket, redirect_params),
+        (video_src_socket, audio_src_socket, Some(redirect_params)),
     );
     let fold_fut = stream.fold(state, |state, event| async move {
         match event {
@@ -374,15 +396,13 @@ async fn answer(
         create_media_connect_options(&media_config).await?;
     let redirect_params = create_redirect(media_config);
 
-    println!("constraints#@\n {:?}", constraints);
     let answer_params = AnswerParameters {
         constraints: constraints,
-        redirect_params: Some(redirect_params.clone())
+        redirect_params: Some(redirect_params.clone()),
     };
 
     // answer to call from neighbour
-    let answer = media::answer(&media_connection_id, &answer_params).await?;
-    println!("answer#@\n {:?}", answer);
+    let _answer = media::answer(&media_connection_id, &answer_params).await?;
 
     // This channel is for redirecting keyboard inputs from PeerFold future to MediaFold future
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
@@ -401,7 +421,7 @@ async fn answer(
     let mut state = MediaConnectionState::default();
     state.insert_media_connection_id(
         media_connection_id,
-        (video_src_socket, audio_src_socket, redirect_params),
+        (video_src_socket, audio_src_socket, Some(redirect_params)),
     );
     let fold_fut = stream.fold(state, |state, event| async move {
         match event {
@@ -543,6 +563,80 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
 
 //==================== process events for media ====================
 
+fn create_socket_state_message(
+    value: &(
+        Option<MediaSrcSockets>,
+        Option<MediaSrcSockets>,
+        Option<RedirectParameters>,
+    ),
+) -> String {
+    let mut message = String::from("");
+    if let Some(ref socket_info) = value.0 {
+        message = format!(
+            "{}Its video src socket is {}:{}",
+            message,
+            socket_info.media_socket.ip(),
+            socket_info.media_socket.port()
+        );
+        message = format!(
+            "{}\nAlso, rtcp socket is ready for {}:{}",
+            message,
+            socket_info.rtcp_socket.ip(),
+            socket_info.rtcp_socket.port()
+        );
+    }
+    if let Some(ref socket_info) = value.1 {
+        message = format!(
+            "{}\nIts Audio src socket is {}:{}",
+            message,
+            socket_info.media_socket.ip(),
+            socket_info.media_socket.port()
+        );
+        message = format!(
+            "{}\nAlso, rtcp socket is ready for {}:{}",
+            message,
+            socket_info.rtcp_socket.ip(),
+            socket_info.rtcp_socket.port()
+        );
+    }
+    if let Some(ref redirect) = value.2 {
+        if let Some(ref video_redirect) = redirect.video {
+            message = format!(
+                "{}\nReceived Video is redirect to {}:{}",
+                message,
+                video_redirect.ip(),
+                video_redirect.port()
+            );
+        }
+        if let Some(ref rtcp_redirect) = redirect.video_rtcp {
+            message = format!(
+                "{}\nReceived RTCP for Video is redirect to {}:{}",
+                message,
+                rtcp_redirect.ip(),
+                rtcp_redirect.port()
+            );
+        }
+        if let Some(ref audio_redirect) = redirect.audio {
+            message = format!(
+                "{}\nReceived Audio is redirect to {}:{}",
+                message,
+                audio_redirect.ip(),
+                audio_redirect.port()
+            );
+        }
+        if let Some(ref rtcp_redirect) = redirect.audio_rtcp {
+            message = format!(
+                "{}\nReceived RTCP for Audio is redirect to {}:{}",
+                message,
+                rtcp_redirect.ip(),
+                rtcp_redirect.port()
+            );
+        }
+    }
+
+    message
+}
+
 // This function process MediaConnection events
 async fn on_media_api_events(
     state: MediaConnectionState,
@@ -551,17 +645,25 @@ async fn on_media_api_events(
     //FIXME not enough
     match event {
         media::MediaConnectionEvents::READY(media_connection_id) => {
-            info!("{:?} is ready", media_connection_id);
+            let mut message = String::from("====================");
+            message = format!(
+                "{}\nMediaConnection {} is ready to send-recv media",
+                message,
+                media_connection_id.as_str()
+            );
             let value = state
                 .get(&media_connection_id)
                 .expect("socket info not set");
-            info!("it's video src socket is {:?}", value.0);
-            info!("it's audio src socket is {:?}", value.1);
-            info!("it's redirect info is {:?}", value.2);
+            message = format!("{}\n{}", message, create_socket_state_message(value));
+
+            info!("{}", message);
             Ok(state)
         }
         media::MediaConnectionEvents::CLOSE(media_connection_id) => {
-            info!("{:?} is closed", media_connection_id);
+            info!(
+                "====================\nMediaConnection {} is closed",
+                media_connection_id.as_str()
+            );
             Ok(state)
         }
         _ => Ok::<_, error::Error>(state),
@@ -579,16 +681,27 @@ async fn on_media_key_events(
             // prinnts all MediaConnection status
             for media_connection_id in state.media_connection_id_iter() {
                 let status = media::status(&media_connection_id).await?;
-                info!(
-                    "##################\nMediaConnection {:?} is now {:?}",
-                    media_connection_id, status
+                let mut message = format!(
+                    "MediaConnection {} is as follows",
+                    media_connection_id.as_str()
                 );
+                message = format!("{}\nis_open: {}", message, status.open);
+                message = format!(
+                    "{}\nneighbour PeerId: {}",
+                    message,
+                    status.remote_id.as_str()
+                );
+                message = format!("{}\nIts ssrc is: {:?}", message, status.ssrc);
+
                 let value = state
                     .get(&media_connection_id)
                     .expect("socket info not set");
-                info!("it's video src socket is {:?}", value.0);
-                info!("it's audio src socket is {:?}", value.1);
-                info!("it's redirect info is {:?}", value.2);
+                let tmp_message = create_socket_state_message(value);
+                message = format!(
+                    "{}\nIt can redirect media as follows\n {}",
+                    message, tmp_message
+                );
+                info!("{}", message);
             }
             Ok(state)
         }
@@ -636,7 +749,7 @@ struct MediaConnectionState(
             // audio src sockets
             Option<MediaSrcSockets>,
             // redirect information
-            RedirectParameters,
+            Option<RedirectParameters>,
         ),
     >,
 );
@@ -650,7 +763,7 @@ impl MediaConnectionState {
         (
             Option<MediaSrcSockets>,
             Option<MediaSrcSockets>,
-            RedirectParameters,
+            Option<RedirectParameters>,
         ),
     > {
         self.0.keys()
@@ -662,7 +775,7 @@ impl MediaConnectionState {
         value: (
             Option<MediaSrcSockets>,
             Option<MediaSrcSockets>,
-            RedirectParameters,
+            Option<RedirectParameters>,
         ),
     ) {
         let _ = self.0.insert(media_connection_id, value);
@@ -682,7 +795,7 @@ impl MediaConnectionState {
     ) -> Option<&(
         Option<MediaSrcSockets>,
         Option<MediaSrcSockets>,
-        RedirectParameters,
+        Option<RedirectParameters>,
     )> {
         self.0.get(media_connection_id)
     }

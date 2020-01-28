@@ -14,4 +14,12 @@ video_params = { band_width = 1500, codec = "H264", payload_type = 100, sampling
 audio_redirect = { media_ip = "127.0.0.1", media_port = 10010, rtcp_ip = "127.0.0.1", rtcp_port = 10011 }
 audio_params = { band_width = 1500, codec = "OPUS", payload_type = 111, sampling_rate = 48000 }
 
+[[media]]
+video = true
+audio = true
+video_redirect = { media_ip = "127.0.0.1", media_port = 10002, rtcp_ip = "127.0.0.1", rtcp_port = 10003 }
+video_params = { band_width = 1500, codec = "H264", payload_type = 100, sampling_rate = 90000 }
+audio_redirect = { media_ip = "127.0.0.1", media_port = 10012, rtcp_ip = "127.0.0.1", rtcp_port = 10014 }
+audio_params = { band_width = 1500, codec = "OPUS", payload_type = 111, sampling_rate = 48000 }
+
 

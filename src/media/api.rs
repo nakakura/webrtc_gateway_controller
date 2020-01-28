@@ -162,6 +162,7 @@ mod test_create_media {
     use futures::*;
     use serde_json::json;
 
+    use crate::common::SerializableSocket;
     use crate::error;
     use crate::media::formats::*;
     use helper::server;
@@ -202,9 +203,9 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, true);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.media_id, MediaId::new("vi-test"));
-        assert_eq!(result.port, 10001);
-        assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
+        assert_eq!(result.get_id().unwrap(), MediaId::new("vi-test"));
+        assert_eq!(result.port(), 10001);
+        assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
     }
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
@@ -243,9 +244,9 @@ mod test_create_media {
         let addr = format!("http://{}", server.addr());
         let task = super::create_media(&addr, false);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.media_id, MediaId::new("au-test"));
-        assert_eq!(result.port, 10001);
-        assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
+        assert_eq!(result.get_id().unwrap(), MediaId::new("au-test"));
+        assert_eq!(result.port(), 10001);
+        assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
     }
 
     /// If server returns 400, create_data returns error
@@ -611,6 +612,7 @@ mod test_delete_media {
 mod test_create_rtcp {
     use serde_json::json;
 
+    use crate::common::SerializableSocket;
     use crate::error;
     use helper::server;
 
@@ -639,9 +641,9 @@ mod test_create_rtcp {
         let addr = format!("http://{}", server.addr());
         let task = super::create_rtcp(&addr);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.rtcp_id.as_str(), "rc-test");
-        assert_eq!(result.port, 10003);
-        assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
+        assert_eq!(result.get_id().unwrap().as_str(), "rc-test");
+        assert_eq!(result.port(), 10003);
+        assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
     }
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -1534,9 +1536,7 @@ mod test_answer {
         };
         let task = super::answer(&addr, media_connection_id, &params);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.params.video_port, Some(10011));
         assert_eq!(result.params.video_id, Some(MediaId::new("vi-test")));
-        assert_eq!(result.params.audio_port, Some(10021));
         assert_eq!(result.params.audio_id, Some(MediaId::new("au-test")));
     }
 
@@ -1866,8 +1866,8 @@ mod test_answer {
 mod test_pli {
     use serde_json::json;
 
-    use crate::error;
-    use crate::media::formats::*;
+    use crate::common::SerializableSocket;
+    use crate::{error, PhantomId, SocketInfo};
     use helper::server;
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -1892,11 +1892,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.expect("event parse error");
@@ -1935,11 +1931,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
@@ -1971,11 +1963,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
@@ -2007,11 +1995,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
@@ -2043,11 +2027,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
@@ -2079,11 +2059,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
@@ -2115,11 +2091,7 @@ mod test_pli {
         });
 
         let addr = format!("http://{}", server.addr());
-        let params = SocketInfo {
-            port: 10001,
-            ip_v4: Some("127.0.0.1".to_string()),
-            ip_v6: None,
-        };
+        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
 
         let task = super::pli(&addr, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");

@@ -264,14 +264,14 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
 mod test_socket_info {
     use std::net::SocketAddr;
 
-    use super::SocketInfo;
+    use super::*;
 
     #[test]
     fn v4() {
         let original_addr: SocketAddr = "127.0.0.1:8000".parse().unwrap();
-        let socket_info: SocketInfo = original_addr.into();
+        let socket_info = SocketInfo::<PhantomId>::new(None, original_addr);
         let json = serde_json::to_string(&socket_info).expect("serialize failed");
-        let decoded_socket_info: SocketInfo =
+        let decoded_socket_info: SocketInfo<PhantomId> =
             serde_json::from_str(&json).expect("deserialize failed");
         assert_eq!(socket_info, decoded_socket_info);
     }
@@ -279,9 +279,9 @@ mod test_socket_info {
     #[test]
     fn v6() {
         let original_addr: SocketAddr = "[2001:DB8:0:0:8:800:200C:417A]:8000".parse().unwrap();
-        let socket_info: SocketInfo = original_addr.into();
+        let socket_info = SocketInfo::<PhantomId>::new(None, original_addr);
         let json = serde_json::to_string(&socket_info).expect("serialize failed");
-        let decoded_socket_info: SocketInfo =
+        let decoded_socket_info: SocketInfo<PhantomId> =
             serde_json::from_str(&json).expect("deserialize failed");
         assert_eq!(socket_info, decoded_socket_info);
     }

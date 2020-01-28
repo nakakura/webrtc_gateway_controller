@@ -500,7 +500,7 @@ mod test_event {
         if let PeerEventEnum::CALL(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
             assert_eq!(response.params.token, token);
-            assert_eq!(response.call_params.media_connection_id, "mc-test");
+            assert_eq!(response.call_params.media_connection_id.as_str(), "mc-test");
         } else {
             unreachable!();
         }

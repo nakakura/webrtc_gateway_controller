@@ -1014,10 +1014,12 @@ mod test_redirect_data_connection {
     use futures::*;
     use serde_json::json;
 
+    use crate::common::SerializableSocket;
     use crate::data::formats::*;
-    use crate::error;
     use crate::DataConnectionId;
+    use crate::{error, PhantomId, SocketInfo};
     use helper::server;
+    use std::net::{IpAddr, SocketAddr};
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to start redirecting data received from neighbours
@@ -1027,7 +1029,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |mut req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1050,11 +1052,15 @@ mod test_redirect_data_connection {
                         .redirect_params
                         .clone()
                         .expect("no redirect params")
-                        .ip_v4,
-                    Some(ip_v4.to_string())
+                        .ip()
+                        .to_string(),
+                    ip_v4.to_string()
                 );
                 assert_eq!(
-                    redirect_data_params.redirect_params.expect("no port").port,
+                    redirect_data_params
+                        .redirect_params
+                        .expect("no port")
+                        .port(),
                     port
                 );
 
@@ -1073,14 +1079,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1104,7 +1108,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1130,14 +1134,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1161,7 +1163,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1177,14 +1179,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1208,7 +1208,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1224,14 +1224,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1255,7 +1253,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1271,14 +1269,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1302,7 +1298,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1318,14 +1314,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());
@@ -1349,7 +1343,7 @@ mod test_redirect_data_connection {
         let data_id = DataId::new("da-test");
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
-        let port = 10001;
+        let port = 10001u16;
 
         let server = server::http(move |req| async move {
             if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
@@ -1365,14 +1359,12 @@ mod test_redirect_data_connection {
         });
 
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let redirect_params = SocketInfo {
-            ip_v4: Some(ip_v4.to_string()),
-            ip_v6: None,
-            port: port,
-        };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
         let redirect_data_params = RedirectDataParams {
             feed_params: Some(data_id_obj),
-            redirect_params: Some(redirect_params),
+            redirect_params: Some(params),
         };
 
         let addr = format!("http://{}", server.addr());

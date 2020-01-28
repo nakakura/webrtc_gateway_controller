@@ -152,9 +152,7 @@ pub struct AnswerResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct AnswerResponseParams {
-    pub video_port: Option<u16>,
     pub video_id: Option<MediaId>,
-    pub audio_port: Option<u16>,
     pub audio_id: Option<MediaId>,
 }
 

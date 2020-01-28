@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::DataConnectionId;
+use crate::{DataConnectionId, MediaConnectionId};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct PeerId(pub String);
@@ -94,7 +94,7 @@ pub struct PeerCallEvent {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerCallEventMediaParams {
-    pub media_connection_id: String,
+    pub media_connection_id: MediaConnectionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]

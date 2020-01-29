@@ -6,7 +6,7 @@ use reqwest::Client;
 use super::formats::*;
 use crate::common;
 use crate::error;
-use crate::{PeerId, PeerInfo};
+use crate::prelude::{PeerId, PeerInfo};
 
 /// It access to the POST /peer endpoint, and return its response.
 /// Server returns values with 201 Created and 403 Forbidden.
@@ -119,7 +119,7 @@ mod test_create_peer {
 
     use crate::error;
     use crate::peer::formats::PeerOptions;
-    use crate::{PeerId, Token};
+    use crate::prelude::*;
     use helper::server;
 
     /// A WebRTC Gateway returns 201 Created and a PeerResponse struct, if it succeeds to create a Peer Object
@@ -866,7 +866,7 @@ mod test_delete_peer {
 
     use crate::error;
     use crate::peer::api::*;
-    use crate::*;
+    use crate::prelude::*;
     use helper::server;
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec

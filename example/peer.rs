@@ -5,6 +5,7 @@ use futures::prelude::*;
 use log::info;
 
 use peer::PeerEventEnum;
+use webrtc_gateway_controller::prelude::*;
 use webrtc_gateway_controller::*;
 
 #[derive(Debug)]

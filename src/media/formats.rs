@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::common::{PhantomId, SerializableId, SocketInfo};
-use crate::{PeerId, Token};
+use crate::prelude::{PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct MediaId(pub String);

@@ -14,6 +14,7 @@ use log::{error, info, warn};
 use serde_derive::Deserialize;
 
 use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper};
+use webrtc_gateway_controller::prelude::*;
 use webrtc_gateway_controller::*;
 
 //==================== for parsing data.toml ====================

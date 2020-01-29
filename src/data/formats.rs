@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::common::{PhantomId, SocketInfo};
-use crate::{PeerId, Token};
+use crate::prelude::{PeerId, Token};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CreatedResponse {

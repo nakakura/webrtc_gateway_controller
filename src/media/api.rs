@@ -1023,7 +1023,7 @@ mod test_create_call {
 
     use crate::error;
     use crate::media::formats::CallParameters;
-    use crate::*;
+    use crate::prelude::*;
     use helper::server;
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1867,7 +1867,8 @@ mod test_pli {
     use serde_json::json;
 
     use crate::common::SerializableSocket;
-    use crate::{error, PhantomId, SocketInfo};
+    use crate::error;
+    use crate::prelude::*;
     use helper::server;
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.

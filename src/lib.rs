@@ -1,8 +1,14 @@
 mod common;
+/// /data api bindings
 pub mod data;
+/// Definition of errors occur in this crate
 pub mod error;
+/// /media api bindings
 pub mod media;
+/// /peers api bindings
 pub mod peer;
+/// A "prelude" for users of this crate.
+pub mod prelude;
 
 use std::sync::Once;
 
@@ -29,8 +35,3 @@ pub(crate) fn base_url() -> &'static str {
         &BASE_URL
     }
 }
-
-pub use common::{PhantomId, SerializableSocket, SocketInfo};
-pub use data::formats::{DataConnectionId, DataId};
-pub use media::formats::{MediaConnectionId, MediaId, RtcpId};
-pub use peer::formats::{PeerEventEnum, PeerId, PeerInfo, Token};

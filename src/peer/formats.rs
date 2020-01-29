@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{DataConnectionId, MediaConnectionId};
+use crate::prelude::{DataConnectionId, MediaConnectionId};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct PeerId(pub String);

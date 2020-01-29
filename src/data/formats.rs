@@ -1,15 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{PhantomId, SocketInfo};
+use crate::common::{PhantomId, SerializableId, SocketInfo};
 use crate::prelude::{PeerId, Token};
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct CreatedResponse {
-    pub data_id: DataId,
-    pub port: u16,
-    pub ip_v4: Option<String>,
-    pub ip_v6: Option<String>,
-}
 
 /// Query for POST /data/connections
 ///
@@ -83,6 +75,27 @@ impl DataId {
 
     pub fn new(data_id: impl Into<String>) -> Self {
         DataId(data_id.into())
+    }
+}
+
+impl SerializableId for DataId {
+    fn new(id: Option<String>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        id.map(|id| DataId(id))
+    }
+
+    fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    fn id(&self) -> String {
+        self.0.clone()
+    }
+
+    fn key(&self) -> &'static str {
+        "data_id"
     }
 }
 

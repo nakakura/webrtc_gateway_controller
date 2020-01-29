@@ -5,17 +5,18 @@ use serde_json::json;
 
 use super::formats::*;
 use crate::common;
+use crate::common::SocketInfo;
 use crate::error;
 
 /// It access to the POST /data endpoint, and return its response.
 /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
 /// If server returns 400, 405, 406, 408, create_data returns error
 /// http://35.200.46.204/#/2.data/data
-pub(crate) async fn create_data(base_url: &str) -> Result<CreatedResponse, error::Error> {
+pub(crate) async fn create_data(base_url: &str) -> Result<SocketInfo<DataId>, error::Error> {
     let api_url = format!("{}/data", base_url);
     let json = json!({});
     let api_call = || Client::new().post(&api_url).json(&json).send();
-    let parser = |r: reqwest::Response| r.json::<CreatedResponse>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<SocketInfo<DataId>>().map_err(Into::into);
     common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 

@@ -8,9 +8,10 @@ use crate::data::formats::*;
 use crate::error;
 use formats::DataConnectionId;
 
+use crate::common::SocketInfo;
 pub use formats::{
-    ConnectQuery, ConnectionQueryOption, CreatedResponse, DataConnectionIdWrapper,
-    DataConnectionStatus, DataIdWrapper, DcInit, RedirectDataParams,
+    ConnectQuery, ConnectionQueryOption, DataConnectionIdWrapper, DataConnectionStatus,
+    DataIdWrapper, DcInit, RedirectDataParams,
 };
 
 #[derive(Debug, PartialEq, PartialOrd)]
@@ -21,7 +22,7 @@ pub enum DataConnectionEventEnum {
 }
 
 /// This function let a WebRTC Gateway open a socket to receive media which will be redirected to neighbour peer.
-pub async fn open_source_socket() -> Result<CreatedResponse, error::Error> {
+pub async fn open_source_socket() -> Result<SocketInfo<DataId>, error::Error> {
     let base_url = super::base_url();
     api::create_data(base_url).await
 }

@@ -73,7 +73,7 @@ pub async fn listen_events<'a>(
     loop {
         let result = api::event(base_url, data_connection_id.as_str()).await?;
         match result {
-            formats::DataConnectionEventEnum::OPEN => {
+            formats::EventEnum::OPEN => {
                 if event_notifier
                     .send(DataConnectionEventEnum::OPEN(data_connection_id.clone()))
                     .await
@@ -82,7 +82,7 @@ pub async fn listen_events<'a>(
                     return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
-            formats::DataConnectionEventEnum::CLOSE => {
+            formats::EventEnum::CLOSE => {
                 if event_notifier
                     .send(DataConnectionEventEnum::CLOSE(data_connection_id.clone()))
                     .await
@@ -92,7 +92,7 @@ pub async fn listen_events<'a>(
                 };
                 break;
             }
-            formats::DataConnectionEventEnum::ERROR {
+            formats::EventEnum::ERROR {
                 error_message: message,
             } => {
                 if event_notifier
@@ -106,7 +106,7 @@ pub async fn listen_events<'a>(
                     return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
-            formats::DataConnectionEventEnum::TIMEOUT => {}
+            formats::EventEnum::TIMEOUT => {}
         }
     }
 

@@ -190,16 +190,9 @@ pub struct DataConnectionStatus {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "event")]
-pub enum DataConnectionEventEnum {
+pub(crate) enum EventEnum {
     OPEN,
     CLOSE,
     ERROR { error_message: String },
     TIMEOUT,
 }
-
-#[derive(Debug, PartialEq)]
-pub struct OnOpenTxParameters(pub DataConnectionId);
-#[derive(Debug, PartialEq)]
-pub struct OnCloseTxParameters(pub DataConnectionId);
-#[derive(Debug, PartialEq)]
-pub struct OnErrorTxParameters(pub DataConnectionId, pub String);

@@ -104,18 +104,18 @@ pub(crate) async fn status(
 pub(crate) async fn event(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<DataConnectionEventEnum, error::Error> {
+) -> Result<EventEnum, error::Error> {
     let api_url = format!(
         "{}/data/connections/{}/events",
         base_url, data_connection_id
     );
     let api_call = || Client::new().get(&api_url).send();
-    let parser = |r: reqwest::Response| r.json::<DataConnectionEventEnum>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
             error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
-                Ok(DataConnectionEventEnum::TIMEOUT)
+                Ok(EventEnum::TIMEOUT)
             }
             e => Err(e),
         },
@@ -1639,7 +1639,7 @@ mod test_status {
 mod test_event {
     use serde_json::json;
 
-    use crate::data::formats::DataConnectionEventEnum;
+    use crate::data::formats::EventEnum;
     use crate::error;
     use crate::prelude::*;
     use helper::server;
@@ -1671,7 +1671,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
-        assert_eq!(result, DataConnectionEventEnum::OPEN);
+        assert_eq!(result, EventEnum::OPEN);
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1701,7 +1701,7 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
-        assert_eq!(result, DataConnectionEventEnum::CLOSE);
+        assert_eq!(result, EventEnum::CLOSE);
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1734,7 +1734,7 @@ mod test_event {
         let result = task.await.expect("parse error");
         assert_eq!(
             result,
-            DataConnectionEventEnum::ERROR {
+            EventEnum::ERROR {
                 error_message: "error".to_string()
             }
         );
@@ -1930,6 +1930,6 @@ mod test_event {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, data_connection_id.as_str());
         let result = task.await.expect("parse error");
-        assert_eq!(result, DataConnectionEventEnum::TIMEOUT);
+        assert_eq!(result, EventEnum::TIMEOUT);
     }
 }

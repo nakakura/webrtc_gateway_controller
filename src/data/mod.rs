@@ -14,6 +14,11 @@ pub use formats::{
     DataIdWrapper, DcInit, RedirectDataParams,
 };
 
+/// Shows DataConnection events.
+///
+/// It's response from GET /data/connections/{data_connection_id}/events
+///
+/// See [API](http://35.200.46.204/#/2.data/data_connection_events)
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {
     OPEN(DataConnectionId),
@@ -22,18 +27,49 @@ pub enum DataConnectionEventEnum {
 }
 
 /// This function let a WebRTC Gateway open a socket to receive media which will be redirected to neighbour peer.
+///
+/// # Examples
+/// ```
+/// use webrtc_gateway_controller::data::open_source_socket;
+///
+/// let result = open_source_socket().await;
+/// ```
 pub async fn open_source_socket() -> Result<SocketInfo<DataId>, error::Error> {
     let base_url = super::base_url();
     api::create_data(base_url).await
 }
 
 /// This function let a WebRTC Gateway close a socket to receive media which will be redirected to neighbour peer.
+///
+/// # Examples
+/// ```
+/// use webrtc_gateway_controller::data::close_source_socket;
+/// use webrtc_gateway_controller::prelude::DataId;
+///
+/// let data_id = DataId::new("da-example");
+/// let result = close_source_socket(&data_id).await;
+/// ```
 pub async fn close_source_socket(data_id: &DataId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_data(base_url, data_id.as_str()).await
 }
 
 /// This function let a WebRTC Gateway establish a DataChannel to neighbour
+///
+/// # Examples
+/// ```
+/// use webrtc_gateway_controller::data::ConnectQuery;
+/// use webrtc_gateway_controller::prelude::{PeerId, Token};
+///
+/// let query = ConnectQuery {
+///     peer_id: PeerId::new("peer_id"),
+///     token: Token::new("test-token"),
+///     options: None,
+///     target_id: PeerId::new("target_id"),
+///     params: None,
+///     redirect_params: None,
+/// };
+/// ```
 pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Error> {
     let base_url = super::base_url();
     let result = api::create_data_connection(base_url, &query).await?;
@@ -41,11 +77,40 @@ pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Err
 }
 
 /// This function let a WebRTC Gateway close a DataChannel
+///
+/// # Examples
+/// ```
+/// use webrtc_gateway_controller::data::disconnect;
+/// use webrtc_gateway_controller::prelude::DataConnectionId;
+///
+/// let data_connection_id = DataConnectionId::new("dc-example");
+/// let result = disconnect(&data_connection_id).await;
+/// ```
 pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_data_connection(base_url, data_connection_id.as_str()).await
 }
 
+/// DataConnection is automatically established when neighbour connect to this side.
+/// In that case, the connection doesn't have source and destination port information.
+/// This function set the information.
+///
+/// # Example
+/// ```
+/// use webrtc_gateway_controller::prelude::{DataId, DataConnectionId, PhantomId, SocketInfo, SerializableSocket};
+/// use webrtc_gateway_controller::data::{DataIdWrapper, RedirectDataParams};
+///
+/// let data_connection_id = DataConnectionId::new("dc-example");
+/// let feed_params = Some(DataIdWrapper {
+///     data_id: DataId::new("da-example")
+/// });
+/// let redirect_params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:8000".parse().unwrap());
+/// let redirect = RedirectDataParams {
+///     feed_params: feed_params,
+///     redirect_params: Some(redirect_params)
+/// };
+/// let result = redirect(&data_connection_id, &redirect).await;
+/// ```
 pub async fn redirect(
     data_connection_id: &DataConnectionId,
     redirect_data_params: &RedirectDataParams,
@@ -55,6 +120,15 @@ pub async fn redirect(
 }
 
 /// This function to get status of DataChannel
+///
+/// # Example
+/// ```
+/// use webrtc_gateway_controller::prelude::DataConnectionId;
+/// use webrtc_gateway_controller::data::status;
+///
+/// let data_connection_id = DataConnectionId::new("dc-example");
+/// let result = status(&data_connection_id).await;
+/// ```
 pub async fn status(
     data_connection_id: &DataConnectionId,
 ) -> Result<DataConnectionStatus, error::Error> {
@@ -64,6 +138,22 @@ pub async fn status(
 
 /// This function keep listening events from a WebRTC Gateway.
 /// It keep accessing event API endpoint until receiving a CLOSE event or HTTP Error Code.
+///
+/// # Example
+/// ```
+/// use futures::{future, mpsc};
+///
+/// use webrtc_gateway_controller::data::{DataConnectionEventEnum, listen_events};
+/// use webrtc_gateway_controller::prelude::DataConnectionId;
+///
+/// let data_connection_id = DataConnectionId::new("dc-example");
+/// let (dc_event_notifier, dc_event_observer) = mpsc::channel::<DataConnectionEventEnum>(0);
+/// let dc_event_observr = dc_event_observer.for_each(|event| {
+///     // Do something
+/// });
+/// let events_fut = listen_events(data_connection_id, dc_event_observer);
+/// let _ = future::join(dc_event_observer, events_fut).await;
+/// ```
 pub async fn listen_events<'a>(
     data_connection_id: DataConnectionId,
     mut event_notifier: mpsc::Sender<DataConnectionEventEnum>,

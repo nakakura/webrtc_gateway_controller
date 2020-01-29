@@ -19,9 +19,11 @@ pub struct ConnectQuery {
     pub options: Option<ConnectionQueryOption>,
     /// connect to the neighbour which has this PeerId
     pub target_id: PeerId,
-    /// Shows source Data Object which feeds data redirected to nighbour
+    /// Shows source Data Object which feeds data redirected to nighbour.
+    /// If this field is not set, DataConnection works as RecvOnly.
     pub params: Option<DataIdWrapper>,
     /// Shows destiation socket to which received data is redirected
+    /// If this field is not set, DataConnection works as SendOnly.
     pub redirect_params: Option<SocketInfo<PhantomId>>,
 }
 

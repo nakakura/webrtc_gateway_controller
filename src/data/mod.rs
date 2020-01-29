@@ -1,4 +1,4 @@
-pub mod api;
+mod api;
 pub(crate) mod formats;
 
 use futures::channel::mpsc;

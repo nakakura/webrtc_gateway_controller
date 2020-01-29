@@ -8,7 +8,10 @@ use crate::data::formats::*;
 use crate::error;
 use formats::DataConnectionId;
 
-pub use formats::{CreateDataConnectionQuery, CreatedResponse, DataIdWrapper, RedirectDataParams};
+pub use formats::{
+    ConnectQuery, ConnectionQueryOption, CreatedResponse, DataConnectionIdWrapper,
+    DataConnectionStatus, DataIdWrapper, DcInit, RedirectDataParams,
+};
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {
@@ -30,7 +33,7 @@ pub async fn close_source_socket(data_id: &DataId) -> Result<(), error::Error> {
 }
 
 /// This function let a WebRTC Gateway establish a DataChannel to neighbour
-pub async fn connect(query: CreateDataConnectionQuery) -> Result<DataConnectionId, error::Error> {
+pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Error> {
     let base_url = super::base_url();
     let result = api::create_data_connection(base_url, &query).await?;
     Ok(result.params.data_connection_id)

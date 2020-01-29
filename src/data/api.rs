@@ -36,12 +36,11 @@ pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), err
 /// http://35.200.46.204/#/2.data/data_connections_create
 pub(crate) async fn create_data_connection(
     base_url: &str,
-    params: &CreateDataConnectionQuery,
-) -> Result<CreateDataConnectionResponse, error::Error> {
+    params: &ConnectQuery,
+) -> Result<ConnectionResponse, error::Error> {
     let api_url = format!("{}/data/connections", base_url);
     let api_call = || Client::new().post(&api_url).json(params).send();
-    let parser =
-        |r: reqwest::Response| r.json::<CreateDataConnectionResponse>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<ConnectionResponse>().map_err(Into::into);
     common::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
 
@@ -544,7 +543,7 @@ mod test_create_data_connection {
                 while let Some(item) = req.body_mut().next().await {
                     full.extend(&*item.unwrap());
                 }
-                let _peer_options: CreateDataConnectionQuery =
+                let _peer_options: ConnectQuery =
                     serde_json::from_slice(&full).expect("PeerOptions parse error");
                 let json = json!({
                     "command_type": "PEERS_CONNECT",
@@ -563,7 +562,7 @@ mod test_create_data_connection {
         });
 
         let data_id = DataIdWrapper { data_id: data_id };
-        let query = CreateDataConnectionQuery {
+        let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,
@@ -612,7 +611,7 @@ mod test_create_data_connection {
 
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
-        let query = CreateDataConnectionQuery {
+        let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,
@@ -652,7 +651,7 @@ mod test_create_data_connection {
 
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
-        let query = CreateDataConnectionQuery {
+        let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,
@@ -692,7 +691,7 @@ mod test_create_data_connection {
 
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
-        let query = CreateDataConnectionQuery {
+        let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,
@@ -732,7 +731,7 @@ mod test_create_data_connection {
 
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
-        let query = CreateDataConnectionQuery {
+        let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,
@@ -772,7 +771,7 @@ mod test_create_data_connection {
 
         let addr = format!("http://{}", server.addr());
         let data_id = DataIdWrapper { data_id: data_id };
-        let query = CreateDataConnectionQuery {
+        let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,

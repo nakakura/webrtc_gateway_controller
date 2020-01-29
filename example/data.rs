@@ -299,7 +299,7 @@ async fn connect(
     });
 
     // set up query and access to connect API.
-    let query = data::CreateDataConnectionQuery {
+    let query = data::ConnectQuery {
         peer_id: peer_info.peer_id,
         token: peer_info.token,
         options: None,

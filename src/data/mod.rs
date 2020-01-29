@@ -32,7 +32,9 @@ pub enum DataConnectionEventEnum {
 /// ```
 /// use webrtc_gateway_controller::data::open_source_socket;
 ///
-/// let result = open_source_socket().await;
+/// async fn example() {
+///     let result = open_source_socket().await;
+/// }
 /// ```
 pub async fn open_source_socket() -> Result<SocketInfo<DataId>, error::Error> {
     let base_url = super::base_url();
@@ -46,8 +48,10 @@ pub async fn open_source_socket() -> Result<SocketInfo<DataId>, error::Error> {
 /// use webrtc_gateway_controller::data::close_source_socket;
 /// use webrtc_gateway_controller::prelude::DataId;
 ///
-/// let data_id = DataId::new("da-example");
-/// let result = close_source_socket(&data_id).await;
+/// async fn example() {
+///     let data_id = DataId::new("da-example");
+///     let result = close_source_socket(&data_id).await;
+/// }
 /// ```
 pub async fn close_source_socket(data_id: &DataId) -> Result<(), error::Error> {
     let base_url = super::base_url();
@@ -83,8 +87,10 @@ pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Err
 /// use webrtc_gateway_controller::data::disconnect;
 /// use webrtc_gateway_controller::prelude::DataConnectionId;
 ///
-/// let data_connection_id = DataConnectionId::new("dc-example");
-/// let result = disconnect(&data_connection_id).await;
+/// async fn example() {
+///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let result = disconnect(&data_connection_id).await;
+/// }
 /// ```
 pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), error::Error> {
     let base_url = super::base_url();
@@ -98,18 +104,20 @@ pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), err
 /// # Example
 /// ```
 /// use webrtc_gateway_controller::prelude::{DataId, DataConnectionId, PhantomId, SocketInfo, SerializableSocket};
-/// use webrtc_gateway_controller::data::{DataIdWrapper, RedirectDataParams};
+/// use webrtc_gateway_controller::data::{DataIdWrapper, RedirectDataParams, redirect};
 ///
-/// let data_connection_id = DataConnectionId::new("dc-example");
-/// let feed_params = Some(DataIdWrapper {
-///     data_id: DataId::new("da-example")
-/// });
-/// let redirect_params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:8000".parse().unwrap());
-/// let redirect = RedirectDataParams {
-///     feed_params: feed_params,
-///     redirect_params: Some(redirect_params)
-/// };
-/// let result = redirect(&data_connection_id, &redirect).await;
+/// async fn example() {
+///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let feed_params = Some(DataIdWrapper {
+///         data_id: DataId::new("da-example")
+///     });
+///     let redirect_params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:8000".parse().unwrap());
+///     let redirect_params = RedirectDataParams {
+///         feed_params: feed_params,
+///         redirect_params: Some(redirect_params)
+///     };
+///     let result = redirect(&data_connection_id, &redirect_params).await;
+/// }
 /// ```
 pub async fn redirect(
     data_connection_id: &DataConnectionId,
@@ -126,8 +134,10 @@ pub async fn redirect(
 /// use webrtc_gateway_controller::prelude::DataConnectionId;
 /// use webrtc_gateway_controller::data::status;
 ///
-/// let data_connection_id = DataConnectionId::new("dc-example");
-/// let result = status(&data_connection_id).await;
+/// async fn example() {
+///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let result = status(&data_connection_id).await;
+/// }
 /// ```
 pub async fn status(
     data_connection_id: &DataConnectionId,
@@ -141,18 +151,23 @@ pub async fn status(
 ///
 /// # Example
 /// ```
-/// use futures::{future, mpsc};
+/// use futures::channel::mpsc;
+/// use futures::future::{self, *};
+/// use futures::stream::*;
+/// use futures::*;
 ///
 /// use webrtc_gateway_controller::data::{DataConnectionEventEnum, listen_events};
 /// use webrtc_gateway_controller::prelude::DataConnectionId;
 ///
-/// let data_connection_id = DataConnectionId::new("dc-example");
-/// let (dc_event_notifier, dc_event_observer) = mpsc::channel::<DataConnectionEventEnum>(0);
-/// let dc_event_observr = dc_event_observer.for_each(|event| {
+/// async fn example() {
+///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let (dc_event_notifier, dc_event_observer) = mpsc::channel::<DataConnectionEventEnum>(0);
+///     let dc_event_observer = dc_event_observer.for_each(|event| async move {
 ///     // Do something
-/// });
-/// let events_fut = listen_events(data_connection_id, dc_event_observer);
-/// let _ = future::join(dc_event_observer, events_fut).await;
+///     });
+///     let events_fut = listen_events(data_connection_id, dc_event_notifier);
+///     let _ = join!(dc_event_observer, events_fut);
+/// }
 /// ```
 pub async fn listen_events<'a>(
     data_connection_id: DataConnectionId,

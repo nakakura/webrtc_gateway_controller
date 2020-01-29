@@ -9,8 +9,8 @@ use crate::error;
 
 pub use formats::{
     AnswerParameters, AnswerResponse, AnswerResponseParams, CallParameters, CallResponse,
-    Constraints, CreateMediaOptions, MediaConnectionEventEnum, MediaConnectionIdWrapper,
-    MediaConnectionStatus, MediaParams, RedirectParameters, SsrcPair,
+    Constraints, MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus,
+    MediaParams, RedirectParameters, SsrcPair,
 };
 use formats::{MediaConnectionId, MediaId, RtcpId};
 

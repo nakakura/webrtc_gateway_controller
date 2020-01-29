@@ -107,7 +107,7 @@ pub struct DataIdWrapper {
     pub data_id: DataId,
 }
 
-/// Identifier for source socket of data connection
+/// Identifier for DataConnection
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct DataConnectionId(pub String);
 

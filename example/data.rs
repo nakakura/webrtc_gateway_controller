@@ -13,7 +13,7 @@ use futures::prelude::*;
 use log::{error, info, warn};
 use serde_derive::Deserialize;
 
-use webrtc_gateway_controller::data::{CreatedResponse, DataIdWrapper};
+use webrtc_gateway_controller::data::DataIdWrapper;
 use webrtc_gateway_controller::prelude::*;
 use webrtc_gateway_controller::*;
 
@@ -305,7 +305,7 @@ async fn connect(
         options: None,
         target_id: target_id,
         params: Some(DataIdWrapper {
-            data_id: data_socket_created_response.data_id.clone(),
+            data_id: data_socket_created_response.get_id().clone().unwrap(),
         }),
         redirect_params: redirect_info.clone(),
     };
@@ -362,7 +362,7 @@ async fn redirect(
     });
     let redirect_params = data::RedirectDataParams {
         feed_params: Some(DataIdWrapper {
-            data_id: data_socket_created_response.data_id.clone(),
+            data_id: data_socket_created_response.get_id().clone().unwrap(),
         }),
         redirect_params: redirect_info.clone(),
     };
@@ -411,21 +411,21 @@ async fn redirect(
 // This struct shows the previous state.
 #[derive(Clone, Default)]
 struct DataConnectionState(
-    HashMap<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)>,
+    HashMap<DataConnectionId, (Option<SocketInfo<DataId>>, Option<SocketInfo<PhantomId>>)>,
 );
 
 // This struct has only setter and getter.
 impl DataConnectionState {
     pub fn data_connection_id_iter(
         &self,
-    ) -> Keys<DataConnectionId, (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
+    ) -> Keys<DataConnectionId, (Option<SocketInfo<DataId>>, Option<SocketInfo<PhantomId>>)> {
         self.0.keys()
     }
 
     pub fn insert_data_connection_id(
         &mut self,
         data_connection_id: DataConnectionId,
-        value: (Option<CreatedResponse>, Option<SocketInfo<PhantomId>>),
+        value: (Option<SocketInfo<DataId>>, Option<SocketInfo<PhantomId>>),
     ) {
         let _ = self.0.insert(data_connection_id, value);
     }
@@ -441,7 +441,7 @@ impl DataConnectionState {
     pub fn get(
         &self,
         data_connection_id: &DataConnectionId,
-    ) -> Option<&(Option<CreatedResponse>, Option<SocketInfo<PhantomId>>)> {
+    ) -> Option<&(Option<SocketInfo<DataId>>, Option<SocketInfo<PhantomId>>)> {
         self.0.get(data_connection_id)
     }
 }

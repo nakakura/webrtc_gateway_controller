@@ -126,6 +126,7 @@ pub(crate) async fn event(
 mod test_create_data {
     use serde_json::json;
 
+    use crate::common::SerializableSocket;
     use crate::data::formats::DataId;
     use crate::error;
     use helper::server;
@@ -154,9 +155,9 @@ mod test_create_data {
         let addr = format!("http://{}", server.addr());
         let task = super::create_data(&addr);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.data_id, DataId::new("da-test"));
-        assert_eq!(result.port, 50000);
-        assert_eq!(result.ip_v4, Some("127.0.0.1".to_string()));
+        assert_eq!(result.get_id(), Some(DataId::new("da-test")));
+        assert_eq!(result.port(), 50000);
+        assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
     }
 
     /// If server returns 400, create_data returns error

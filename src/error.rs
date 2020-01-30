@@ -5,26 +5,36 @@ use failure::Fail;
 use reqwest;
 use serde::{Deserialize, Serialize};
 
+/// Error response from some APIs.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct ErrorResponse {
+    /// Shows where this Json is from.
     pub command_type: String,
+    /// Shows errors
     pub params: Errors,
 }
 
+/// Shows errors
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct Errors {
+    /// Shows errors
     pub errors: Vec<ErrorItem>,
 }
 
+/// Shows errors
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct ErrorItem {
+    /// Error kind
     pub field: String,
+    /// Error detail message
     pub message: String,
 }
 
+/// Wrapper for reqwest::Error
 #[derive(Debug)]
 pub struct ReqwestError(pub reqwest::Error);
 
+/// Enum of errors in this crate.
 #[derive(Debug, Fail)]
 pub enum Error {
     #[fail(display = "Some I/O Error: {:?}", error)]
@@ -110,6 +120,7 @@ impl From<std::net::AddrParseError> for Error {
 }
 
 impl Error {
+    /// Create error message
     #[allow(dead_code)]
     pub fn create_myerror(message: &str) -> Error {
         Error::MyError {

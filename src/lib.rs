@@ -16,6 +16,7 @@ static mut BASE_URL: String = String::new();
 static INIT: Once = Once::new();
 static INIT_CHECK: Once = Once::new();
 
+/// Initialize this crate with base url of WebRTC Gateway.
 pub fn initialize(base_url: impl Into<String>) {
     unsafe {
         INIT.call_once(|| {

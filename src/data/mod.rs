@@ -30,13 +30,13 @@ pub enum DataConnectionEventEnum {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::data::open_source_socket;
+/// use webrtc_gateway_controller::data::open_data_socket;
 ///
 /// async fn example() {
-///     let result = open_source_socket().await;
+///     let result = open_data_socket().await;
 /// }
 /// ```
-pub async fn open_source_socket() -> Result<SocketInfo<DataId>, error::Error> {
+pub async fn open_data_socket() -> Result<SocketInfo<DataId>, error::Error> {
     let base_url = super::base_url();
     api::create_data(base_url).await
 }
@@ -45,15 +45,15 @@ pub async fn open_source_socket() -> Result<SocketInfo<DataId>, error::Error> {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::data::close_source_socket;
+/// use webrtc_gateway_controller::data::close_data_socket;
 /// use webrtc_gateway_controller::prelude::DataId;
 ///
 /// async fn example() {
 ///     let data_id = DataId::new("da-example");
-///     let result = close_source_socket(&data_id).await;
+///     let result = close_data_socket(&data_id).await;
 /// }
 /// ```
-pub async fn close_source_socket(data_id: &DataId) -> Result<(), error::Error> {
+pub async fn close_data_socket(data_id: &DataId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_data(base_url, data_id.as_str()).await
 }

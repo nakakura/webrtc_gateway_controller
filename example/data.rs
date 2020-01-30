@@ -290,7 +290,7 @@ async fn connect(
         .expect("peer has not been created");
 
     // Data received from this content socket will be redirected to neighbour with DataConnection.
-    let data_socket_created_response = data::open_source_socket().await?;
+    let data_socket_created_response = data::open_data_socket().await?;
 
     // Data received from DataConnection will be redirected according to this information.
     let redirect_info = params.socket_config().map(|socket_config| {
@@ -352,7 +352,7 @@ async fn redirect(
     data_connection_id: DataConnectionId,
 ) -> Result<PeerFoldState, error::Error> {
     // Data received from this content socket will be redirected to neighbour with DataConnection.
-    let data_socket_created_response = data::open_source_socket().await?;
+    let data_socket_created_response = data::open_data_socket().await?;
     // Data received from DataConnection will be redirected according to this information.
     // If there is no redirect infor in config.toml, redirect info will be None.
     // In this case, the data channel is virtually sendonly.

@@ -9,7 +9,8 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::error;
 
-pub async fn api_access<A: Sized, T: Sized, R: Sized>(
+/// It's a high-order function as a template of API access.
+pub(crate) async fn api_access<A: Sized, T: Sized, R: Sized>(
     success_code: reqwest::StatusCode,
     is_404_captable: bool,
     api_call: impl Fn() -> A,
@@ -55,50 +56,50 @@ where
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct PhantomId(String);
-
-impl SerializableId for PhantomId {
-    fn new(_id: Option<String>) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        None
-    }
-
-    fn as_str(&self) -> &str {
-        ""
-    }
-
-    fn id(&self) -> String {
-        String::from("")
-    }
-
-    fn key(&self) -> &'static str {
-        ""
-    }
-}
-
+/// This trait is for serializing ID to JSON.
+///
+/// It also has some getter functions.
 pub trait SerializableId: Clone {
-    fn new(id: Option<String>) -> Option<Self>
+    /// Try to create an instance of SerializableId with String parameter.
+    ///
+    /// It returns None, if id is None.
+    fn try_create(id: Option<String>) -> Option<Self>
     where
         Self: Sized;
+    /// Get internal str of the Id.
     fn as_str(&self) -> &str;
+    /// Get internal String of the Id
     fn id(&self) -> String;
+    /// Field name of Json. If it returns `"hoge_id"`, json will be `{"hoge_id": self.id()}`.
     fn key(&self) -> &'static str;
 }
 
+/// This trait is for serializing SocketInfo to JSON.
+///
+/// It also has some getter functions.
 pub trait SerializableSocket<T> {
+    /// Create an instance of SerializableSocket
     fn new(id: Option<String>, socket: SocketAddr) -> Self;
+    /// Create an instance of SerializableSocket.
+    ///
+    /// # Failures
+    /// It returns error, if the ip and port is not valid for SocketAddr.
     fn try_create(id: Option<String>, ip: &str, port: u16) -> Result<Self, error::Error>
     where
         Self: Sized;
+    /// Returns id field.
     fn get_id(&self) -> Option<T>;
+    /// Field name of Json.
     fn key(&self) -> &'static str;
+    /// Returns IpAddr of the socket.
     fn ip(&self) -> IpAddr;
+    /// Returns port number of the socket.
     fn port(&self) -> u16;
 }
 
+/// There are several field which has some kind of id and SocketAddr.
+///
+/// This struct covers all of them.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SocketInfo<T: SerializableId> {
     id: Option<T>,
@@ -108,7 +109,7 @@ pub struct SocketInfo<T: SerializableId> {
 impl<T: SerializableId> SerializableSocket<T> for SocketInfo<T> {
     fn new(id: Option<String>, socket: SocketAddr) -> Self {
         Self {
-            id: T::new(id),
+            id: T::try_create(id),
             socket: socket,
         }
     }
@@ -257,6 +258,35 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
 
         const FIELDS: &'static [&'static str] = &["ip_v4", "ip_v6", "port", "*_id"];
         deserializer.deserialize_struct("SocketAddr", FIELDS, SocketInfoVisitor(PhantomData))
+    }
+}
+
+/// It's just a dummy Id data returning None.
+///
+/// There are many similar structs holding SocketAddr and a kind of ID.
+/// PhantomId is for a struct which doesn't have id field.
+/// It will be set as a generics parameter of `SocketInfo`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PhantomId(String);
+
+impl SerializableId for PhantomId {
+    fn try_create(_id: Option<String>) -> Option<Self>
+        where
+            Self: Sized,
+    {
+        None
+    }
+
+    fn as_str(&self) -> &str {
+        ""
+    }
+
+    fn id(&self) -> String {
+        String::from("")
+    }
+
+    fn key(&self) -> &'static str {
+        ""
     }
 }
 

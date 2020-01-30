@@ -81,7 +81,7 @@ impl DataId {
 }
 
 impl SerializableId for DataId {
-    fn new(id: Option<String>) -> Option<Self>
+    fn try_create(id: Option<String>) -> Option<Self>
     where
         Self: Sized,
     {

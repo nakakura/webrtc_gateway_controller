@@ -18,7 +18,7 @@ impl MediaId {
 }
 
 impl SerializableId for MediaId {
-    fn new(id: Option<String>) -> Option<Self>
+    fn try_create(id: Option<String>) -> Option<Self>
     where
         Self: Sized,
     {
@@ -53,7 +53,7 @@ impl RtcpId {
 }
 
 impl SerializableId for RtcpId {
-    fn new(id: Option<String>) -> Option<Self>
+    fn try_create(id: Option<String>) -> Option<Self>
     where
         Self: Sized,
     {

@@ -287,7 +287,9 @@ pub async fn listen_events<'a>(
             }
             formats::EventEnum::STREAM => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::STREAM(media_connection_id.clone()))
+                    .send(MediaConnectionEventEnum::STREAM(
+                        media_connection_id.clone(),
+                    ))
                     .await
                     .is_err()
                 {

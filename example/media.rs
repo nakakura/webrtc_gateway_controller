@@ -359,7 +359,8 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEventEnum>(0);
+    let (mc_event_notifier, mc_event_observer) =
+        mpsc::channel::<media::MediaConnectionEventEnum>(0);
     let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
     tokio::spawn(event_listen_fut);
 
@@ -421,7 +422,8 @@ async fn answer(
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEventEnum>(0);
+    let (mc_event_notifier, mc_event_observer) =
+        mpsc::channel::<media::MediaConnectionEventEnum>(0);
     let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
     tokio::spawn(event_listen_fut);
 

@@ -359,7 +359,7 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEvents>(0);
+    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEventEnum>(0);
     let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
     tokio::spawn(event_listen_fut);
 
@@ -421,7 +421,7 @@ async fn answer(
     let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
 
     // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEvents>(0);
+    let (mc_event_notifier, mc_event_observer) = mpsc::channel::<media::MediaConnectionEventEnum>(0);
     let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
     tokio::spawn(event_listen_fut);
 
@@ -653,10 +653,10 @@ fn create_socket_state_message(
 // This function process MediaConnection events
 async fn on_media_api_events(
     state: MediaConnectionState,
-    event: media::MediaConnectionEvents,
+    event: media::MediaConnectionEventEnum,
 ) -> Result<MediaConnectionState, error::Error> {
     let status = match event {
-        media::MediaConnectionEvents::READY(media_connection_id) => {
+        media::MediaConnectionEventEnum::READY(media_connection_id) => {
             let mut message = format!(
                 "====================\nMediaConnection {} is ready to send-recv media",
                 media_connection_id.as_str()
@@ -669,14 +669,14 @@ async fn on_media_api_events(
             info!("{}", message);
             Ok(state)
         }
-        media::MediaConnectionEvents::CLOSE(media_connection_id) => {
+        media::MediaConnectionEventEnum::CLOSE(media_connection_id) => {
             info!(
                 "====================\nMediaConnection {} is closed",
                 media_connection_id.as_str()
             );
             Ok(state)
         }
-        media::MediaConnectionEvents::STREAM(media_connection_id) => {
+        media::MediaConnectionEventEnum::STREAM(media_connection_id) => {
             let message = format!(
                 "====================\nRecv stream from MediaConnection {}",
                 media_connection_id.as_str()
@@ -684,7 +684,7 @@ async fn on_media_api_events(
             info!("{}", message);
             Ok(state)
         }
-        media::MediaConnectionEvents::ERROR((media_connection_id, message)) => {
+        media::MediaConnectionEventEnum::ERROR((media_connection_id, message)) => {
             error!(
                 "error {:?} in MediaConnection {}",
                 message,

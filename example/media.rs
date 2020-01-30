@@ -344,7 +344,7 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
         create_media_connect_options(&media_config).await?;
     let redirect_params = create_redirect(media_config);
 
-    let call_params = CallParameters {
+    let call_params = CallQuery {
         peer_id: peer_info.peer_id,
         token: peer_info.token,
         target_id: target_id,
@@ -409,7 +409,7 @@ async fn answer(
         create_media_connect_options(&media_config).await?;
     let redirect_params = create_redirect(media_config);
 
-    let answer_params = AnswerParameters {
+    let answer_params = AnswerQuery {
         constraints: constraints,
         redirect_params: Some(redirect_params.clone()),
     };

@@ -92,9 +92,11 @@ pub(crate) struct CreateMediaOptions {
     pub is_video: bool,
 }
 
-/// Parameter for call
+/// Query parameter for POST /media/connections
+///
+/// See [API](http://35.200.46.204/#/3.media/media_connection_create)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct CallParameters {
+pub struct CallQuery {
     /// to identify which PeerObject calls to neighbour
     pub peer_id: PeerId,
     /// to show that this program has permission to control PeerObject
@@ -157,38 +159,61 @@ pub struct RedirectParameters {
     pub audio_rtcp: Option<SocketInfo<PhantomId>>,
 }
 
+/// Response from POST /media/connections
+///
+/// See [API](http://35.200.46.204/#/3.media/media_connection_create)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CallResponse {
+    /// Fixed value as `"PEERS_CALL"`.
     pub command_type: String,
+    /// Identifier for MediaConnection
     pub params: MediaConnectionIdWrapper,
 }
 
+/// Wrapper for serializing JSON
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct MediaConnectionIdWrapper {
+    /// Identifier for MediaConnection
     pub media_connection_id: MediaConnectionId,
 }
 
+/// Query parameter for POST /media/connections
+///
+/// See [API](http://35.200.46.204/#/3.media/media_connection_answer)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct AnswerParameters {
+pub struct AnswerQuery {
+    /// Parameters for MediaConnection
+    /// It contains source socket. If the field is None, this MediaConnection works as RecvOnly.
     pub constraints: Constraints,
+    /// Shows destiation socket to which received data is redirected
+    /// If this field is not set, DataConnection works as SendOnly.
     pub redirect_params: Option<RedirectParameters>,
 }
 
+/// Response from POST /media/connections
+///
+/// See [API](http://35.200.46.204/#/3.media/media_connection_answer)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct AnswerResponse {
+    /// Fixed value as `"MEDIA_CONNECTION_ANSWER"`.
     pub command_type: String,
+    /// Shows media_ids used in this MediaConnection
     pub params: AnswerResponseParams,
 }
 
+/// Shows media_ids used in this MediaConnection
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct AnswerResponseParams {
     pub video_id: Option<MediaId>,
     pub audio_id: Option<MediaId>,
 }
 
+/// Events from GET /media/events API.
+/// It includes TIMEOUT, but the event is not needed for end-user-programs.
+/// So it's used internally.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "event")]
-pub enum MediaConnectionEventEnum {
+pub(crate) enum EventEnum {
     READY,
     STREAM,
     CLOSE,
@@ -196,16 +221,24 @@ pub enum MediaConnectionEventEnum {
     TIMEOUT,
 }
 
+/// Status of MediaConnection
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct MediaConnectionStatus {
+    /// Metadata associated with the connection, passed in by whoever initiated the connection.
     pub metadata: String,
+    /// Shows whether this MediaConnection is working or not.
     pub open: bool,
+    /// Shows neighbour id
     pub remote_id: PeerId,
+    /// Shows ssrc(Synchrozination Source) information
     pub ssrc: Vec<SsrcPair>,
 }
 
+/// Shows ssrc(Synchrozination Source) information
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SsrcPair {
+    /// Identify Media
     pub media_id: MediaId,
+    /// SSRC
     pub ssrc: usize,
 }

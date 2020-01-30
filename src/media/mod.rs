@@ -8,9 +8,8 @@ use crate::common::{PhantomId, SocketInfo};
 use crate::error;
 
 pub use formats::{
-    AnswerParameters, AnswerResponse, AnswerResponseParams, CallParameters, CallResponse,
-    Constraints, MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus,
-    MediaParams, RedirectParameters, SsrcPair,
+    AnswerQuery, AnswerResponse, AnswerResponseParams, CallQuery, CallResponse, Constraints,
+    MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams, RedirectParameters, SsrcPair,
 };
 use formats::{MediaConnectionId, MediaId, RtcpId};
 
@@ -42,14 +41,14 @@ pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
     api::delete_rtcp(base_url, rtcp_id.as_str()).await
 }
 
-pub async fn call(call_params: &CallParameters) -> Result<CallResponse, error::Error> {
+pub async fn call(call_params: &CallQuery) -> Result<CallResponse, error::Error> {
     let base_url = super::base_url();
     api::create_call(base_url, call_params).await
 }
 
 pub async fn answer(
     media_connection_id: &MediaConnectionId,
-    params: &AnswerParameters,
+    params: &AnswerQuery,
 ) -> Result<AnswerResponse, error::Error> {
     let base_url = super::base_url();
     api::answer(base_url, media_connection_id.as_str(), params).await
@@ -77,7 +76,7 @@ pub async fn listen_events<'a>(
     loop {
         let result = api::event(base_url, media_connection_id.as_str()).await?;
         match result {
-            formats::MediaConnectionEventEnum::READY => {
+            formats::EventEnum::READY => {
                 if event_notifier
                     .send(MediaConnectionEvents::READY(media_connection_id.clone()))
                     .await
@@ -86,7 +85,7 @@ pub async fn listen_events<'a>(
                     return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
-            formats::MediaConnectionEventEnum::CLOSE => {
+            formats::EventEnum::CLOSE => {
                 if event_notifier
                     .send(MediaConnectionEvents::CLOSE(media_connection_id.clone()))
                     .await
@@ -96,7 +95,7 @@ pub async fn listen_events<'a>(
                 };
                 break;
             }
-            formats::MediaConnectionEventEnum::STREAM => {
+            formats::EventEnum::STREAM => {
                 if event_notifier
                     .send(MediaConnectionEvents::STREAM(media_connection_id.clone()))
                     .await
@@ -105,7 +104,7 @@ pub async fn listen_events<'a>(
                     return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
-            formats::MediaConnectionEventEnum::ERROR {
+            formats::EventEnum::ERROR {
                 error_message: message,
             } => {
                 if event_notifier
@@ -119,7 +118,7 @@ pub async fn listen_events<'a>(
                     return Err(error::Error::create_myerror("fail to notify an event"));
                 };
             }
-            formats::MediaConnectionEventEnum::TIMEOUT => {}
+            formats::EventEnum::TIMEOUT => {}
         }
     }
 

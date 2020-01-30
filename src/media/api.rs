@@ -60,7 +60,7 @@ pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), err
 /// http://35.200.46.204/#/3.media/media_connection_create
 pub(crate) async fn create_call(
     base_url: &str,
-    call_params: &CallParameters,
+    call_params: &CallQuery,
 ) -> Result<CallResponse, error::Error> {
     let api_url = format!("{}/media/connections", base_url);
     let api_call = || Client::new().post(&api_url).json(call_params).send();
@@ -89,7 +89,7 @@ pub(crate) async fn delete_call(
 pub(crate) async fn answer(
     base_url: &str,
     media_connection_id: &str,
-    params: &AnswerParameters,
+    params: &AnswerQuery,
 ) -> Result<AnswerResponse, error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/answer",
@@ -122,18 +122,18 @@ pub(crate) async fn pli(
 pub(crate) async fn event(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<MediaConnectionEventEnum, error::Error> {
+) -> Result<EventEnum, error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/events",
         base_url, media_connection_id
     );
     let api_call = || Client::new().get(&api_url).send();
-    let parser = |r: reqwest::Response| r.json::<MediaConnectionEventEnum>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
             error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
-                Ok(MediaConnectionEventEnum::TIMEOUT)
+                Ok(EventEnum::TIMEOUT)
             }
             e => Err(e),
         },
@@ -1022,7 +1022,7 @@ mod test_create_call {
     use serde_json::json;
 
     use crate::error;
-    use crate::media::formats::CallParameters;
+    use crate::media::formats::CallQuery;
     use crate::prelude::*;
     use helper::server;
 
@@ -1049,7 +1049,7 @@ mod test_create_call {
             }
         });
 
-        let call_params = CallParameters {
+        let call_params = CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
@@ -1091,7 +1091,7 @@ mod test_create_call {
             }
         });
 
-        let call_params = CallParameters {
+        let call_params = CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
@@ -1126,7 +1126,7 @@ mod test_create_call {
             }
         });
 
-        let call_params = CallParameters {
+        let call_params = CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
@@ -1161,7 +1161,7 @@ mod test_create_call {
             }
         });
 
-        let call_params = CallParameters {
+        let call_params = CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
@@ -1196,7 +1196,7 @@ mod test_create_call {
             }
         });
 
-        let call_params = CallParameters {
+        let call_params = CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
@@ -1231,7 +1231,7 @@ mod test_create_call {
             }
         });
 
-        let call_params = CallParameters {
+        let call_params = CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
@@ -1530,7 +1530,7 @@ mod test_answer {
             audio_params: None,
         };
 
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -1589,7 +1589,7 @@ mod test_answer {
             video_params: Some(video_params),
             audio_params: None,
         };
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -1642,7 +1642,7 @@ mod test_answer {
             audio_params: None,
         };
 
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -1694,7 +1694,7 @@ mod test_answer {
             audio_params: None,
         };
 
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -1745,7 +1745,7 @@ mod test_answer {
             video_params: Some(video_params),
             audio_params: None,
         };
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -1797,7 +1797,7 @@ mod test_answer {
             audio_params: None,
         };
 
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -1849,7 +1849,7 @@ mod test_answer {
             audio_params: None,
         };
 
-        let params = AnswerParameters {
+        let params = AnswerQuery {
             constraints: constraints,
             redirect_params: None,
         };
@@ -2135,7 +2135,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
-        assert_eq!(result, MediaConnectionEventEnum::READY);
+        assert_eq!(result, EventEnum::READY);
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2162,7 +2162,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
-        assert_eq!(result, MediaConnectionEventEnum::STREAM);
+        assert_eq!(result, EventEnum::STREAM);
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2189,7 +2189,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
-        assert_eq!(result, MediaConnectionEventEnum::CLOSE);
+        assert_eq!(result, EventEnum::CLOSE);
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2218,7 +2218,7 @@ mod test_events {
         let result = task.await.expect("event parse error");
         assert_eq!(
             result,
-            MediaConnectionEventEnum::ERROR {
+            EventEnum::ERROR {
                 error_message: "hoge".to_string()
             }
         );
@@ -2408,7 +2408,7 @@ mod test_events {
         let addr = format!("http://{}", server.addr());
         let task = super::event(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
-        assert_eq!(result, MediaConnectionEventEnum::TIMEOUT);
+        assert_eq!(result, EventEnum::TIMEOUT);
     }
 }
 

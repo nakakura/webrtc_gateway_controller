@@ -18,7 +18,7 @@ pub use formats::{
 ///
 /// It's bindings for POST /peers
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer)
+/// [API](http://35.200.46.204/#/1.peers/peer)
 ///
 /// Notice: This api call does not guarantee that WebRTC Gateway creates a Peer Object successfully.
 /// You need to wait OPEN event
@@ -38,7 +38,7 @@ pub async fn create<'a>(
 ///
 /// It's bindings for GET /peers/{peer_id}/events
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer_event)
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
 ///
 /// This function need to repeat long-polling to WebRTC Gateway's peer event API.
 /// When the API returns TIMEOUT events, this function ignore them and keep listening events.
@@ -101,7 +101,7 @@ pub async fn listen_events<'a>(
 ///
 /// It's bindings for DELETE /peers/{peer_id}
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer_destroy)
+/// [API](http://35.200.46.204/#/1.peers/peer_destroy)
 pub async fn delete(peer_info: &PeerInfo) -> Result<(), error::Error> {
     let base_url = crate::base_url();
     api::delete_peer(base_url, peer_info).await
@@ -111,7 +111,7 @@ pub async fn delete(peer_info: &PeerInfo) -> Result<(), error::Error> {
 ///
 /// It's bindings for GET /peers/{peer_id}/status
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer_status)
+/// [API](http://35.200.46.204/#/1.peers/peer_status)
 pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::Error> {
     let base_url = crate::base_url();
     api::status(base_url, peer_info).await
@@ -119,7 +119,7 @@ pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, 
 
 /// Response from GET /peers/{peer_id}/events
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer_event)
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 #[serde(tag = "event")]
 pub enum PeerEventEnum {

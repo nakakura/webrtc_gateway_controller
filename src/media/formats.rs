@@ -94,7 +94,7 @@ pub(crate) struct CreateMediaOptions {
 
 /// Query parameter for POST /media/connections
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_create)
+/// [API](http://35.200.46.204/#/3.media/media_connection_create)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CallQuery {
     /// to identify which PeerObject calls to neighbour
@@ -161,7 +161,7 @@ pub struct RedirectParameters {
 
 /// Response from POST /media/connections
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_create)
+/// [API](http://35.200.46.204/#/3.media/media_connection_create)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct CallResponse {
     /// Fixed value as `"PEERS_CALL"`.
@@ -179,7 +179,7 @@ pub struct MediaConnectionIdWrapper {
 
 /// Query parameter for POST /media/connections
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_answer)
+/// [API](http://35.200.46.204/#/3.media/media_connection_answer)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct AnswerQuery {
     /// Parameters for MediaConnection
@@ -192,7 +192,7 @@ pub struct AnswerQuery {
 
 /// Response from POST /media/connections
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_answer)
+/// [API](http://35.200.46.204/#/3.media/media_connection_answer)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct AnswerResponse {
     /// Fixed value as `"MEDIA_CONNECTION_ANSWER"`.

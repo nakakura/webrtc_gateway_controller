@@ -17,7 +17,7 @@ use formats::{MediaConnectionId, MediaId, RtcpId};
 ///
 /// It's response from GET /media/connections/{media_connection_id}/events
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_event)
+/// [API](http://35.200.46.204/#/3.media/media_connection_event)
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum MediaConnectionEventEnum {
     READY(MediaConnectionId),
@@ -33,7 +33,7 @@ pub enum MediaConnectionEventEnum {
 ///
 /// It's bindings for POST /media.
 ///
-/// See [API](http://35.200.46.204/#/3.media/media)
+/// [API](http://35.200.46.204/#/3.media/media)
 ///
 /// # Examples
 /// ```
@@ -53,7 +53,7 @@ pub async fn open_media_socket(is_video: bool) -> Result<SocketInfo<MediaId>, er
 ///
 /// It's bindings for DELETE /media/{media_id}
 ///
-/// See [API](http://35.200.46.204/#/3.media/streams_delete)
+/// [API](http://35.200.46.204/#/3.media/streams_delete)
 ///
 /// # Examples
 /// ```
@@ -74,7 +74,7 @@ pub async fn delete_media(media_id: &MediaId) -> Result<(), error::Error> {
 ///
 /// It's bindings for POST /media/rtcp.
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_rtcp_create)
+/// [API](http://35.200.46.204/#/3.media/media_rtcp_create)
 ///
 /// # Examples
 /// ```
@@ -93,7 +93,7 @@ pub async fn open_rtcp_socket() -> Result<SocketInfo<RtcpId>, error::Error> {
 ///
 /// It's bindings for DELETE /media/rtcp/{rtcp_id}
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_rtcp_delete)
+/// [API](http://35.200.46.204/#/3.media/media_rtcp_delete)
 ///
 /// # Examples
 /// ```
@@ -114,7 +114,7 @@ pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
 ///
 /// It's bindings for POST /media/connections.
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_create)
+/// [API](http://35.200.46.204/#/3.media/media_connection_create)
 ///
 /// # Examples
 /// ```
@@ -149,7 +149,7 @@ pub async fn call(call_params: &CallQuery) -> Result<CallResponse, error::Error>
 ///
 /// It's bindings for POST /media/connections/{media_connection_id}/answer
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_answer)
+/// [API](http://35.200.46.204/#/3.media/media_connection_answer)
 ///
 /// # Examples
 /// ```
@@ -184,7 +184,7 @@ pub async fn answer(
 ///
 /// It's bindings for DELETE /media/connections/{media_connection_id}.
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_close)
+/// [API](http://35.200.46.204/#/3.media/media_connection_close)
 ///
 /// # Examples
 /// ```
@@ -208,7 +208,7 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 ///
 /// It's bindings for POST /media/connections/{media_connection_id}/pli
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_pli)
+/// [API](http://35.200.46.204/#/3.media/media_connection_pli)
 ///
 /// # Examples
 /// ```
@@ -235,7 +235,7 @@ pub async fn send_pli(
 /// until it receives a CLOSE event or an Error event.
 /// If it receives timeout, it ignores the event and listen events again.
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_event)
+/// [API](http://35.200.46.204/#/3.media/media_connection_event)
 ///
 /// # Examples
 /// ```
@@ -321,7 +321,7 @@ pub async fn listen_events<'a>(
 ///
 /// It's bindings for GET /media/connections/{media_connection_id}/events.
 ///
-/// See [API](http://35.200.46.204/#/3.media/media_connection_status)
+/// [API](http://35.200.46.204/#/3.media/media_connection_status)
 ///
 /// # Examples
 /// ```

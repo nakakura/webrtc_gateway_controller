@@ -7,7 +7,7 @@ use crate::prelude::{PeerId, Token};
 ///
 /// It will send as JSON body
 ///
-/// See [API](http://35.200.46.204/#/2.data/data_connections_create)
+/// [API](http://35.200.46.204/#/2.data/data_connections_create)
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ConnectQuery {
@@ -123,7 +123,7 @@ impl DataConnectionId {
 
 /// Response JSON from POST /data/connections
 ///
-/// See [API](http://35.200.46.204/#/2.data/data_connections_create)
+/// [API](http://35.200.46.204/#/2.data/data_connections_create)
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ConnectionResponse {
@@ -143,7 +143,7 @@ pub struct DataConnectionIdWrapper {
 ///
 /// It will send as JSON body
 ///
-/// See [API](http://35.200.46.204/#/2.data/data_connection_put)
+/// [API](http://35.200.46.204/#/2.data/data_connection_put)
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectDataParams {
@@ -157,7 +157,7 @@ pub struct RedirectDataParams {
 ///
 /// It will send as JSON body
 ///
-/// See [API](http://35.200.46.204/#/2.data/data_connection_put)
+/// [API](http://35.200.46.204/#/2.data/data_connection_put)
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectDataResponse {
@@ -169,7 +169,7 @@ pub struct RedirectDataResponse {
 
 /// Response from GET /data/connections/{data_cnnection_id}/status
 ///
-/// See [API](http://35.200.46.204/#/2.data/data_connection_status)
+/// [API](http://35.200.46.204/#/2.data/data_connection_status)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DataConnectionStatus {
     /// Identifies a peer connected with this DataConnection

@@ -18,7 +18,7 @@ pub use formats::{
 ///
 /// It's response from GET /data/connections/{data_connection_id}/events
 ///
-/// See [API](http://35.200.46.204/#/2.data/data_connection_events)
+/// [API](http://35.200.46.204/#/2.data/data_connection_events)
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {
     OPEN(DataConnectionId),

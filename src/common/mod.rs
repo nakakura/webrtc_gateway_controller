@@ -271,8 +271,8 @@ pub struct PhantomId(String);
 
 impl SerializableId for PhantomId {
     fn try_create(_id: Option<String>) -> Option<Self>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         None
     }

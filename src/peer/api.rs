@@ -23,7 +23,7 @@ pub(crate) async fn create_peer(
     peer_id: PeerId,
     turn: bool,
 ) -> Result<CreatedResponse, error::Error> {
-    let peer_options = PeerOptions {
+    let peer_options = CreatePeerQuery {
         key: api_key.into(),
         domain: domain.into(),
         peer_id: peer_id,
@@ -45,10 +45,7 @@ pub(crate) async fn create_peer(
 /// this function returns error
 /// Also, if server returns json which command_type is not "PEERS_EVENTS", it returns error.
 /// http://35.200.46.204/#/1.peers/peer_event
-pub(crate) async fn event(
-    base_url: &str,
-    peer_info: &PeerInfo,
-) -> Result<PeerEventEnum, error::Error> {
+pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventEnum, error::Error> {
     let api_url = format!(
         "{}/peers/{}/events?token={}",
         base_url,
@@ -64,12 +61,12 @@ pub(crate) async fn event(
             )
             .send()
     };
-    let parser = |r: reqwest::Response| r.json::<PeerEventEnum>().map_err(Into::into);
+    let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
     match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
             error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
-                Ok(PeerEventEnum::TIMEOUT)
+                Ok(EventEnum::TIMEOUT)
             }
             e => Err(e),
         },
@@ -118,7 +115,7 @@ mod test_create_peer {
     use serde_json::json;
 
     use crate::error;
-    use crate::peer::formats::PeerOptions;
+    use crate::peer::formats::CreatePeerQuery;
     use crate::prelude::*;
     use helper::server;
 
@@ -135,7 +132,7 @@ mod test_create_peer {
                 while let Some(item) = req.body_mut().next().await {
                     full.extend(&*item.unwrap());
                 }
-                let peer_options: PeerOptions =
+                let peer_options: CreatePeerQuery =
                     serde_json::from_slice(&full).expect("PeerOptions parse error");
                 let json = json!({
                     "command_type": "PEERS_CREATE",
@@ -402,7 +399,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
-        if let PeerEventEnum::OPEN(response) = result {
+        if let EventEnum::OPEN(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
             assert_eq!(response.params.token, token);
         } else {
@@ -449,7 +446,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
-        if let PeerEventEnum::CONNECTION(response) = result {
+        if let EventEnum::CONNECTION(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
             assert_eq!(response.params.token, token);
             assert_eq!(response.data_params.data_connection_id.as_str(), "dc-test");
@@ -497,7 +494,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
-        if let PeerEventEnum::CALL(response) = result {
+        if let EventEnum::CALL(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
             assert_eq!(response.params.token, token);
             assert_eq!(response.call_params.media_connection_id.as_str(), "mc-test");
@@ -542,7 +539,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
-        if let PeerEventEnum::CLOSE(response) = result {
+        if let EventEnum::CLOSE(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
             assert_eq!(response.params.token, token);
         } else {
@@ -587,7 +584,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("event parse error");
-        if let PeerEventEnum::ERROR(response) = result {
+        if let EventEnum::ERROR(response) = result {
             assert_eq!(response.params.peer_id, peer_id);
             assert_eq!(response.params.token, token);
             assert_eq!(response.error_message, "error");
@@ -856,7 +853,7 @@ mod test_event {
 
         let task = super::event(&addr, &peer_info);
         let result = task.await.expect("parse error");
-        assert_eq!(result, PeerEventEnum::TIMEOUT);
+        assert_eq!(result, EventEnum::TIMEOUT);
     }
 }
 

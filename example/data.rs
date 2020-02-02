@@ -80,7 +80,7 @@ async fn main() {
     //create peer and observe peer events
     let create_peer_future = peer::create(api_key, domain, peer_id, true);
     let peer_info = create_peer_future.await.expect("create peer failed");
-    let (peer_event_notifier, peer_event_observer) = mpsc::channel::<PeerEventEnum>(0);
+    let (peer_event_notifier, peer_event_observer) = mpsc::channel::<EventEnum>(0);
     let event_future = peer::listen_events(&peer_info, peer_event_notifier);
 
     //this program reacts only to user input and peer events.
@@ -159,10 +159,10 @@ impl PeerFoldState {
 // This function process events from Peer Object
 async fn on_peer_api_events(
     status: PeerFoldState,
-    event: PeerEventEnum,
+    event: EventEnum,
 ) -> Result<PeerFoldState, error::Error> {
     let status = match event {
-        PeerEventEnum::OPEN(event) => {
+        EventEnum::OPEN(event) => {
             // PeerObject notify that it has been successfully created.
             // Hold PeerInfo for further process.
             info!(
@@ -173,7 +173,7 @@ async fn on_peer_api_events(
             let params = status.set_peer_info(Some(event.params));
             Ok(params)
         }
-        PeerEventEnum::CLOSE(event) => {
+        EventEnum::CLOSE(event) => {
             // PeerObject notify that it has already been deleted.
             // Erase old PeerInfo.
             info!(
@@ -183,7 +183,7 @@ async fn on_peer_api_events(
             let params = status.set_peer_info(None);
             Ok(params)
         }
-        PeerEventEnum::CONNECTION(event) => {
+        EventEnum::CONNECTION(event) => {
             // In this timing, DataChannel itself has already been established.
             // To send and recv data, call redirect API.
             info!(
@@ -192,7 +192,7 @@ async fn on_peer_api_events(
             );
             redirect(status, event.data_params.data_connection_id).await
         }
-        PeerEventEnum::ERROR(event) => {
+        EventEnum::ERROR(event) => {
             error!("error {:?} occurs in on_peer_api_events", event);
             Ok(status)
         }

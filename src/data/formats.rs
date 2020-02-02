@@ -134,7 +134,7 @@ pub struct ConnectionResponse {
 }
 
 /// Struct just for adapter to adjust JSON format
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct DataConnectionIdWrapper {
     pub data_connection_id: DataConnectionId,
 }

@@ -1,6 +1,6 @@
 [package]
 name = "skyway-webrtc-gateway-api"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Toshiya Nakakura <nakakura@me.com>"]
 edition = "2018"
 license = "MIT"

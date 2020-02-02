@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::data::DataConnectionIdWrapper;
-use crate::prelude::{DataConnectionId, MediaConnectionId};
+use crate::media::MediaConnectionIdWrapper;
 
 /// Identifier for PeerObject.
 ///
@@ -44,7 +44,7 @@ pub struct PeerInfo {
 
 /// Query for POST /peers.
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer)
+/// [API](http://35.200.46.204/#/1.peers/peer)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreatePeerQuery {
     /// SkyWay's API Key.
@@ -59,7 +59,7 @@ pub struct CreatePeerQuery {
 
 /// Response from POST /peers
 ///
-/// See [API](http://35.200.46.204/#/1.peers/peer)
+/// [API](http://35.200.46.204/#/1.peers/peer)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct CreatedResponse {
     /// Fixed value as `"PEERS_CREATE"`.
@@ -80,6 +80,10 @@ pub(crate) enum EventEnum {
     TIMEOUT,
 }
 
+/// Response from GET /peers/{peer_id}/events
+///
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
+///
 /// Indicates peer object is registered to SkyWay Server
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerOpenEvent {
@@ -87,6 +91,10 @@ pub struct PeerOpenEvent {
     pub params: PeerInfo,
 }
 
+/// Response from GET /peers/{peer_id}/events
+///
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
+///
 /// Indicates peer object is deleted
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerCloseEvent {
@@ -94,6 +102,10 @@ pub struct PeerCloseEvent {
     pub params: PeerInfo,
 }
 
+/// Response from GET /peers/{peer_id}/events
+///
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
+///
 /// Shows Error about PeerObject
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerErrorEvent {
@@ -105,6 +117,8 @@ pub struct PeerErrorEvent {
 
 /// Shows that the Peer Object receives a request to establish DataConnection with neighbour.
 ///
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
+///
 /// DataConnection is automatically established when the request comes.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerConnectionEvent {
@@ -115,17 +129,17 @@ pub struct PeerConnectionEvent {
 }
 
 /// Shows that the Peer Object receives a request to establish MediaConnection with neighbour.
+///
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerCallEvent {
     pub params: PeerInfo,
-    pub call_params: PeerCallEventMediaParams,
+    pub call_params: MediaConnectionIdWrapper,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
-pub struct PeerCallEventMediaParams {
-    pub media_connection_id: MediaConnectionId,
-}
-
+/// Response from GET /peer/{peer_id}/status
+///
+/// [API](http://35.200.46.204/#/1.peers/peer_status)
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub struct PeerStatusMessage {
     pub peer_id: PeerId,

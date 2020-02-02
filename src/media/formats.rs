@@ -171,7 +171,7 @@ pub struct CallResponse {
 }
 
 /// Wrapper for serializing JSON
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub struct MediaConnectionIdWrapper {
     /// Identifier for MediaConnection
     pub media_connection_id: MediaConnectionId,

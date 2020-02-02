@@ -15,9 +15,9 @@ use serde_derive::Deserialize;
 
 use media::*;
 use peer::PeerEventEnum;
-use webrtc_gateway_controller::peer::PeerCallEvent;
-use webrtc_gateway_controller::prelude::*;
-use webrtc_gateway_controller::*;
+use skyway_webrtc_gateway_api::peer::PeerCallEvent;
+use skyway_webrtc_gateway_api::prelude::*;
+use skyway_webrtc_gateway_api::*;
 
 //==================== for parsing media.toml ====================
 // It shows config toml formats
@@ -103,7 +103,7 @@ async fn main() {
     let domain = config.peer.domain;
     let peer_id = PeerId::new(config.peer.peer_id);
     let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
-    webrtc_gateway_controller::initialize(base_url);
+    skyway_webrtc_gateway_api::initialize(base_url);
 
     //observe keyboard events
     let (key_notifier, key_observer) = mpsc::channel::<String>(0);

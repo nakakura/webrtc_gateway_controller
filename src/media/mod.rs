@@ -37,7 +37,7 @@ pub enum MediaConnectionEventEnum {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::open_media_socket;
+/// use skyway_webrtc_gateway_api::media::open_media_socket;
 ///
 /// async fn example() {
 ///     let result = open_media_socket(true).await; //video
@@ -57,8 +57,8 @@ pub async fn open_media_socket(is_video: bool) -> Result<SocketInfo<MediaId>, er
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::delete_media;
-/// use webrtc_gateway_controller::prelude::MediaId;
+/// use skyway_webrtc_gateway_api::media::delete_media;
+/// use skyway_webrtc_gateway_api::prelude::MediaId;
 ///
 /// async fn example() {
 ///     let media_id = MediaId::new("vi-example");
@@ -78,7 +78,7 @@ pub async fn delete_media(media_id: &MediaId) -> Result<(), error::Error> {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::open_rtcp_socket;
+/// use skyway_webrtc_gateway_api::media::open_rtcp_socket;
 ///
 /// async fn example() {
 ///     let result = open_rtcp_socket().await;
@@ -97,8 +97,8 @@ pub async fn open_rtcp_socket() -> Result<SocketInfo<RtcpId>, error::Error> {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::delete_rtcp;
-/// use webrtc_gateway_controller::prelude::RtcpId;
+/// use skyway_webrtc_gateway_api::media::delete_rtcp;
+/// use skyway_webrtc_gateway_api::prelude::RtcpId;
 ///
 /// async fn example() {
 ///     let rtcp_id = RtcpId::new("rc-example");
@@ -118,8 +118,8 @@ pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::{call, CallQuery, Constraints};
-/// use webrtc_gateway_controller::prelude::{PeerId, MediaConnectionId, Token};
+/// use skyway_webrtc_gateway_api::media::{call, CallQuery, Constraints};
+/// use skyway_webrtc_gateway_api::prelude::{PeerId, MediaConnectionId, Token};
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
@@ -153,8 +153,8 @@ pub async fn call(call_params: &CallQuery) -> Result<CallResponse, error::Error>
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::{answer, AnswerQuery, Constraints};
-/// use webrtc_gateway_controller::prelude::MediaConnectionId;
+/// use skyway_webrtc_gateway_api::media::{answer, AnswerQuery, Constraints};
+/// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
@@ -188,8 +188,8 @@ pub async fn answer(
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::disconnect;
-/// use webrtc_gateway_controller::prelude::MediaConnectionId;
+/// use skyway_webrtc_gateway_api::media::disconnect;
+/// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
@@ -212,8 +212,8 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::send_pli;
-/// use webrtc_gateway_controller::prelude::{MediaConnectionId, PhantomId, SerializableSocket, SocketInfo};
+/// use skyway_webrtc_gateway_api::media::send_pli;
+/// use skyway_webrtc_gateway_api::prelude::{MediaConnectionId, PhantomId, SerializableSocket, SocketInfo};
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
@@ -244,8 +244,8 @@ pub async fn send_pli(
 /// use futures::stream::*;
 /// use futures::*;
 ///
-/// use webrtc_gateway_controller::media::{MediaConnectionEventEnum, listen_events};
-/// use webrtc_gateway_controller::prelude::MediaConnectionId;
+/// use skyway_webrtc_gateway_api::media::{MediaConnectionEventEnum, listen_events};
+/// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
@@ -325,8 +325,8 @@ pub async fn listen_events<'a>(
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::media::status;
-/// use webrtc_gateway_controller::prelude::MediaConnectionId;
+/// use skyway_webrtc_gateway_api::media::status;
+/// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");

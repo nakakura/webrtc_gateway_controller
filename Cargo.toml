@@ -1,8 +1,10 @@
 [package]
-name = "webrtc_gateway_controller"
+name = "skyway-webrtc-gateway-api"
 version = "0.0.1"
 authors = ["Toshiya Nakakura <nakakura@me.com>"]
 edition = "2018"
+license = "MIT"
+description = "REST API Wrapper for SkyWay WebRTC Gateway"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

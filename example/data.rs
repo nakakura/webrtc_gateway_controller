@@ -13,10 +13,10 @@ use futures::prelude::*;
 use log::{error, info, warn};
 use serde_derive::Deserialize;
 
-use webrtc_gateway_controller::data::DataIdWrapper;
-use webrtc_gateway_controller::prelude::*;
-use webrtc_gateway_controller::*;
-use webrtc_gateway_controller::peer::PeerEventEnum;
+use skyway_webrtc_gateway_api::data::DataIdWrapper;
+use skyway_webrtc_gateway_api::peer::PeerEventEnum;
+use skyway_webrtc_gateway_api::prelude::*;
+use skyway_webrtc_gateway_api::*;
 
 //==================== for parsing data.toml ====================
 
@@ -72,7 +72,7 @@ async fn main() {
     let domain = config.peer.domain;
     let peer_id = PeerId::new(config.peer.peer_id);
     let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
-    webrtc_gateway_controller::initialize(base_url);
+    skyway_webrtc_gateway_api::initialize(base_url);
 
     //observe keyboard events
     let (key_notifier, key_observer) = mpsc::channel::<String>(0);

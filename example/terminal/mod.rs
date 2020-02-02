@@ -1,7 +1,7 @@
 use futures::channel::mpsc;
 use futures::*;
 
-use webrtc_gateway_controller::error;
+use skyway_webrtc_gateway_api::error;
 
 // FIXME
 // Keyboard events should be subscribed from many locations

@@ -30,7 +30,7 @@ pub enum DataConnectionEventEnum {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::data::open_data_socket;
+/// use skyway_webrtc_gateway_api::data::open_data_socket;
 ///
 /// async fn example() {
 ///     let result = open_data_socket().await;
@@ -45,8 +45,8 @@ pub async fn open_data_socket() -> Result<SocketInfo<DataId>, error::Error> {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::data::close_data_socket;
-/// use webrtc_gateway_controller::prelude::DataId;
+/// use skyway_webrtc_gateway_api::data::close_data_socket;
+/// use skyway_webrtc_gateway_api::prelude::DataId;
 ///
 /// async fn example() {
 ///     let data_id = DataId::new("da-example");
@@ -62,8 +62,8 @@ pub async fn close_data_socket(data_id: &DataId) -> Result<(), error::Error> {
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::data::ConnectQuery;
-/// use webrtc_gateway_controller::prelude::{PeerId, Token};
+/// use skyway_webrtc_gateway_api::data::ConnectQuery;
+/// use skyway_webrtc_gateway_api::prelude::{PeerId, Token};
 ///
 /// let query = ConnectQuery {
 ///     peer_id: PeerId::new("peer_id"),
@@ -84,8 +84,8 @@ pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Err
 ///
 /// # Examples
 /// ```
-/// use webrtc_gateway_controller::data::disconnect;
-/// use webrtc_gateway_controller::prelude::DataConnectionId;
+/// use skyway_webrtc_gateway_api::data::disconnect;
+/// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
 ///
 /// async fn example() {
 ///     let data_connection_id = DataConnectionId::new("dc-example");
@@ -103,8 +103,8 @@ pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), err
 ///
 /// # Example
 /// ```
-/// use webrtc_gateway_controller::prelude::{DataId, DataConnectionId, PhantomId, SocketInfo, SerializableSocket};
-/// use webrtc_gateway_controller::data::{DataIdWrapper, RedirectDataParams, redirect};
+/// use skyway_webrtc_gateway_api::prelude::{DataId, DataConnectionId, PhantomId, SocketInfo, SerializableSocket};
+/// use skyway_webrtc_gateway_api::data::{DataIdWrapper, RedirectDataParams, redirect};
 ///
 /// async fn example() {
 ///     let data_connection_id = DataConnectionId::new("dc-example");
@@ -131,8 +131,8 @@ pub async fn redirect(
 ///
 /// # Example
 /// ```
-/// use webrtc_gateway_controller::prelude::DataConnectionId;
-/// use webrtc_gateway_controller::data::status;
+/// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
+/// use skyway_webrtc_gateway_api::data::status;
 ///
 /// async fn example() {
 ///     let data_connection_id = DataConnectionId::new("dc-example");
@@ -156,8 +156,8 @@ pub async fn status(
 /// use futures::stream::*;
 /// use futures::*;
 ///
-/// use webrtc_gateway_controller::data::{DataConnectionEventEnum, listen_events};
-/// use webrtc_gateway_controller::prelude::DataConnectionId;
+/// use skyway_webrtc_gateway_api::data::{DataConnectionEventEnum, listen_events};
+/// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
 ///
 /// async fn example() {
 ///     let data_connection_id = DataConnectionId::new("dc-example");

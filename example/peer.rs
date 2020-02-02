@@ -5,8 +5,8 @@ use futures::prelude::*;
 use log::info;
 
 use peer::PeerEventEnum;
-use webrtc_gateway_controller::prelude::*;
-use webrtc_gateway_controller::*;
+use skyway_webrtc_gateway_api::prelude::*;
+use skyway_webrtc_gateway_api::*;
 
 #[derive(Debug)]
 enum EventEnum {
@@ -26,7 +26,7 @@ async fn main() {
     let peer_id = ::std::env::var("PEER_ID").expect("PEER_ID is not set in environment variables");
     let peer_id = PeerId::new(peer_id);
     let base_url = ::std::env::var("BASE_URL").unwrap_or("http://localhost:8000".to_string());
-    webrtc_gateway_controller::initialize(base_url);
+    skyway_webrtc_gateway_api::initialize(base_url);
 
     let create_peer_future = peer::create(api_key, domain, peer_id, true);
     let peer_info = create_peer_future.await.expect("create peer failed");

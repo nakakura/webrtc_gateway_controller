@@ -5,6 +5,9 @@ authors = ["Toshiya Nakakura <nakakura@me.com>"]
 edition = "2018"
 license = "MIT"
 description = "REST API Wrapper for SkyWay WebRTC Gateway"
+repository = "https://github.com/nakakura/webrtc_gateway_controller"
+readme = "README.md"
+keywords = ["skyway", "webrtc", "gateway", "rtp"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["initialize","Initialize this crate with base url of WebRTC Gateway."]],"mod":[["data","/data api bindings"],["error","Definition of errors occur in this crate"],["media","/media api bindings"],["peer","/peers api bindings"],["prelude","A \"prelude\" for users of this crate."]]});

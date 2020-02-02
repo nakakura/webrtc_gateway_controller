@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error","Enum of errors in this crate."]],"struct":[["ErrorItem","Shows errors"],["ErrorResponse","Error response from some APIs."],["Errors","Shows errors"],["ReqwestError","Wrapper for reqwest::Error"]]});

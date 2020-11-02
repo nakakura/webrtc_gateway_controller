@@ -34,11 +34,11 @@ pub struct ConnectQuery {
 #[allow(non_snake_case)]
 pub struct ConnectionQueryOption {
     /// Metadata associated with the connection, passed in by whoever initiated the connection.
-    pub metadata: String,
+    pub metadata: Option<String>,
     /// Can be BINARY (default), BINARY_UTF8, JSON, or NONE.
-    pub serialization: String,
+    pub serialization: Option<String>,
     /// Detail option for DataConnection
-    pub dcInit: DcInit,
+    pub dcInit: Option<DcInit>,
 }
 
 /// Query parameter for POST /data/connections
@@ -51,19 +51,19 @@ pub struct ConnectionQueryOption {
 #[allow(non_snake_case)]
 pub struct DcInit {
     /// Indicates whether or not the data channel guarantees in-order delivery of messages; the default is true, which indicates that the data channel is indeed ordered.
-    pub ordered: bool,
+    pub ordered: Option<bool>,
     /// The amount of time, in milliseconds, the browser is allowed to take to attempt to transmit a message.
-    pub maxPacketLifeTime: usize,
+    pub maxPacketLifeTime: Option<usize>,
     /// The maximum number of times the WebRTC Gateway should try to retransmit a message before giving up.
-    pub maxRetransmits: usize,
+    pub maxRetransmits: Option<usize>,
     /// containing the name of the sub-protocol in use. If no protocol was specified when the data channel was created, then this property's value is "".
-    pub protocol: String,
+    pub protocol: Option<String>,
     /// Indicates whether the RTCDataChannel's connection was negotiated by the Web app (true) or by the WebRTC layer (false).
-    pub negotiated: bool,
+    pub negotiated: Option<bool>,
     /// ID number (between 0 and 65,534) which uniquely identifies the RTCDataChannel.
-    pub id: usize,
+    pub id: Option<usize>,
     /// Show priority of this channel.
-    pub priority: String,
+    pub priority: Option<String>,
 }
 
 /// Identifier for source socket of data
@@ -82,8 +82,8 @@ impl DataId {
 
 impl SerializableId for DataId {
     fn try_create(id: Option<String>) -> Option<Self>
-    where
-        Self: Sized,
+        where
+            Self: Sized,
     {
         id.map(|id| DataId(id))
     }

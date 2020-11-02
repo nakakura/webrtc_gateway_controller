@@ -8,10 +8,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::error;
 use crate::peer::formats::EventEnum;
-use formats::PeerId;
 pub use formats::{
     CreatePeerQuery, CreatedResponse, PeerCallEvent, PeerCloseEvent, PeerConnectionEvent,
-    PeerErrorEvent, PeerInfo, PeerOpenEvent, PeerStatusMessage,
+    PeerErrorEvent, PeerInfo, PeerOpenEvent, PeerStatusMessage, PeerId
 };
 
 /// Request to create Peer.

@@ -51,18 +51,32 @@ pub struct ConnectionQueryOption {
 #[allow(non_snake_case)]
 pub struct DcInit {
     /// Indicates whether or not the data channel guarantees in-order delivery of messages; the default is true, which indicates that the data channel is indeed ordered.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub ordered: Option<bool>,
     /// The amount of time, in milliseconds, the browser is allowed to take to attempt to transmit a message.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub maxPacketLifeTime: Option<usize>,
     /// The maximum number of times the WebRTC Gateway should try to retransmit a message before giving up.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub maxRetransmits: Option<usize>,
     /// containing the name of the sub-protocol in use. If no protocol was specified when the data channel was created, then this property's value is "".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub protocol: Option<String>,
     /// Indicates whether the RTCDataChannel's connection was negotiated by the Web app (true) or by the WebRTC layer (false).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub negotiated: Option<bool>,
     /// ID number (between 0 and 65,534) which uniquely identifies the RTCDataChannel.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub id: Option<usize>,
     /// Show priority of this channel.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, deserialize_with = "crate::helper::deserialize_maybe_nan")]
     pub priority: Option<String>,
 }
 

@@ -9,6 +9,8 @@ pub mod media;
 pub mod peer;
 /// A "prelude" for users of this crate.
 pub mod prelude;
+/// helper to load yaml
+pub(crate) mod helper;
 
 use std::sync::Once;
 

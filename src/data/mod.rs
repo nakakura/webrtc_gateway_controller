@@ -6,12 +6,11 @@ use futures::*;
 
 use crate::data::formats::*;
 use crate::error;
-use formats::DataConnectionId;
 
 use crate::common::SocketInfo;
 pub use formats::{
     ConnectQuery, ConnectionQueryOption, DataConnectionIdWrapper, DataConnectionStatus,
-    DataIdWrapper, DcInit, RedirectDataParams,
+    DataIdWrapper, DcInit, RedirectDataParams, DataId, DataConnectionId
 };
 
 /// Shows DataConnection events.

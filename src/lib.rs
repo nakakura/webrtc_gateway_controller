@@ -1,4 +1,5 @@
-mod common;
+/// common fields
+pub mod common;
 /// /data api bindings
 pub mod data;
 /// Definition of errors occur in this crate

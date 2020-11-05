@@ -96,8 +96,8 @@ impl DataId {
 
 impl SerializableId for DataId {
     fn try_create(id: Option<String>) -> Option<Self>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         id.map(|id| DataId(id))
     }

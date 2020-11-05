@@ -9,8 +9,8 @@ use crate::error;
 
 use crate::common::SocketInfo;
 pub use formats::{
-    ConnectQuery, ConnectionQueryOption, DataConnectionIdWrapper, DataConnectionStatus,
-    DataIdWrapper, DcInit, RedirectDataParams, DataId, DataConnectionId
+    ConnectQuery, ConnectionQueryOption, DataConnectionId, DataConnectionIdWrapper,
+    DataConnectionStatus, DataId, DataIdWrapper, DcInit, RedirectDataParams,
 };
 
 /// Shows DataConnection events.
@@ -23,6 +23,7 @@ pub enum DataConnectionEventEnum {
     OPEN(DataConnectionId),
     CLOSE(DataConnectionId),
     ERROR((DataConnectionId, String)),
+    TIMEOUT,
 }
 
 /// This function let a WebRTC Gateway open a socket to receive media which will be redirected to neighbour peer.
@@ -143,6 +144,38 @@ pub async fn status(
 ) -> Result<DataConnectionStatus, error::Error> {
     let base_url = super::base_url();
     api::status(base_url, data_connection_id.as_str()).await
+}
+
+/// This function get a single event from a WebRTC Gateway.
+///
+/// # Example
+/// ```
+/// use futures::future::{self, *};
+/// use futures::stream::*;
+/// use futures::*;
+///
+/// use skyway_webrtc_gateway_api::data::{DataConnectionEventEnum, listen_events, event};
+/// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
+///
+/// async fn example() {
+///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let event_result = event(&data_connection_id).await;
+/// }
+/// ```
+pub async fn event<'a>(
+    data_connection_id: &DataConnectionId,
+) -> Result<DataConnectionEventEnum, error::Error> {
+    let base_url = super::base_url();
+    let event = api::event(base_url, data_connection_id.as_str()).await?;
+    let event = match event {
+        formats::EventEnum::OPEN => DataConnectionEventEnum::OPEN(data_connection_id.clone()),
+        formats::EventEnum::CLOSE => DataConnectionEventEnum::CLOSE(data_connection_id.clone()),
+        formats::EventEnum::ERROR {
+            error_message: message,
+        } => DataConnectionEventEnum::ERROR((data_connection_id.clone(), message)),
+        formats::EventEnum::TIMEOUT => DataConnectionEventEnum::TIMEOUT,
+    };
+    Ok(event)
 }
 
 /// This function keep listening events from a WebRTC Gateway.

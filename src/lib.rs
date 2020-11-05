@@ -4,14 +4,14 @@ pub mod common;
 pub mod data;
 /// Definition of errors occur in this crate
 pub mod error;
+/// helper to load yaml
+pub(crate) mod helper;
 /// /media api bindings
 pub mod media;
 /// /peers api bindings
 pub mod peer;
 /// A "prelude" for users of this crate.
 pub mod prelude;
-/// helper to load yaml
-pub(crate) mod helper;
 
 use std::sync::Once;
 

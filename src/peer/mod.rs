@@ -33,6 +33,29 @@ pub async fn create<'a>(
     Ok(result.params)
 }
 
+/// Listen an event of a Peer Object.
+///
+/// It's bindings for GET /peers/{peer_id}/events
+///
+/// [API](http://35.200.46.204/#/1.peers/peer_event)
+pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, error::Error> {
+    println!("--event-");
+    let base_url = crate::base_url();
+    println!("event-");
+    let event = api::event(base_url, peer_info).await?;
+        println!("event--");
+    Ok(
+        match event{
+            EventEnum::TIMEOUT => PeerEventEnum::TIMEOUT,
+            EventEnum::CLOSE(event) => PeerEventEnum::CLOSE(event),
+            EventEnum::OPEN(event) => PeerEventEnum::OPEN(event),
+            EventEnum::CONNECTION(event) => PeerEventEnum::CONNECTION(event),
+            EventEnum::CALL(event) => PeerEventEnum::CALL(event),
+            EventEnum::ERROR(event) => PeerEventEnum::ERROR(event),
+        }
+    )
+}
+
 /// Listen events of a Peer Object.
 ///
 /// It's bindings for GET /peers/{peer_id}/events
@@ -127,4 +150,5 @@ pub enum PeerEventEnum {
     CONNECTION(PeerConnectionEvent),
     CALL(PeerCallEvent),
     ERROR(PeerErrorEvent),
+    TIMEOUT,
 }

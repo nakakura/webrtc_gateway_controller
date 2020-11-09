@@ -9,9 +9,9 @@ use crate::error;
 
 pub use formats::{
     AnswerQuery, AnswerResponse, AnswerResponseParams, CallQuery, CallResponse, Constraints,
-    MediaConnectionIdWrapper, MediaConnectionStatus, MediaParams, RedirectParameters, SsrcPair,
+    MediaConnectionId, MediaConnectionIdWrapper, MediaConnectionStatus, MediaId, MediaParams,
+    RedirectParameters, RtcpId, SsrcPair,
 };
-use formats::{MediaConnectionId, MediaId, RtcpId};
 
 /// Shows DataConnection events.
 ///

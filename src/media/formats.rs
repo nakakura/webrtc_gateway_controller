@@ -127,6 +127,8 @@ pub struct Constraints {
     pub video_params: Option<MediaParams>,
     /// Parameters for sending audio
     pub audio_params: Option<MediaParams>,
+    /// metadata sent to a neighbour.
+    pub metadata: Option<String>,
 }
 
 /// Parameters for sending media
@@ -231,7 +233,7 @@ pub struct MediaConnectionStatus {
     /// Shows neighbour id
     pub remote_id: PeerId,
     /// Shows ssrc(Synchrozination Source) information
-    pub ssrc: Vec<SsrcPair>,
+    pub ssrc: Option<Vec<SsrcPair>>,
 }
 
 /// Shows ssrc(Synchrozination Source) information

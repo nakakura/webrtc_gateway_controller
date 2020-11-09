@@ -91,6 +91,8 @@ pub trait SerializableSocket<T> {
     fn get_id(&self) -> Option<T>;
     /// Field name of Json.
     fn key(&self) -> &'static str;
+    /// Returns SocketAddr of the socket.
+    fn addr(&self) -> &SocketAddr;
     /// Returns IpAddr of the socket.
     fn ip(&self) -> IpAddr;
     /// Returns port number of the socket.
@@ -129,6 +131,10 @@ impl<T: SerializableId> SerializableSocket<T> for SocketInfo<T> {
             Some(ref id) => id.key(),
             None => "",
         }
+    }
+
+    fn addr(&self) -> &SocketAddr {
+        &self.socket
     }
 
     fn ip(&self) -> IpAddr {

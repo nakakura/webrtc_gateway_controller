@@ -43,17 +43,15 @@ pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, error::Err
     let base_url = crate::base_url();
     println!("event-");
     let event = api::event(base_url, peer_info).await?;
-        println!("event--");
-    Ok(
-        match event{
-            EventEnum::TIMEOUT => PeerEventEnum::TIMEOUT,
-            EventEnum::CLOSE(event) => PeerEventEnum::CLOSE(event),
-            EventEnum::OPEN(event) => PeerEventEnum::OPEN(event),
-            EventEnum::CONNECTION(event) => PeerEventEnum::CONNECTION(event),
-            EventEnum::CALL(event) => PeerEventEnum::CALL(event),
-            EventEnum::ERROR(event) => PeerEventEnum::ERROR(event),
-        }
-    )
+    println!("event--");
+    Ok(match event {
+        EventEnum::TIMEOUT => PeerEventEnum::TIMEOUT,
+        EventEnum::CLOSE(event) => PeerEventEnum::CLOSE(event),
+        EventEnum::OPEN(event) => PeerEventEnum::OPEN(event),
+        EventEnum::CONNECTION(event) => PeerEventEnum::CONNECTION(event),
+        EventEnum::CALL(event) => PeerEventEnum::CALL(event),
+        EventEnum::ERROR(event) => PeerEventEnum::ERROR(event),
+    })
 }
 
 /// Listen events of a Peer Object.

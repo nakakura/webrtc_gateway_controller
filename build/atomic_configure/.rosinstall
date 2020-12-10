@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/nakakura/catkin_ws/src/skyway/module/webrtc_gateway_controller/devel/setup.sh

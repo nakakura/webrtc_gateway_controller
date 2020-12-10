@@ -134,6 +134,7 @@ pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
 ///             audioReceiveEnabled: Some(false),
 ///             video_params: None,
 ///             audio_params: None,
+///             metadata: None,
 ///         }),
 ///         redirect_params: None,
 ///     };
@@ -166,6 +167,7 @@ pub async fn call(call_params: &CallQuery) -> Result<CallResponse, error::Error>
 ///             audioReceiveEnabled: Some(false),
 ///             video_params: None,
 ///             audio_params: None,
+///             metadata: None,
 ///         },
 ///         redirect_params: None,
 ///     };

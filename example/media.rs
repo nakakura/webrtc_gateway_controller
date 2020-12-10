@@ -541,6 +541,7 @@ async fn create_media_connect_options(
             audioReceiveEnabled: Some(media_params.audio_redirect.is_some()),
             video_params: video_constraints,
             audio_params: audio_constraints,
+            metadata: None,
         },
     ))
 }

@@ -1,0 +1,2 @@
+
+-DCATKIN_DEVEL_PREFIX=/home/nakakura/catkin_ws/src/skyway/module/webrtc_gateway_controller/devel -DCMAKE_INSTALL_PREFIX=/home/nakakura/catkin_ws/src/skyway/module/webrtc_gateway_controller/install -G Unix Makefiles

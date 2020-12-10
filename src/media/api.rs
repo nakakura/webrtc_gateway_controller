@@ -1528,6 +1528,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
 
         let params = AnswerQuery {
@@ -1588,6 +1589,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
         let params = AnswerQuery {
             constraints: constraints,
@@ -1640,6 +1642,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
 
         let params = AnswerQuery {
@@ -1692,6 +1695,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
 
         let params = AnswerQuery {
@@ -1744,6 +1748,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
         let params = AnswerQuery {
             constraints: constraints,
@@ -1795,6 +1800,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
 
         let params = AnswerQuery {
@@ -1847,6 +1853,7 @@ mod test_answer {
             audioReceiveEnabled: Some(false),
             video_params: Some(video_params),
             audio_params: None,
+            metadata: None,
         };
 
         let params = AnswerQuery {
@@ -2457,12 +2464,13 @@ mod test_status {
         let addr = format!("http://{}", server.addr());
         let task = super::status(&addr, media_connection_id);
         let result = task.await.expect("event parse error");
+        let ssrc = result.ssrc.clone().unwrap();
         assert_eq!(result.open, true);
-        assert_eq!(result.ssrc.len(), 2);
-        assert_eq!(result.ssrc[0].media_id.as_str(), "au-test");
-        assert_eq!(result.ssrc[0].ssrc, 2);
-        assert_eq!(result.ssrc[1].media_id.as_str(), "vi-test");
-        assert_eq!(result.ssrc[1].ssrc, 3);
+        assert_eq!(ssrc.len(), 2);
+        assert_eq!(ssrc[0].media_id.as_str(), "au-test");
+        assert_eq!(ssrc[0].ssrc, 2);
+        assert_eq!(ssrc[1].media_id.as_str(), "vi-test");
+        assert_eq!(ssrc[1].ssrc, 3);
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.

@@ -93,7 +93,7 @@ async fn main() {
     // initialize logger
     if std::env::var("RUST_LOG").is_err() {
         std::env::set_var("RUST_LOG", "info");
-        info!("RUST_LOG is not set. So it works as info mode.")
+        info!("RUST_LOG is not set. So it works as info mode.");
     }
     env_logger::init();
 

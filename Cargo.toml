@@ -28,7 +28,9 @@ tokio = { version = "0.2.8", features = ["full"] }
 async-std = "1.4.0"
 either = "1.5"
 http = "0.2"
+httptest = "*"
 hyper = { version = "0.13.1" }
+mockito = "*"
 toml = "0.5"
 # internal crate for unit test of rest apis
 helper = { path="./helper" }

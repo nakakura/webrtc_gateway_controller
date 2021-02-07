@@ -124,49 +124,50 @@ pub(crate) async fn event(
 
 #[cfg(test)]
 mod test_create_data {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::common::SerializableSocket;
     use crate::data::formats::DataId;
     use crate::error;
-    use helper::server;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_201() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/data")
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "data_id": "da-test",
                     "port": 50000,
-                    "ip_v4": "127.0.0.1",
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                    "ip_v4": "127.0.0.1"
+                }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data(&url);
         let result = task.await.expect("event parse error");
         assert_eq!(result.get_id(), Some(DataId::new("da-test")));
         assert_eq!(result.port(), 50000);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 400, create_data returns error
+    /// API returns 400 error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/data")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "DATA_CREATE",
                     "params": {
                         "errors": [
@@ -176,421 +177,337 @@ mod test_create_data {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 403, create_data returns error
+    /// API returns 403 error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 405, create_data returns error
+    /// API returns 405 error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 406, create_data returns error
+    /// API returns 406 error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 408, create_data returns error
+    /// API returns 406 error
     /// http://35.200.46.204/#/2.data/data
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/data" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_delete_data {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::data::formats::DataId;
     use crate::error;
-    use helper::server;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
-    /// http://35.200.46.204/#/2.data/data
+    /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_204() {
         let data_id = DataId::new("da-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NO_CONTENT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/da-test")
+            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, ());
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 400, create_data returns error
-    /// http://35.200.46.204/#/2.data/data
-    #[tokio::test]
-    async fn recv_400() {
-        let data_id = DataId::new("da-test");
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "DATA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id.as_str());
-        let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
-            unreachable!();
-        }
-    }
-
-    /// If server returns 403, delete_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// API returns 403
+    /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_403() {
         let data_id = DataId::new("da-test");
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "DATA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id.as_str());
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/da-test")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 405, delete_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// API returns 404
+    /// http://35.200.46.204/#/2.data/data_delete
+    #[tokio::test]
+    async fn recv_404() {
+        let data_id = DataId::new("da-test");
+
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/da-test")
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data(&url, data_id.as_str());
+        let result = task.await.err().expect("parse error");
+        if let error::Error::MyError { error: _e } = result {} else {
+            unreachable!();
+        }
+
+        // server called
+        httpserver.assert();
+    }
+
+    /// API returns 405
+    /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_405() {
         let data_id = DataId::new("da-test");
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "DATA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id.as_str());
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/da-test")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 406, delete_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// API returns 406
+    /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_406() {
         let data_id = DataId::new("da-test");
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "DATA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id.as_str());
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/da-test")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 408, delete_data returns error
-    /// http://35.200.46.204/#/2.data/data
+    /// API returns 408
+    /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_408() {
         let data_id = DataId::new("da-test");
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/da-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "DATA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data(&addr, data_id.as_str());
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/da-test")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_create_data_connection {
-    use futures::*;
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::data::formats::*;
     use crate::error;
     use crate::prelude::*;
-    use helper::server;
 
-    /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
-    /// http://35.200.46.204/#/2.data/data
-    #[tokio::test]
-    async fn recv_202() {
+    fn create_options() -> ConnectQuery {
         let peer_id = PeerId::new("peer_id");
         let token = Token::new("test-token");
         let target_id = PeerId::new("target_id");
         let data_id = DataId::new("da-test");
-
-        let server = server::http(move |mut req| async move {
-            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                let mut full: Vec<u8> = Vec::new();
-                while let Some(item) = req.body_mut().next().await {
-                    full.extend(&*item.unwrap());
-                }
-                let _peer_options: ConnectQuery =
-                    serde_json::from_slice(&full).expect("PeerOptions parse error");
-                let json = json!({
-                    "command_type": "PEERS_CONNECT",
-                    "params": {
-                        "data_connection_id": "dc-test"
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::ACCEPTED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
         let data_id = DataIdWrapper { data_id: data_id };
         let query = ConnectQuery {
             peer_id: peer_id,
             token: token,
             options: None,
             target_id: target_id,
-            params: Some(data_id),
+            params: Some(data_id.clone()),
             redirect_params: None,
         };
-
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_data_connection(&addr, &query);
-        let result = task.await.expect("parse error");
-        assert_eq!(result.params.data_connection_id.as_str(), "dc-test");
+        query
     }
 
-    /// It returns 400 to show errors
+    /// The API returns 202 Accepted, when a WebRTC Gateway succeed to create a DataConnection
+    /// http://35.200.46.204/#/2.data/data_connections_create
+    #[tokio::test]
+    async fn recv_202() {
+        // create api parameters
+        let query = create_options();
+
+        // set up server mock
+        let httpserver = mock("POST", "/data/connections")
+            .with_status(hyper::StatusCode::ACCEPTED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                    "command_type": "PEERS_CONNECT",
+                    "params": {
+                        "data_connection_id": "dc-test"
+                    }
+                }"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data_connection(&url, &query);
+        let result = task.await.expect("parse error");
+        assert_eq!(result.params.data_connection_id.as_str(), "dc-test");
+
+        // server called
+        httpserver.assert();
+    }
+
+    /// API returns 400
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId::new("peer_id");
-        let token = Token::new("test-token");
-        let target_id = PeerId::new("target_id");
-        let data_id = DataId::new("da-test");
+        // create api parameters
+        let query = create_options();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/data/connections")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "DATA_CONNECTION_CREATE",
                     "params": {
                         "errors": [
@@ -600,229 +517,165 @@ mod test_create_data_connection {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let data_id = DataIdWrapper { data_id: data_id };
-        let query = ConnectQuery {
-            peer_id: peer_id,
-            token: token,
-            options: None,
-            target_id: target_id,
-            params: Some(data_id),
-            redirect_params: None,
-        };
-        let task = super::create_data_connection(&addr, &query);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// It returns 403 to show errors
+    /// API returns 403
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId::new("peer_id");
-        let token = Token::new("test-token");
-        let target_id = PeerId::new("target_id");
-        let data_id = DataId::new("da-test");
+        // create api parameters
+        let query = create_options();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data/connections")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let data_id = DataIdWrapper { data_id: data_id };
-        let query = ConnectQuery {
-            peer_id: peer_id,
-            token: token,
-            options: None,
-            target_id: target_id,
-            params: Some(data_id),
-            redirect_params: None,
-        };
-        let task = super::create_data_connection(&addr, &query);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// It returns 405 to show errors
+    /// API returns 405
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId::new("peer_id");
-        let token = Token::new("test-token");
-        let target_id = PeerId::new("target_id");
-        let data_id = DataId::new("da-test");
+        // create api parameters
+        let query = create_options();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data/connections")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let data_id = DataIdWrapper { data_id: data_id };
-        let query = ConnectQuery {
-            peer_id: peer_id,
-            token: token,
-            options: None,
-            target_id: target_id,
-            params: Some(data_id),
-            redirect_params: None,
-        };
-        let task = super::create_data_connection(&addr, &query);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// It returns 406 to show errors
+    /// API returns 406
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = PeerId::new("peer_id");
-        let token = Token::new("test-token");
-        let target_id = PeerId::new("target_id");
-        let data_id = DataId::new("da-test");
+        // create api parameters
+        let query = create_options();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data/connections")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let data_id = DataIdWrapper { data_id: data_id };
-        let query = ConnectQuery {
-            peer_id: peer_id,
-            token: token,
-            options: None,
-            target_id: target_id,
-            params: Some(data_id),
-            redirect_params: None,
-        };
-        let task = super::create_data_connection(&addr, &query);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// It returns 408 to show errors
+    /// API returns 408
     /// http://35.200.46.204/#/2.data/data_connections_create
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId::new("peer_id");
-        let token = Token::new("test-token");
-        let target_id = PeerId::new("target_id");
-        let data_id = DataId::new("da-test");
+        // create api parameters
+        let query = create_options();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/data/connections")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let data_id = DataIdWrapper { data_id: data_id };
-        let query = ConnectQuery {
-            peer_id: peer_id,
-            token: token,
-            options: None,
-            target_id: target_id,
-            params: Some(data_id),
-            redirect_params: None,
-        };
-        let task = super::create_data_connection(&addr, &query);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_delete_data_connection {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
     use crate::prelude::*;
-    use helper::server;
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Peer Object
     /// It returns 400, 403, 404, 405, 406, 408 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
-    async fn recv_202() {
+    async fn recv_204() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NO_CONTENT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, ());
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -832,9 +685,12 @@ mod test_delete_data_connection {
     async fn recv_400() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "DATA_CONNECTION_DELETE",
                     "params": {
                         "errors": [
@@ -844,24 +700,20 @@ mod test_delete_data_connection {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -871,26 +723,24 @@ mod test_delete_data_connection {
     async fn recv_403() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -900,26 +750,24 @@ mod test_delete_data_connection {
     async fn recv_404() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -929,26 +777,24 @@ mod test_delete_data_connection {
     async fn recv_405() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -958,139 +804,111 @@ mod test_delete_data_connection {
     async fn recv_406() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
-    /// It returns 403 to show errors.
+    /// It returns 408 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_408() {
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("DELETE", "/data/connections/dc-test")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_data_connection(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_redirect_data_connection {
-    use futures::*;
-    use serde_json::json;
+    use std::net::{IpAddr, SocketAddr};
+
+    use mockito::mock;
 
     use crate::common::SerializableSocket;
     use crate::data::formats::*;
     use crate::error;
     use crate::prelude::*;
-    use helper::server;
-    use std::net::{IpAddr, SocketAddr};
+
+    fn create_param() -> (RedirectDataParams, DataConnectionId) {
+        let data_id = DataId::new("da-test");
+        let data_connection_id = DataConnectionId::new("dc-test");
+        let ip_v4 = "127.0.0.1";
+        let port = 10001u16;
+        let data_id_obj = DataIdWrapper { data_id: data_id };
+        let addr: IpAddr = ip_v4.parse().unwrap();
+        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+
+        (RedirectDataParams {
+            feed_params: Some(data_id_obj),
+            redirect_params: Some(params),
+        }, data_connection_id)
+    }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to start redirecting data received from neighbours
     /// http://35.200.46.204/#/2.data/data_connection_put
     #[tokio::test]
-    async fn recv_202() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+    async fn recv_200() {
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |mut req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let mut full: Vec<u8> = Vec::new();
-                while let Some(item) = req.body_mut().next().await {
-                    full.extend(&*item.unwrap());
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
                 }
-                let redirect_data_params: RedirectDataParams =
-                    serde_json::from_slice(&full).expect("PeerOptions parse error");
-                assert_eq!(
-                    redirect_data_params
-                        .feed_params
-                        .clone()
-                        .expect("no data params")
-                        .data_id,
-                    DataId::new("da-test")
-                );
-                assert_eq!(
-                    redirect_data_params
-                        .redirect_params
-                        .clone()
-                        .expect("no redirect params")
-                        .ip()
-                        .to_string(),
-                    ip_v4.to_string()
-                );
-                assert_eq!(
-                    redirect_data_params
-                        .redirect_params
-                        .expect("no port")
-                        .port(),
-                    port
-                );
+            }"#.into()))
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "command_type": "DATA_CONNECTION_PUT",
+                "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
+            }"#)
+            .create();
 
-                let json = json!({
-                    "command_type": "DATA_CONNECTION_PUT",
-                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1099,53 +917,47 @@ mod test_redirect_data_connection {
             result.data_id,
             DataId::new("da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
         );
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
-    /// It returns 400 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_pute
+    /// It returns 400
+    /// http://35.200.46.204/#/2.data/data_connection_put
     #[tokio::test]
     async fn recv_400() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let json = json!({
-                    "command_type": "DATA_CONNECTION_PUT",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
+                }
+            }"#.into()))
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "command_type": "DATA_CONNECTION_DELETE",
+                "params": {
+                    "errors": [{
+                        "field": "peer_id",
+                        "message": "peer_id field is not specified"
+                    }]
+                }
+            }"#)
+            .create();
 
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1154,43 +966,39 @@ mod test_redirect_data_connection {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
     /// It returns 403 to show errors.
-    /// http://35.200.46.204/#/2.data/data_connection_pute
+    /// http://35.200.46.204/#/2.data/data_connection_put
     #[tokio::test]
     async fn recv_403() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
+                }
+            }"#.into()))
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1199,6 +1007,9 @@ mod test_redirect_data_connection {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -1206,36 +1017,29 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_404() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
+                }
+            }"#.into()))
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1244,6 +1048,9 @@ mod test_redirect_data_connection {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -1251,36 +1058,29 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_405() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
+                }
+            }"#.into()))
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1289,6 +1089,9 @@ mod test_redirect_data_connection {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -1296,36 +1099,29 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_406() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
+                }
+            }"#.into()))
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1334,6 +1130,9 @@ mod test_redirect_data_connection {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -1341,36 +1140,29 @@ mod test_redirect_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_pute
     #[tokio::test]
     async fn recv_408() {
-        let data_id = DataId::new("da-test");
-        let data_connection_id = DataConnectionId::new("dc-test");
-        let ip_v4 = "127.0.0.1";
-        let port = 10001u16;
+        // set up params
+        let (redirect_data_params, data_connection_id) = create_param();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test" && req.method() == reqwest::Method::PUT {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("PUT", "/data/connections/dc-test")
+            .match_body(mockito::Matcher::JsonString(r#"{
+                "feed_params": {
+                    "data_id": "da-test"
+                },
+                "redirect_params": {
+                    "ip_v4": "127.0.0.1",
+                    "port": 10001
+                }
+            }"#.into()))
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
-
-        let redirect_data_params = RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        };
-
-        let addr = format!("http://{}", server.addr());
+        // call api
+        let url = mockito::server_url();
         let task = super::redirect_data_connection(
-            &addr,
+            &url,
             data_connection_id.as_str(),
             &redirect_data_params,
         );
@@ -1379,94 +1171,89 @@ mod test_redirect_data_connection {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
+
 }
 
 #[cfg(test)]
 mod test_status {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
     use crate::prelude::*;
-    use helper::server;
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_200() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "buffersize": 0,
-                    "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
-                    "metadata": "",
-                    "open": true,
-                    "reliable": true,
-                    "remote_id": "data_caller",
-                    "serialization": "BINARY",
-                    "type": "DATA"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "buffersize": 0,
+                "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
+                "metadata": "",
+                "open": true,
+                "reliable": true,
+                "remote_id": "data_caller",
+                "serialization": "BINARY",
+                "type": "DATA"
+            }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result.open, true);
         assert_eq!(result.reliable, true);
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
-    /// It returns 400 to show errors.
+    /// API returns 400
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_400() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "command_type": "DATA_CONNECTION_STATUS",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "command_type": "DATA_CONNECTION_STATUS",
+                "params": {
+                    "errors": [{
+                        "field": "string",
+                        "message": "string"
+                    }]
+                }
+            }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -1474,71 +1261,54 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_403() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "command_type": "DATA_CONNECTION_STATUS",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "field",
-                                "message": "something happened"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
-    }
 
+        // server called
+        httpserver.assert();
+    }
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// It returns 404 to show errors.
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_404() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -1546,30 +1316,27 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_405() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -1577,30 +1344,27 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_406() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -1608,70 +1372,63 @@ mod test_status {
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_408() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/status"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/status")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_event {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::data::formats::EventEnum;
     use crate::error;
     use crate::prelude::*;
-    use helper::server;
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_open() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "OPEN"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "event": "OPEN"
+            }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, EventEnum::OPEN);
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1679,29 +1436,26 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_close() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "CLOSE"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "event": "CLOSE"
+            }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(result, EventEnum::CLOSE);
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1709,28 +1463,22 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_error() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "ERROR",
-                    "error_message": "error"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
+                "event": "ERROR",
+                "error_message": "error"
+            }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.expect("parse error");
         assert_eq!(
             result,
@@ -1738,20 +1486,24 @@ mod test_event {
                 error_message: "error".to_string()
             }
         );
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
-    /// When it receives 400, show errors.
+    /// The API returns 400.
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_400() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{
                     "command_type": "DATA_CONNECTION_EVENTS",
                     "params": {
                         "errors": [
@@ -1761,24 +1513,20 @@ mod test_event {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1786,30 +1534,27 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_403() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1817,30 +1562,27 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_404() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1848,30 +1590,27 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_405() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1879,30 +1618,27 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_406() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1910,26 +1646,24 @@ mod test_event {
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_408() {
+        // set up params
         let data_connection_id = DataConnectionId::new("dc-test");
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/data/connections/dc-test/events"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("GET", "/data/connections/dc-test/events")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, data_connection_id.as_str());
-        let result = task.await.expect("parse error");
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, data_connection_id.as_str());
+        let result = task.await.unwrap();
         assert_eq!(result, EventEnum::TIMEOUT);
+
+        // server called
+        httpserver.assert();
     }
+
 }

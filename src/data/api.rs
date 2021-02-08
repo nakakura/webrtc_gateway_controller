@@ -143,7 +143,8 @@ mod test_create_data {
                     "data_id": "da-test",
                     "port": 50000,
                     "ip_v4": "127.0.0.1"
-                }"#)
+                }"#,
+            )
             .create();
 
         // call api
@@ -177,14 +178,16 @@ mod test_create_data {
                             }
                         ]
                     }
-                }"#)
+                }"#,
+            )
             .create();
 
         // call api
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -207,7 +210,8 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -230,7 +234,8 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -253,7 +258,8 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -276,7 +282,8 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -332,7 +339,8 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -357,7 +365,8 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -382,7 +391,8 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
         // server called
@@ -406,7 +416,8 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -431,7 +442,8 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {} else {
+        if let error::Error::MyError { error: _e } = result {
+        } else {
             unreachable!();
         }
 
@@ -482,7 +494,8 @@ mod test_create_data_connection {
                     "params": {
                         "data_connection_id": "dc-test"
                     }
-                }"#)
+                }"#,
+            )
             .create();
 
         // call api
@@ -517,7 +530,8 @@ mod test_create_data_connection {
                             }
                         ]
                     }
-                }"#)
+                }"#,
+            )
             .create();
 
         // call api
@@ -544,8 +558,7 @@ mod test_create_data_connection {
         let httpserver = mock("POST", "/data/connections")
             .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(
-                r#"{}"#)
+            .with_body(r#"{}"#)
             .create();
 
         // call api
@@ -572,8 +585,7 @@ mod test_create_data_connection {
         let httpserver = mock("POST", "/data/connections")
             .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(
-                r#"{}"#)
+            .with_body(r#"{}"#)
             .create();
 
         // call api
@@ -600,8 +612,7 @@ mod test_create_data_connection {
         let httpserver = mock("POST", "/data/connections")
             .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(
-                r#"{}"#)
+            .with_body(r#"{}"#)
             .create();
 
         // call api
@@ -628,8 +639,7 @@ mod test_create_data_connection {
         let httpserver = mock("POST", "/data/connections")
             .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(
-                r#"{}"#)
+            .with_body(r#"{}"#)
             .create();
 
         // call api
@@ -700,7 +710,8 @@ mod test_delete_data_connection {
                             }
                         ]
                     }
-                }"#)
+                }"#,
+            )
             .create();
 
         // call api
@@ -872,10 +883,13 @@ mod test_redirect_data_connection {
         let addr: IpAddr = ip_v4.parse().unwrap();
         let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
 
-        (RedirectDataParams {
-            feed_params: Some(data_id_obj),
-            redirect_params: Some(params),
-        }, data_connection_id)
+        (
+            RedirectDataParams {
+                feed_params: Some(data_id_obj),
+                redirect_params: Some(params),
+            },
+            data_connection_id,
+        )
     }
 
     /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -888,7 +902,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -896,13 +911,17 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "command_type": "DATA_CONNECTION_PUT",
                 "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -932,7 +951,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -940,10 +960,13 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "command_type": "DATA_CONNECTION_DELETE",
                 "params": {
                     "errors": [{
@@ -951,7 +974,8 @@ mod test_redirect_data_connection {
                         "message": "peer_id field is not specified"
                     }]
                 }
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -981,7 +1005,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -989,7 +1014,9 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -1022,7 +1049,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -1030,7 +1058,9 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -1063,7 +1093,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -1071,7 +1102,9 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -1104,7 +1137,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -1112,7 +1146,9 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -1145,7 +1181,8 @@ mod test_redirect_data_connection {
 
         // set up server mock
         let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(r#"{
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
                 "feed_params": {
                     "data_id": "da-test"
                 },
@@ -1153,7 +1190,9 @@ mod test_redirect_data_connection {
                     "ip_v4": "127.0.0.1",
                     "port": 10001
                 }
-            }"#.into()))
+            }"#
+                .into(),
+            ))
             .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -1175,7 +1214,6 @@ mod test_redirect_data_connection {
         // server called
         httpserver.assert();
     }
-
 }
 
 #[cfg(test)]
@@ -1197,7 +1235,8 @@ mod test_status {
         let httpserver = mock("GET", "/data/connections/dc-test/status")
             .with_status(hyper::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "buffersize": 0,
                 "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
                 "metadata": "",
@@ -1206,7 +1245,8 @@ mod test_status {
                 "remote_id": "data_caller",
                 "serialization": "BINARY",
                 "type": "DATA"
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -1232,7 +1272,8 @@ mod test_status {
         let httpserver = mock("GET", "/data/connections/dc-test/status")
             .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "command_type": "DATA_CONNECTION_STATUS",
                 "params": {
                     "errors": [{
@@ -1240,7 +1281,8 @@ mod test_status {
                         "message": "string"
                     }]
                 }
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -1416,9 +1458,11 @@ mod test_event {
         let httpserver = mock("GET", "/data/connections/dc-test/events")
             .with_status(hyper::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "event": "OPEN"
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -1443,9 +1487,11 @@ mod test_event {
         let httpserver = mock("GET", "/data/connections/dc-test/events")
             .with_status(hyper::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "event": "CLOSE"
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -1470,10 +1516,12 @@ mod test_event {
         let httpserver = mock("GET", "/data/connections/dc-test/events")
             .with_status(hyper::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                 "event": "ERROR",
                 "error_message": "error"
-            }"#)
+            }"#,
+            )
             .create();
 
         // call api
@@ -1503,7 +1551,8 @@ mod test_event {
         let httpserver = mock("GET", "/data/connections/dc-test/events")
             .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
-            .with_body(r#"{
+            .with_body(
+                r#"{
                     "command_type": "DATA_CONNECTION_EVENTS",
                     "params": {
                         "errors": [
@@ -1513,7 +1562,8 @@ mod test_event {
                             }
                         ]
                     }
-                }"#)
+                }"#,
+            )
             .create();
 
         // call api
@@ -1665,5 +1715,4 @@ mod test_event {
         // server called
         httpserver.assert();
     }
-
 }

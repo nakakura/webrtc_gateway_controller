@@ -111,52 +111,49 @@ pub(crate) async fn status(
 
 #[cfg(test)]
 mod test_create_peer {
-    use futures::*;
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
-    use crate::peer::formats::CreatePeerQuery;
     use crate::prelude::*;
-    use helper::server;
+
+    fn create_params() -> (PeerId, Token) {
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("pt-9749250e-d157-4f80-9ee2-359ce8524308");
+        (peer_id, token)
+    }
 
     /// A WebRTC Gateway returns 201 Created and a PeerResponse struct, if it succeeds to create a Peer Object
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_201() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let (peer_id, token) = create_params();
 
-        let server = server::http(move |mut req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let mut full: Vec<u8> = Vec::new();
-                while let Some(item) = req.body_mut().next().await {
-                    full.extend(&*item.unwrap());
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "command_type": "PEERS_CREATE",
+                "params": {
+                    "peer_id": "hoge",
+                    "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
                 }
-                let peer_options: CreatePeerQuery =
-                    serde_json::from_slice(&full).expect("PeerOptions parse error");
-                let json = json!({
-                    "command_type": "PEERS_CREATE",
-                    "params": {
-                        "peer_id": peer_options.peer_id,
-                        "token": Token::new("test-token"),
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+            }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id.clone(), false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.expect("CreatedResponse parse error");
         assert_eq!(result.command_type, "PEERS_CREATE".to_string());
         assert_eq!(result.params.peer_id, peer_id);
         assert_eq!(result.params.token, token);
+
+        // server called
+        httpserver.assert();
     }
 
     /// If this program connects to an another web server,
@@ -164,40 +161,43 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_201_but_from_another_webserver() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!("invalid-message");
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{ invalid: "message" }"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::Error::ReqwestError { error: _e }) = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// When WebRTC Gateway returns 400, parse error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "PEERS_CREATE",
                     "params": {
                         "errors": [
@@ -207,24 +207,21 @@ mod test_create_peer {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// A WebRTC Gateway returns 403 Forbidden code and a PeerResponse struct.
@@ -232,120 +229,119 @@ mod test_create_peer {
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
-        let result = task.await.err().unwrap();
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// When WebRTC Gateway returns 405, parse error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// When WebRTC Gateway returns 405, parse error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// When WebRTC Gateway returns 408, parse error
     /// http://35.200.46.204/#/1.peers/peer
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/peers")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_peer(&addr, "api_key", "domain", peer_id, false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// If WebRTC Gateway itself is not found, create_peer function returns error
     #[tokio::test]
     async fn no_server() {
-        let peer_id = PeerId::new("hoge");
+        // set up parameters
+        let (peer_id, _token) = create_params();
 
-        let task = super::create_peer("http://localhost:0", "api_key", "domain", peer_id, false);
+        // call api
+        let url = "http://localhost:0".to_string();
+        let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await;
         assert!(result.is_err());
         if let Err(error::Error::ReqwestError { error: _e }) = result {
@@ -357,289 +353,271 @@ mod test_create_peer {
 
 #[cfg(test)]
 mod test_event {
-    use serde_json::json;
+    use mockito::mock;
 
-    use crate::error;
     use crate::peer::formats::*;
-    use helper::server;
+    use crate::error;
 
-    /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
-    /// http://35.200.46.204/#/1.peers/peer
+    fn create_params() -> PeerInfo {
+        let peer_id = PeerId::new("hoge");
+        let token = Token::new("pt-9749250e-d157-4f80-9ee2-359ce8524308");
+        PeerInfo {
+            peer_id: peer_id.clone(),
+            token: token.clone(),
+        }
+    }
+
+    /// PeerEvent API returns 200 and events
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_200_recv_open() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        // set up server mock
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "event": "OPEN",
                     "params": {
-                        "peer_id": PeerId::new("hoge"),
-                        "token": Token::new("test-token"),
+                        "peer_id": "hoge",
+                        "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::event(&addr, &peer_info);
+
+        let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::OPEN(response) = result {
-            assert_eq!(response.params.peer_id, peer_id);
-            assert_eq!(response.params.token, token);
+            assert_eq!(response.params.peer_id, peer_info.peer_id);
+            assert_eq!(response.params.token, peer_info.token);
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
-    /// http://35.200.46.204/#/1.peers/peer
+    /// PeerEvent API returns 200 and events
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_200_recv_connection() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "event": "CONNECTION",
-                    "data_params": {
-                        "data_connection_id": "dc-test"
-                    },
                     "params": {
-                        "peer_id": PeerId::new("hoge"),
-                        "token": Token::new("test-token"),
+                        "peer_id": "hoge",
+                        "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
+                    },
+                    "data_params": {
+                        "data_connection_id": "da-102127d9-30de-413b-93f7-41a33e39d82b"
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                  }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::event(&addr, &peer_info);
+        let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::CONNECTION(response) = result {
-            assert_eq!(response.params.peer_id, peer_id);
-            assert_eq!(response.params.token, token);
-            assert_eq!(response.data_params.data_connection_id.as_str(), "dc-test");
+            assert_eq!(response.params.peer_id, peer_info.peer_id);
+            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(
+                response.data_params.data_connection_id.as_str(),
+                "da-102127d9-30de-413b-93f7-41a33e39d82b"
+            );
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
-    /// http://35.200.46.204/#/1.peers/peer
+    /// PeerEvent API returns 200 and events
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_200_recv_call() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "event": "CALL",
-                    "call_params": {
-                        "media_connection_id": "mc-test"
-                    },
                     "params": {
-                        "peer_id": PeerId::new("hoge"),
-                        "token": Token::new("test-token"),
+                        "peer_id": "hoge",
+                        "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
+                    },
+                    "call_params": {
+                        "media_connection_id": "mc-102127d9-30de-413b-93f7-41a33e39d82b"
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                  }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::CALL(response) = result {
-            assert_eq!(response.params.peer_id, peer_id);
-            assert_eq!(response.params.token, token);
-            assert_eq!(response.call_params.media_connection_id.as_str(), "mc-test");
+            assert_eq!(response.params.peer_id, peer_info.peer_id);
+            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(
+                response.call_params.media_connection_id.as_str(),
+                "mc-102127d9-30de-413b-93f7-41a33e39d82b"
+            );
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
-    /// http://35.200.46.204/#/1.peers/peer
+    /// PeerEvent API returns 200 and events
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_200_recv_close() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "event": "CLOSE",
                     "params": {
-                        "peer_id": PeerId::new("hoge"),
-                        "token": Token::new("test-token"),
+                        "peer_id": "hoge",
+                        "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::CLOSE(response) = result {
-            assert_eq!(response.params.peer_id, peer_id);
-            assert_eq!(response.params.token, token);
+            assert_eq!(response.params.peer_id, peer_info.peer_id);
+            assert_eq!(response.params.token, peer_info.token);
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// A WebRTC Gateway returns 200 OK code and a PeerResponse struct, if it recv correct peer_id and peer_token
-    /// http://35.200.46.204/#/1.peers/peer
+    /// PeerEvent API returns 200 and events, even the event type is error
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_200_recv_error() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "event": "ERROR",
                     "params": {
-                        "peer_id": PeerId::new("hoge"),
-                        "token": Token::new("test-token"),
+                        "peer_id": "hoge",
+                        "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
                     },
                     "error_message": "error"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::ERROR(response) = result {
-            assert_eq!(response.params.peer_id, peer_id);
-            assert_eq!(response.params.token, token);
-            assert_eq!(response.error_message, "error");
+            assert_eq!(response.params.peer_id, peer_info.peer_id);
+            assert_eq!(response.params.token, peer_info.token);
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If a WebRTC Gateway returns invalid json, event returns error
-    /// http://35.200.46.204/#/1.peers/peer
+    /// care for the case PeerEvent API returns invalid json
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_200_but_recv_invalid_json() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
-                    "event": "OPEN",
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                    "event": "EX",
+                    "field": "invalid"
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await;
         assert!(result.is_err());
+        // server called
+        httpserver.assert();
     }
 
-    /// A WebRTC Gateway returns 400 Invalid Input code and a PeerResponse struct, if any error happen
-    /// http://35.200.46.204/#/1.peers/peer
+    /// API returns 400
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_400() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "PEERS_EVENTS",
                     "params": {
                         "errors": [
@@ -649,211 +627,157 @@ mod test_event {
                               }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If a WebRTC Gateway returns 403, event returns error
-    /// http://35.200.46.204/#/1.peers/peer
+    /// API returns 403
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_403() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"# )
+            .create();
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If a WebRTC Gateway returns 404, event returns error
-    /// http://35.200.46.204/#/1.peers/peer
+    /// API returns 404
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_404() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
-        } else {
+        if let error::Error::MyError { error: _e } = result {} else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If a WebRTC Gateway returns 405, event returns error
-    /// http://35.200.46.204/#/1.peers/peer
+    /// API returns 405
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_405() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"# )
+            .create();
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If a WebRTC Gateway returns 406, event returns error
-    /// http://35.200.46.204/#/1.peers/peer
+    /// API returns 406
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_406() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"# )
+            .create();
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If a WebRTC Gateway returns 408, event returns PeerEventEnum::Timeout
-    /// http://35.200.46.204/#/1.peers/peer
+    /// API returns 408
+    /// http://35.200.46.204/#/1.peers/peer_event
     #[tokio::test]
     async fn recv_408() {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::new("test-token");
+        // set up parameters
+        let peer_info = create_params();
 
-        let server = server::http(move |req| async move {
-            if req.uri() == "/peers/hoge/events?token=test-token"
-                && req.method() == reqwest::Method::GET
-            {
-                let json = json!({});
+        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        // set up server mock
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"# )
+            .create();
 
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let peer_info = PeerInfo {
-            peer_id: peer_id,
-            token: token,
-        };
-
-        let task = super::event(&addr, &peer_info);
-        let result = task.await.expect("parse error");
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, &peer_info);
+        let result = task.await.expect("api does not return Ok(timeout)");
         assert_eq!(result, EventEnum::TIMEOUT);
+
+        // server called
+        httpserver.assert();
     }
 }
 

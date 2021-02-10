@@ -1228,267 +1228,228 @@ mod test_create_call {
 
 #[cfg(test)]
 mod test_delete_call {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
-    use helper::server;
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If the API returns values with 204 No Content
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_204() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NO_CONTENT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, ());
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If server returns 400, it returns error
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_400() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "MEDIA_CONNECTION_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "media_connection_id",
-                                "message": "media_connection_id field is not specified"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "command_type": "MEDIA_CONNECTION_DELETE",
+                "params": {
+                    "errors": [{
+                        "field": "media_connection_id",
+                        "message": "media_connection_id field is not specified"
+                    }]
+                }
+            }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If server returns 403, it returns error
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_403() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If server returns 404, it returns error
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_404() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If server returns 405, it returns error
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_405() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
-    }
 
+        // server called
+        httpserver.assert();
+    }
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If server returns 403, it returns error
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_406() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If server returns 408, it returns error
-    /// http://35.200.46.204/#/3.media/media_connection_clos
+    /// http://35.200.46.204/#/3.media/media_connection_close
     #[tokio::test]
     async fn recv_408() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}", media_connection_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_call(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_answer {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
     use crate::media::formats::*;
-    use helper::server;
 
-    /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
-    /// If the API returns values with 202 Accepted, it returns AnswerResponse
-    /// http://35.200.46.204/#/3.media/media_connection_answer
-    #[tokio::test]
-    async fn recv_202() {
-        let media_connection_id = "mc-test";
-
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({
-                    "command_type": "MEDIA_CONNECTION_ANSWER",
-                    "params": {
-                        "video_port": 10011,
-                        "video_id": "vi-test",
-                        "audio_port": 10021,
-                        "audio_id": "au-test"
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::ACCEPTED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
+    fn create_params() -> AnswerQuery {
         let video_params = MediaParams {
             band_width: 1500,
             codec: String::from("H264"),
@@ -1508,14 +1469,49 @@ mod test_answer {
             metadata: None,
         };
 
-        let params = AnswerQuery {
+        AnswerQuery {
             constraints: constraints,
             redirect_params: None,
-        };
-        let task = super::answer(&addr, media_connection_id, &params);
+        }
+    }
+
+    /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
+    /// If the API returns values with 202 Accepted, it returns AnswerResponse
+    /// http://35.200.46.204/#/3.media/media_connection_answer
+    #[tokio::test]
+    async fn recv_202() {
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
+
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::ACCEPTED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                    "command_type": "MEDIA_CONNECTION_ANSWER",
+                    "params": {
+                        "video_port": 10011,
+                        "video_id": "vi-test",
+                        "audio_port": 10021,
+                        "audio_id": "au-test"
+                    }
+                }"#,
+            )
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.expect("event parse error");
         assert_eq!(result.params.video_id, Some(MediaId::new("vi-test")));
         assert_eq!(result.params.audio_id, Some(MediaId::new("au-test")));
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1523,12 +1519,17 @@ mod test_answer {
     /// http://35.200.46.204/#/3.media/media_connection_answer
     #[tokio::test]
     async fn recv_400() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_CONNECTION_ANSWER",
                     "params": {
                         "errors": [
@@ -1538,47 +1539,22 @@ mod test_answer {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let video_params = MediaParams {
-            band_width: 1500,
-            codec: String::from("H264"),
-            media_id: MediaId::new("test"),
-            rtcp_id: None,
-            payload_type: None,
-            sampling_rate: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let constraints = Constraints {
-            video: true,
-            videoReceiveEnabled: Some(true),
-            audio: false,
-            audioReceiveEnabled: Some(false),
-            video_params: Some(video_params),
-            audio_params: None,
-            metadata: None,
-        };
-        let params = AnswerQuery {
-            constraints: constraints,
-            redirect_params: None,
-        };
-
-        let task = super::answer(&addr, media_connection_id, &params);
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1586,52 +1562,30 @@ mod test_answer {
     /// http://35.200.46.204/#/3.media/media_connection_answer
     #[tokio::test]
     async fn recv_403() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let video_params = MediaParams {
-            band_width: 1500,
-            codec: String::from("H264"),
-            media_id: MediaId::new("test"),
-            rtcp_id: None,
-            payload_type: None,
-            sampling_rate: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let constraints = Constraints {
-            video: true,
-            videoReceiveEnabled: Some(true),
-            audio: false,
-            audioReceiveEnabled: Some(false),
-            video_params: Some(video_params),
-            audio_params: None,
-            metadata: None,
-        };
-
-        let params = AnswerQuery {
-            constraints: constraints,
-            redirect_params: None,
-        };
-        let task = super::answer(&addr, media_connection_id, &params);
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1639,52 +1593,30 @@ mod test_answer {
     /// http://35.200.46.204/#/3.media/media_connection_answer
     #[tokio::test]
     async fn recv_404() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let video_params = MediaParams {
-            band_width: 1500,
-            codec: String::from("H264"),
-            media_id: MediaId::new("test"),
-            rtcp_id: None,
-            payload_type: None,
-            sampling_rate: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let constraints = Constraints {
-            video: true,
-            videoReceiveEnabled: Some(true),
-            audio: false,
-            audioReceiveEnabled: Some(false),
-            video_params: Some(video_params),
-            audio_params: None,
-            metadata: None,
-        };
-
-        let params = AnswerQuery {
-            constraints: constraints,
-            redirect_params: None,
-        };
-        let task = super::answer(&addr, media_connection_id, &params);
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1692,51 +1624,30 @@ mod test_answer {
     /// http://35.200.46.204/#/3.media/media_connection_answer
     #[tokio::test]
     async fn recv_405() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let video_params = MediaParams {
-            band_width: 1500,
-            codec: String::from("H264"),
-            media_id: MediaId::new("test"),
-            rtcp_id: None,
-            payload_type: None,
-            sampling_rate: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let constraints = Constraints {
-            video: true,
-            videoReceiveEnabled: Some(true),
-            audio: false,
-            audioReceiveEnabled: Some(false),
-            video_params: Some(video_params),
-            audio_params: None,
-            metadata: None,
-        };
-        let params = AnswerQuery {
-            constraints: constraints,
-            redirect_params: None,
-        };
-        let task = super::answer(&addr, media_connection_id, &params);
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1744,52 +1655,30 @@ mod test_answer {
     /// http://35.200.46.204/#/3.media/media_connection_answer
     #[tokio::test]
     async fn recv_406() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let video_params = MediaParams {
-            band_width: 1500,
-            codec: String::from("H264"),
-            media_id: MediaId::new("test"),
-            rtcp_id: None,
-            payload_type: None,
-            sampling_rate: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let constraints = Constraints {
-            video: true,
-            videoReceiveEnabled: Some(true),
-            audio: false,
-            audioReceiveEnabled: Some(false),
-            video_params: Some(video_params),
-            audio_params: None,
-            metadata: None,
-        };
-
-        let params = AnswerQuery {
-            constraints: constraints,
-            redirect_params: None,
-        };
-        let task = super::answer(&addr, media_connection_id, &params);
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -1797,91 +1686,71 @@ mod test_answer {
     /// http://35.200.46.204/#/3.media/media_connection_answer
     #[tokio::test]
     async fn recv_408() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/answer", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/answer", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let video_params = MediaParams {
-            band_width: 1500,
-            codec: String::from("H264"),
-            media_id: MediaId::new("test"),
-            rtcp_id: None,
-            payload_type: None,
-            sampling_rate: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let constraints = Constraints {
-            video: true,
-            videoReceiveEnabled: Some(true),
-            audio: false,
-            audioReceiveEnabled: Some(false),
-            video_params: Some(video_params),
-            audio_params: None,
-            metadata: None,
-        };
-
-        let params = AnswerQuery {
-            constraints: constraints,
-            redirect_params: None,
-        };
-        let task = super::answer(&addr, media_connection_id, &params);
+        let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_pli {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::common::SerializableSocket;
     use crate::error;
     use crate::prelude::*;
-    use helper::server;
+
+    fn create_params() -> SocketInfo<PhantomId> {
+        SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap())
+    }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
     /// If the API returns values with 201 Accepted, it returns ()
     /// http://35.200.46.204/#/3.media/media_connection_pli
     #[tokio::test]
     async fn recv_202() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.expect("event parse error");
         assert_eq!(result, ());
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -1889,12 +1758,17 @@ mod test_pli {
     /// http://35.200.46.204/#/3.media/media_connection_plir
     #[tokio::test]
     async fn recv_400() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_CONNECTION_PLI",
                     "params": {
                         "errors": [
@@ -1904,26 +1778,22 @@ mod test_pli {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -1931,31 +1801,30 @@ mod test_pli {
     /// http://35.200.46.204/#/3.media/media_connection_plir
     #[tokio::test]
     async fn recv_403() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -1963,31 +1832,30 @@ mod test_pli {
     /// http://35.200.46.204/#/3.media/media_connection_plir
     #[tokio::test]
     async fn recv_404() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -1995,31 +1863,30 @@ mod test_pli {
     /// http://35.200.46.204/#/3.media/media_connection_plir
     #[tokio::test]
     async fn recv_405() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -2027,31 +1894,30 @@ mod test_pli {
     /// http://35.200.46.204/#/3.media/media_connection_plir
     #[tokio::test]
     async fn recv_406() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -2059,67 +1925,64 @@ mod test_pli {
     /// http://35.200.46.204/#/3.media/media_connection_plir
     #[tokio::test]
     async fn recv_408() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
+        let params = create_params();
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/pli", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/pli", media_connection_id);
+        let httpserver = mock("POST", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap());
+        // call api
+        let url = mockito::server_url();
 
-        let task = super::pli(&addr, media_connection_id, &params);
+        let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_events {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
     use crate::media::formats::*;
-    use helper::server;
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
     /// If the API returns values with 200 Ok, it returns MediaConnectionEventEnum
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_202_ready() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({"event": "READY"});
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"event": "READY"}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, EventEnum::READY);
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2127,26 +1990,25 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_202_stream() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({"event": "STREAM"});
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"event": "STREAM"}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, EventEnum::STREAM);
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2154,26 +2016,25 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_202_close() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({"event": "CLOSE"});
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"event": "CLOSE"}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, EventEnum::CLOSE);
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2181,24 +2042,20 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_202_error() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({"event": "ERROR", "error_message": "hoge"});
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"event": "ERROR", "error_message": "hoge"}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(
             result,
@@ -2206,6 +2063,9 @@ mod test_events {
                 error_message: "hoge".to_string()
             }
         );
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2213,12 +2073,16 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_400() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_CONNECTION_EVENTS",
                     "params": {
                         "errors": [
@@ -2228,24 +2092,21 @@ mod test_events {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2253,29 +2114,28 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_403() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2283,29 +2143,28 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_404() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2313,29 +2172,28 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_405() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2343,29 +2201,28 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_406() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2373,73 +2230,67 @@ mod test_events {
     /// http://35.200.46.204/#/3.media/media_connection_event
     #[tokio::test]
     async fn recv_408() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/events", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/events", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::event(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::event(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, EventEnum::TIMEOUT);
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_status {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
-    use helper::server;
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
     /// If the API returns values with 200 Ok, it returns MediaConnectionStatus
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_200() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({
-                    "metadata": "",
-                    "open": true,
-                    "remote_id": "media_caller",
-                    "ssrc": [
-                        {
-                            "media_id": "au-test",
-                            "ssrc": 2
-                        },
-                        {
-                            "media_id": "vi-test",
-                            "ssrc": 3
-                        }
-                    ]
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::OK)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "metadata": "",
+                "open": true,
+                "remote_id": "media_caller",
+                "ssrc": [{
+                    "media_id": "au-test",
+                    "ssrc": 2
+                },
+                {
+                    "media_id": "vi-test",
+                    "ssrc": 3
+                }]
+            }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.expect("event parse error");
         let ssrc = result.ssrc.clone().unwrap();
         assert_eq!(result.open, true);
@@ -2448,6 +2299,9 @@ mod test_status {
         assert_eq!(ssrc[0].ssrc, 2);
         assert_eq!(ssrc[1].media_id.as_str(), "vi-test");
         assert_eq!(ssrc[1].ssrc, 3);
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2455,12 +2309,16 @@ mod test_status {
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_400() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_CONNECTION_STATUS",
                     "params": {
                         "errors": [
@@ -2470,24 +2328,21 @@ mod test_status {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2495,29 +2350,28 @@ mod test_status {
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_403() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2525,29 +2379,28 @@ mod test_status {
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_404() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2555,29 +2408,28 @@ mod test_status {
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_405() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2585,29 +2437,28 @@ mod test_status {
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_406() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2615,28 +2466,27 @@ mod test_status {
     /// http://35.200.46.204/#/3.media/media_connection_status
     #[tokio::test]
     async fn recv_408() {
-        let media_connection_id = "mc-test";
+        // set up params
+        let media_connection_id = "mc-102127d9-30de-413b-93f7-41a33e39d82b";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/connections/{}/status", media_connection_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::GET {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/connections/{}/status", media_connection_id);
+        let httpserver = mock("GET", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::status(&addr, media_connection_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }

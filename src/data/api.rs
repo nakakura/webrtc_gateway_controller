@@ -136,7 +136,7 @@ mod test_create_data {
     async fn recv_201() {
         // set up server mock
         let httpserver = mock("POST", "/data")
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -165,7 +165,7 @@ mod test_create_data {
     async fn recv_400() {
         // set up server mock
         let httpserver = mock("POST", "/data")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -201,7 +201,7 @@ mod test_create_data {
     async fn recv_403() {
         // set up server mock
         let httpserver = mock("POST", "/data")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -225,7 +225,7 @@ mod test_create_data {
     async fn recv_405() {
         // set up server mock
         let httpserver = mock("POST", "/data")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -249,7 +249,7 @@ mod test_create_data {
     async fn recv_406() {
         // set up server mock
         let httpserver = mock("POST", "/data")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -273,7 +273,7 @@ mod test_create_data {
     async fn recv_408() {
         // set up server mock
         let httpserver = mock("POST", "/data")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -307,7 +307,7 @@ mod test_delete_data {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/da-test")
-            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -330,7 +330,7 @@ mod test_delete_data {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/da-test")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -356,7 +356,7 @@ mod test_delete_data {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/da-test")
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -382,7 +382,7 @@ mod test_delete_data {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/da-test")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -407,7 +407,7 @@ mod test_delete_data {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/da-test")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -433,7 +433,7 @@ mod test_delete_data {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/da-test")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -486,7 +486,7 @@ mod test_create_data_connection {
 
         // set up server mock
         let httpserver = mock("POST", "/data/connections")
-            .with_status(hyper::StatusCode::ACCEPTED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::ACCEPTED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -517,7 +517,7 @@ mod test_create_data_connection {
 
         // set up server mock
         let httpserver = mock("POST", "/data/connections")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -556,7 +556,7 @@ mod test_create_data_connection {
 
         // set up server mock
         let httpserver = mock("POST", "/data/connections")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -583,7 +583,7 @@ mod test_create_data_connection {
 
         // set up server mock
         let httpserver = mock("POST", "/data/connections")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -610,7 +610,7 @@ mod test_create_data_connection {
 
         // set up server mock
         let httpserver = mock("POST", "/data/connections")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -637,7 +637,7 @@ mod test_create_data_connection {
 
         // set up server mock
         let httpserver = mock("POST", "/data/connections")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -673,7 +673,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -697,7 +697,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -736,7 +736,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -763,7 +763,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -790,7 +790,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -817,7 +817,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -844,7 +844,7 @@ mod test_delete_data_connection {
 
         // set up server mock
         let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -914,7 +914,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -963,7 +963,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1017,7 +1017,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1061,7 +1061,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1105,7 +1105,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1149,7 +1149,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1193,7 +1193,7 @@ mod test_redirect_data_connection {
             }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1233,7 +1233,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1270,7 +1270,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1308,7 +1308,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1335,7 +1335,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1363,7 +1363,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1391,7 +1391,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1419,7 +1419,7 @@ mod test_status {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1456,7 +1456,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1485,7 +1485,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1514,7 +1514,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1549,7 +1549,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1589,7 +1589,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1617,7 +1617,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1645,7 +1645,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1673,7 +1673,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1701,7 +1701,7 @@ mod test_event {
 
         // set up server mock
         let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();

@@ -131,7 +131,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -166,7 +166,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{ invalid: "message" }"#)
             .create();
@@ -194,7 +194,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -234,7 +234,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -261,7 +261,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -288,7 +288,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -315,7 +315,7 @@ mod test_create_peer {
 
         // set up server mock
         let httpserver = mock("POST", "/peers")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -377,7 +377,7 @@ mod test_event {
         // set up server mock
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -416,7 +416,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -462,7 +462,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -507,7 +507,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -545,7 +545,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -584,7 +584,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -613,7 +613,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -653,7 +653,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -681,7 +681,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -709,7 +709,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -737,7 +737,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -765,7 +765,7 @@ mod test_event {
         let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -812,7 +812,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -841,7 +841,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -885,7 +885,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -917,7 +917,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -949,7 +949,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -981,7 +981,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1013,7 +1013,7 @@ mod test_delete_peer {
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1062,7 +1062,7 @@ mod test_status {
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1097,7 +1097,7 @@ mod test_status {
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1139,7 +1139,7 @@ mod test_status {
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1171,7 +1171,7 @@ mod test_status {
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1203,7 +1203,7 @@ mod test_status {
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1235,7 +1235,7 @@ mod test_status {
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();

@@ -13,27 +13,22 @@ documentation = "https://docs.rs/skyway-webrtc-gateway-api"
 categories = ["api-bindings"]
 
 [dependencies]
-dotenv_codegen = "0.11.0"
-env_logger = "0.6.2"
-failure = "0.1.6"
-futures = "0.3.1"
-log = "0.4.8"
-reqwest = { version = "0.10", features = ["json"] }
-serde = { version = "1.0.104", features = ["derive"] }
-serde_derive = "1.0.104"
-serde_json = "1.0.44"
-tokio = { version = "0.2.8", features = ["full"] }
+dotenv_codegen = "0.15.0"
+env_logger = "0.8.2"
+failure = "0.1.8"
+futures = "0.3.12"
+log = "0.4.14"
+reqwest = { version = "0.11.0", features = ["json"] }
+serde = { version = "1.0.123", features = ["derive"] }
+serde_derive = "1.0.123"
+serde_json = "1.0.62"
+tokio = { version = "1.2.0", features = ["full"] }
 
 [dev-dependencies]
-async-std = "1.4.0"
-either = "1.5"
-http = "0.2"
-httptest = "*"
-hyper = { version = "0.13.1" }
-mockito = "*"
-toml = "0.5"
-# internal crate for unit test of rest apis
-helper = { path="./helper" }
+async-std = "1.9.0"
+either = "1.6.1"
+mockito = "0.29.0"
+toml = "0.5.8"
 
 [[example]]
 name = "peer"

@@ -177,7 +177,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -215,7 +215,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -253,7 +253,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -295,7 +295,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -325,7 +325,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -355,7 +355,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -385,7 +385,7 @@ mod test_create_media {
                 }"#
                 .into(),
             ))
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -422,7 +422,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -448,7 +448,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -487,7 +487,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -516,7 +516,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -545,7 +545,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -574,7 +574,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -603,7 +603,7 @@ mod test_delete_media {
 
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -636,7 +636,7 @@ mod test_create_rtcp {
     async fn recv_201() {
         // set up server mock
         let httpserver = mock("POST", "/media/rtcp")
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -666,7 +666,7 @@ mod test_create_rtcp {
     async fn recv_400() {
         // set up server mock
         let httpserver = mock("POST", "/media/rtcp")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -703,7 +703,7 @@ mod test_create_rtcp {
     async fn recv_403() {
         // set up server mock
         let httpserver = mock("POST", "/media/rtcp")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -728,7 +728,7 @@ mod test_create_rtcp {
     async fn recv_405() {
         // set up server mock
         let httpserver = mock("POST", "/media/rtcp")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -753,7 +753,7 @@ mod test_create_rtcp {
     async fn recv_406() {
         // set up server mock
         let httpserver = mock("POST", "/media/rtcp")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -778,7 +778,7 @@ mod test_create_rtcp {
     async fn recv_408() {
         // set up server mock
         let httpserver = mock("POST", "/media/rtcp")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -814,7 +814,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -840,7 +840,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -879,7 +879,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -908,7 +908,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -937,7 +937,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -966,7 +966,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -995,7 +995,7 @@ mod test_delete_rtcp {
         // set up server mock
         let path = format!("/media/rtcp/{}", rtcp_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1042,7 +1042,7 @@ mod test_create_call {
 
         // set up server mock
         let httpserver = mock("POST", "/media/connections")
-            .with_status(hyper::StatusCode::ACCEPTED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::ACCEPTED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1078,7 +1078,7 @@ mod test_create_call {
 
         // set up server mock
         let httpserver = mock("POST", "/media/connections")
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1119,7 +1119,7 @@ mod test_create_call {
 
         // set up server mock
         let httpserver = mock("POST", "/media/connections")
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1148,7 +1148,7 @@ mod test_create_call {
 
         // set up server mock
         let httpserver = mock("POST", "/media/connections")
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1177,7 +1177,7 @@ mod test_create_call {
 
         // set up server mock
         let httpserver = mock("POST", "/media/connections")
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1206,7 +1206,7 @@ mod test_create_call {
 
         // set up server mock
         let httpserver = mock("POST", "/media/connections")
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1243,7 +1243,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1269,7 +1269,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1308,7 +1308,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1337,7 +1337,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1366,7 +1366,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1394,7 +1394,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1423,7 +1423,7 @@ mod test_delete_call {
         // set up server mock
         let path = format!("/media/connections/{}", media_connection_id);
         let httpserver = mock("DELETE", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1487,7 +1487,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::ACCEPTED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::ACCEPTED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1526,7 +1526,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1569,7 +1569,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1600,7 +1600,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1631,7 +1631,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1662,7 +1662,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1693,7 +1693,7 @@ mod test_answer {
         // set up server mock
         let path = format!("/media/connections/{}/answer", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1737,7 +1737,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::CREATED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1765,7 +1765,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -1808,7 +1808,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1839,7 +1839,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1870,7 +1870,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1901,7 +1901,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1932,7 +1932,7 @@ mod test_pli {
         // set up server mock
         let path = format!("/media/connections/{}/pli", media_connection_id);
         let httpserver = mock("POST", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -1970,7 +1970,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{"event": "READY"}"#)
             .create();
@@ -1996,7 +1996,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{"event": "STREAM"}"#)
             .create();
@@ -2022,7 +2022,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{"event": "CLOSE"}"#)
             .create();
@@ -2048,7 +2048,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{"event": "ERROR", "error_message": "hoge"}"#)
             .create();
@@ -2079,7 +2079,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -2120,7 +2120,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2149,7 +2149,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2178,7 +2178,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2207,7 +2207,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2236,7 +2236,7 @@ mod test_events {
         // set up server mock
         let path = format!("/media/connections/{}/events", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2269,7 +2269,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::OK.as_u16() as usize)
+            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -2315,7 +2315,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
@@ -2356,7 +2356,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2385,7 +2385,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2414,7 +2414,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2443,7 +2443,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();
@@ -2472,7 +2472,7 @@ mod test_status {
         // set up server mock
         let path = format!("/media/connections/{}/status", media_connection_id);
         let httpserver = mock("GET", path.as_str())
-            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
             .create();

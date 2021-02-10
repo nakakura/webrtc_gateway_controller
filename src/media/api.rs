@@ -159,103 +159,104 @@ pub(crate) async fn status(
 
 #[cfg(test)]
 mod test_create_media {
-    use futures::*;
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::common::SerializableSocket;
     use crate::error;
     use crate::media::formats::*;
-    use helper::server;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_201_video() {
-        let server = server::http(move |mut req| async move {
-            if req.uri() == "/media" && req.method() == reqwest::Method::POST {
-                let mut full: Vec<u8> = Vec::new();
-                while let Some(item) = req.body_mut().next().await {
-                    full.extend(&*item.unwrap());
-                }
-                let media_options: CreateMediaOptions =
-                    serde_json::from_slice(&full).expect("PeerOptions parse error");
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": true
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "media_id": "vi-4d053831-5dc2-461b-a358-d062d6115216",
+                "port": 10001,
+                "ip_v4": "127.0.0.1"
+            }"#,
+            )
+            .create();
 
-                let media_id = if media_options.is_video {
-                    "vi-test"
-                } else {
-                    "au-test"
-                };
-                let json = json!({
-                    "media_id": media_id,
-                    "port": 10001,
-                    "ip_v4": "127.0.0.1"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, true);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, true);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.get_id().unwrap(), MediaId::new("vi-test"));
+        assert_eq!(
+            result.get_id().unwrap(),
+            MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216")
+        );
         assert_eq!(result.port(), 10001);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
+
+        // server called
+        httpserver.assert();
     }
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_201_audio() {
-        let server = server::http(move |mut req| async move {
-            if req.uri() == "/media" && req.method() == reqwest::Method::POST {
-                let mut full: Vec<u8> = Vec::new();
-                while let Some(item) = req.body_mut().next().await {
-                    full.extend(&*item.unwrap());
-                }
-                let media_options: CreateMediaOptions =
-                    serde_json::from_slice(&full).expect("PeerOptions parse error");
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": false
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "media_id": "au-4d053831-5dc2-461b-a358-d062d6115216",
+                "port": 10001,
+                "ip_v4": "127.0.0.1"
+            }"#,
+            )
+            .create();
 
-                let media_id = if media_options.is_video {
-                    "vi-test"
-                } else {
-                    "au-test"
-                };
-                let json = json!({
-                    "media_id": media_id,
-                    "port": 10001,
-                    "ip_v4": "127.0.0.1"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, false);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, false);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.get_id().unwrap(), MediaId::new("au-test"));
+        assert_eq!(
+            result.get_id().unwrap(),
+            MediaId::new("au-4d053831-5dc2-461b-a358-d062d6115216")
+        );
         assert_eq!(result.port(), 10001);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 400, create_data returns error
+    /// API returns 400
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": true
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_CREATE",
                     "params": {
                         "errors": [
@@ -265,162 +266,175 @@ mod test_create_media {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, true);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 403, create_data returns error
+    /// API returns 403
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": true
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, true);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 405, create_data returns error
+    /// API returns 405
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": true
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, true);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 406, create_data returns error
+    /// API returns 406
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": true
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, true);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
-    /// If server returns 408, create_data returns error
+    /// API returns 408
     /// http://35.200.46.204/#/3.media/media
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| async move {
-            if req.uri().to_string() == "/media" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media")
+            .match_body(mockito::Matcher::JsonString(
+                r#"{
+                    "is_video": true
+                }"#
+                .into(),
+            ))
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_media(&addr, true);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_delete_media {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
-    use helper::server;
+    use crate::media::formats::*;
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
     /// If the API returns values with 204 No Content
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_204() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NO_CONTENT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.expect("event parse error");
         assert_eq!(result, ());
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -428,38 +442,38 @@ mod test_delete_media {
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_400() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "MEDIA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "media_id",
-                                "message": "media_id field is not specified"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
-        let result = task.await.err().expect("event parse error");
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "command_type": "MEDIA_DELETE",
+                "params": {
+                    "errors": [{
+                        "field": "media_id",
+                        "message": "media_id field is not specified"
+                    }]
+                }
+            }"#,
+            )
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -467,28 +481,28 @@ mod test_delete_media {
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_403() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
-        let result = task.await.err().expect("event parse error");
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -496,28 +510,28 @@ mod test_delete_media {
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_404() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
-        let result = task.await.err().expect("event parse error");
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -525,28 +539,28 @@ mod test_delete_media {
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_405() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
-        let result = task.await.err().expect("event parse error");
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -554,28 +568,28 @@ mod test_delete_media {
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_406() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
-        let result = task.await.err().expect("event parse error");
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -583,67 +597,66 @@ mod test_delete_media {
     /// http://35.200.46.204/#/3.media/streams_delete
     #[tokio::test]
     async fn recv_408() {
-        let media_id = "test-media_id";
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/{}", media_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up parameters
+        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let path = format!("/media/{}", media_id.as_str());
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_media(&addr, media_id);
-        let result = task.await.err().expect("event parse error");
+        // set up server mock
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_media(&url, media_id.as_str());
+        let result = task.await.err().expect("parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_create_rtcp {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::common::SerializableSocket;
     use crate::error;
-    use helper::server;
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
     /// If the API returns values with 201 Created, it returns CreateRtcpResponse
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_201() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/media/rtcp")
+            .with_status(hyper::StatusCode::CREATED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "rtcp_id": "rc-test",
                     "port": 10003,
                     "ip_v4": "127.0.0.1"
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::CREATED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_rtcp(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_rtcp(&url);
         let result = task.await.expect("event parse error");
         assert_eq!(result.get_id().unwrap().as_str(), "rc-test");
         assert_eq!(result.port(), 10003);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -651,9 +664,12 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up server mock
+        let httpserver = mock("POST", "/media/rtcp")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_DELETE",
                     "params": {
                         "errors": [
@@ -663,24 +679,21 @@ mod test_create_rtcp {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_rtcp(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -688,26 +701,24 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media/rtcp")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_rtcp(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -715,26 +726,24 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media/rtcp")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_rtcp(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -742,26 +751,24 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media/rtcp")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_rtcp(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
@@ -769,61 +776,57 @@ mod test_create_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_create
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/rtcp" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let httpserver = mock("POST", "/media/rtcp")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_rtcp(&addr);
+        // call api
+        let url = mockito::server_url();
+        let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_delete_rtcp {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
-    use helper::server;
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
     /// If the API returns values with 204 No Content
     /// http://35.200.46.204/#/3.media/media_rtcp_delete
     #[tokio::test]
-    async fn recv_201() {
+    async fn recv_204() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NO_CONTENT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NO_CONTENT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.expect("event parse error");
         assert_eq!(result, ());
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -831,39 +834,38 @@ mod test_delete_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_deletee
     #[tokio::test]
     async fn recv_400() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({
-                    "command_type": "MEDIA_DELETE",
-                    "params": {
-                        "errors": [
-                            {
-                                "field": "media_id",
-                                "message": "media_id field is not specified"
-                            }
-                        ]
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "command_type": "RTCP_DELETE",
+                "params": {
+                    "errors": [{
+                        "field": "media_id",
+                        "message": "media_id field is not specified"
+                    }]
+                }
+            }"#,
+            )
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -871,29 +873,28 @@ mod test_delete_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_deletee
     #[tokio::test]
     async fn recv_403() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -901,29 +902,28 @@ mod test_delete_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_deletee
     #[tokio::test]
     async fn recv_404() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_FOUND)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NOT_FOUND.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -931,29 +931,28 @@ mod test_delete_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_deletee
     #[tokio::test]
     async fn recv_405() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -961,29 +960,28 @@ mod test_delete_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_deletee
     #[tokio::test]
     async fn recv_406() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
@@ -991,76 +989,83 @@ mod test_delete_rtcp {
     /// http://35.200.46.204/#/3.media/media_rtcp_deletee
     #[tokio::test]
     async fn recv_408() {
+        // set up params
         let rtcp_id = "rc-test";
 
-        let server = server::http(move |req| async move {
-            let uri = format!("/media/rtcp/{}", rtcp_id);
-            if req.uri().to_string() == uri && req.method() == reqwest::Method::DELETE {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up server mock
+        let path = format!("/media/rtcp/{}", rtcp_id);
+        let httpserver = mock("DELETE", path.as_str())
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::delete_rtcp(&addr, rtcp_id);
+        // call api
+        let url = mockito::server_url();
+        let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 
 #[cfg(test)]
 mod test_create_call {
-    use serde_json::json;
+    use mockito::mock;
 
     use crate::error;
     use crate::media::formats::CallQuery;
     use crate::prelude::*;
-    use helper::server;
 
-    /// Fn create_call access to the POST /media/connections endpoint.
-    /// If the API returns values with 202 Accepted, it returns CallResponse
-    /// http://35.200.46.204/#/3.media/media_connection_create
-    #[tokio::test]
-    async fn recv_201() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({
-                    "command_type": "PEERS_CALL",
-                    "params": {
-                        "media_connection_id": "mc-test"
-                    }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::ACCEPTED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
-
-        let call_params = CallQuery {
+    fn create_params() -> CallQuery {
+        CallQuery {
             peer_id: PeerId::new("peer_id"),
             token: Token::new("pt-test"),
             target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,
-        };
+        }
+    }
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_call(&addr, &call_params);
+    /// Fn create_call access to the POST /media/connections endpoint.
+    /// If the API returns values with 202 Accepted, it returns CallResponse
+    /// http://35.200.46.204/#/3.media/media_connection_create
+    #[tokio::test]
+    async fn recv_202() {
+        // set up params
+        let call_params = create_params();
+
+        // set up server mock
+        let httpserver = mock("POST", "/media/connections")
+            .with_status(hyper::StatusCode::ACCEPTED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
+                "command_type": "PEERS_CALL",
+                "params": {
+                    "media_connection_id": "mc-102127d9-30de-413b-93f7-41a33e39d82b"
+                }
+            }"#,
+            )
+            .create();
+
+        // call api
+        let url = mockito::server_url();
+
+        let task = super::create_call(&url, &call_params);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.params.media_connection_id.as_str(), "mc-test");
+        assert_eq!(
+            result.params.media_connection_id.as_str(),
+            "mc-102127d9-30de-413b-93f7-41a33e39d82b"
+        );
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1068,9 +1073,15 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_400() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({
+        // set up params
+        let call_params = create_params();
+
+        // set up server mock
+        let httpserver = mock("POST", "/media/connections")
+            .with_status(hyper::StatusCode::BAD_REQUEST.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"{
                     "command_type": "MEDIA_CONNECTION_CREATE",
                     "params": {
                         "errors": [
@@ -1080,32 +1091,22 @@ mod test_create_call {
                             }
                         ]
                     }
-                });
-                http::Response::builder()
-                    .status(hyper::StatusCode::BAD_REQUEST)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+                }"#,
+            )
+            .create();
 
-        let call_params = CallQuery {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::new("pt-test"),
-            target_id: PeerId::new("target_id"),
-            constraints: None,
-            redirect_params: None,
-        };
+        // call api
+        let url = mockito::server_url();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_call(&addr, &call_params);
+        let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1113,34 +1114,28 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_403() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::FORBIDDEN)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up params
+        let call_params = create_params();
 
-        let call_params = CallQuery {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::new("pt-test"),
-            target_id: PeerId::new("target_id"),
-            constraints: None,
-            redirect_params: None,
-        };
+        // set up server mock
+        let httpserver = mock("POST", "/media/connections")
+            .with_status(hyper::StatusCode::FORBIDDEN.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_call(&addr, &call_params);
+        // call api
+        let url = mockito::server_url();
+
+        let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1148,34 +1143,28 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_405() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::METHOD_NOT_ALLOWED)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up params
+        let call_params = create_params();
 
-        let call_params = CallQuery {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::new("pt-test"),
-            target_id: PeerId::new("target_id"),
-            constraints: None,
-            redirect_params: None,
-        };
+        // set up server mock
+        let httpserver = mock("POST", "/media/connections")
+            .with_status(hyper::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_call(&addr, &call_params);
+        // call api
+        let url = mockito::server_url();
+
+        let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1183,34 +1172,28 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_406() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::NOT_ACCEPTABLE)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up params
+        let call_params = create_params();
 
-        let call_params = CallQuery {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::new("pt-test"),
-            target_id: PeerId::new("target_id"),
-            constraints: None,
-            redirect_params: None,
-        };
+        // set up server mock
+        let httpserver = mock("POST", "/media/connections")
+            .with_status(hyper::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_call(&addr, &call_params);
+        // call api
+        let url = mockito::server_url();
+
+        let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 
     /// Fn create_call access to the POST /media/connections endpoint.
@@ -1218,34 +1201,28 @@ mod test_create_call {
     /// http://35.200.46.204/#/3.media/media_connection_create
     #[tokio::test]
     async fn recv_408() {
-        let server = server::http(move |req| async move {
-            if req.uri() == "/media/connections" && req.method() == reqwest::Method::POST {
-                let json = json!({});
-                http::Response::builder()
-                    .status(hyper::StatusCode::REQUEST_TIMEOUT)
-                    .header("Content-type", "application/json")
-                    .body(hyper::Body::from(json.to_string()))
-                    .unwrap()
-            } else {
-                unreachable!();
-            }
-        });
+        // set up params
+        let call_params = create_params();
 
-        let call_params = CallQuery {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::new("pt-test"),
-            target_id: PeerId::new("target_id"),
-            constraints: None,
-            redirect_params: None,
-        };
+        // set up server mock
+        let httpserver = mock("POST", "/media/connections")
+            .with_status(hyper::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{}"#)
+            .create();
 
-        let addr = format!("http://{}", server.addr());
-        let task = super::create_call(&addr, &call_params);
+        // call api
+        let url = mockito::server_url();
+
+        let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
         if let error::Error::MyError { error: _e } = result {
         } else {
             unreachable!();
         }
+
+        // server called
+        httpserver.assert();
     }
 }
 

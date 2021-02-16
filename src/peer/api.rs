@@ -4,7 +4,7 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common;
+use crate::common::api::api_access;
 use crate::error;
 use crate::prelude::{PeerId, PeerInfo};
 
@@ -32,7 +32,7 @@ pub(crate) async fn create_peer(
     let api_url = format!("{}/peers", base_url);
     let api_call = || Client::new().post(&api_url).json(&peer_options).send();
     let parser = |r: reqwest::Response| r.json::<CreatedResponse>().map_err(Into::into);
-    common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
+    api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// It access to the GET /peer/{peer_id}/event?token={token} endpoint, and return its response.
@@ -62,7 +62,7 @@ pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventE
             .send()
     };
     let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
-    match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+    match api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
             error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
@@ -87,7 +87,7 @@ pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<
     );
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
-    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Status function access to the GET /peers/{peer_id}/status endpoint to get status of WebRTC Gateway
@@ -106,7 +106,7 @@ pub(crate) async fn status(
     );
     let api_call = || Client::new().get(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<PeerStatusMessage>().map_err(Into::into);
-    common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 #[cfg(test)]

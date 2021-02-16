@@ -4,7 +4,7 @@ pub(crate) mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::{PhantomId, SocketInfo};
+use crate::common::formats::{PhantomId, SocketInfo};
 use crate::error;
 
 pub use formats::{

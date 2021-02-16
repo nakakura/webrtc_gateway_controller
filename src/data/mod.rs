@@ -7,7 +7,8 @@ use futures::*;
 use crate::data::formats::*;
 use crate::error;
 
-use crate::common::SocketInfo;
+use crate::common::formats::SocketInfo;
+
 pub use formats::{
     ConnectQuery, ConnectionQueryOption, DataConnectionId, DataConnectionIdWrapper,
     DataConnectionStatus, DataId, DataIdWrapper, DcInit, RedirectDataParams,

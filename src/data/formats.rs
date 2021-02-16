@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{PhantomId, SerializableId, SocketInfo};
+use crate::common::formats::{PhantomId, SerializableId, SocketInfo};
 use crate::prelude::{PeerId, Token};
 
 /// Query for POST /data/connections

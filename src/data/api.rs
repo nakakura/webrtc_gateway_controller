@@ -4,8 +4,8 @@ use reqwest::Client;
 use serde_json::json;
 
 use super::formats::*;
-use crate::common;
-use crate::common::SocketInfo;
+use crate::common::api::api_access;
+use crate::common::formats::SocketInfo;
 use crate::error;
 
 /// It access to the POST /data endpoint, and return its response.
@@ -17,7 +17,7 @@ pub(crate) async fn create_data(base_url: &str) -> Result<SocketInfo<DataId>, er
     let json = json!({});
     let api_call = || Client::new().post(&api_url).json(&json).send();
     let parser = |r: reqwest::Response| r.json::<SocketInfo<DataId>>().map_err(Into::into);
-    common::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
+    api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// This function access to the DELETE /data endpoint.
@@ -28,7 +28,7 @@ pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), err
     let api_url = format!("{}/data/{}", base_url, data_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
-    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// This function access to the POST /data/connections endpoint.
@@ -42,7 +42,7 @@ pub(crate) async fn create_data_connection(
     let api_url = format!("{}/data/connections", base_url);
     let api_call = || Client::new().post(&api_url).json(params).send();
     let parser = |r: reqwest::Response| r.json::<ConnectionResponse>().map_err(Into::into);
-    common::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
+    api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
 
 /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -56,7 +56,7 @@ pub(crate) async fn delete_data_connection(
     let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
     let api_call = || Client::new().delete(&api_url).send();
     let parser = |_| future::ok(());
-    common::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -76,7 +76,7 @@ pub(crate) async fn redirect_data_connection(
             .send()
     };
     let parser = |r: reqwest::Response| r.json::<RedirectDataResponse>().map_err(Into::into);
-    common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -93,7 +93,7 @@ pub(crate) async fn status(
     );
     let api_call = || Client::new().get(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<DataConnectionStatus>().map_err(Into::into);
-    common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -111,7 +111,7 @@ pub(crate) async fn event(
     );
     let api_call = || Client::new().get(&api_url).send();
     let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
-    match common::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+    match api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
             error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
@@ -126,7 +126,7 @@ pub(crate) async fn event(
 mod test_create_data {
     use mockito::mock;
 
-    use crate::common::SerializableSocket;
+    use crate::common::formats::SerializableSocket;
     use crate::data::formats::DataId;
     use crate::error;
 
@@ -869,7 +869,7 @@ mod test_redirect_data_connection {
 
     use mockito::mock;
 
-    use crate::common::SerializableSocket;
+    use crate::common::formats::SerializableSocket;
     use crate::data::formats::*;
     use crate::error;
     use crate::prelude::*;

@@ -6,7 +6,6 @@ use futures::*;
 
 use crate::data::formats::*;
 use crate::error;
-use crate::new_error;
 
 use crate::common::formats::SocketInfo;
 
@@ -38,7 +37,7 @@ pub enum DataConnectionEventEnum {
 ///     let result = open_data_socket().await;
 /// }
 /// ```
-pub async fn open_data_socket() -> Result<SocketInfo<DataId>, new_error::Error> {
+pub async fn open_data_socket() -> Result<SocketInfo<DataId>, error::Error> {
     let base_url = super::base_url();
     api::create_data(base_url).await
 }
@@ -55,7 +54,7 @@ pub async fn open_data_socket() -> Result<SocketInfo<DataId>, new_error::Error> 
 ///     let result = close_data_socket(&data_id).await;
 /// }
 /// ```
-pub async fn close_data_socket(data_id: &DataId) -> Result<(), new_error::Error> {
+pub async fn close_data_socket(data_id: &DataId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_data(base_url, data_id.as_str()).await
 }
@@ -76,7 +75,7 @@ pub async fn close_data_socket(data_id: &DataId) -> Result<(), new_error::Error>
 ///     redirect_params: None,
 /// };
 /// ```
-pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, new_error::Error> {
+pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Error> {
     let base_url = super::base_url();
     let result = api::create_data_connection(base_url, &query).await?;
     Ok(result.params.data_connection_id)
@@ -94,7 +93,7 @@ pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, new_error:
 ///     let result = disconnect(&data_connection_id).await;
 /// }
 /// ```
-pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), new_error::Error> {
+pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::delete_data_connection(base_url, data_connection_id.as_str()).await
 }
@@ -124,7 +123,7 @@ pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), new
 pub async fn redirect(
     data_connection_id: &DataConnectionId,
     redirect_data_params: &RedirectDataParams,
-) -> Result<RedirectDataResponse, new_error::Error> {
+) -> Result<RedirectDataResponse, error::Error> {
     let base_url = super::base_url();
     api::redirect_data_connection(base_url, data_connection_id.as_str(), redirect_data_params).await
 }
@@ -143,7 +142,7 @@ pub async fn redirect(
 /// ```
 pub async fn status(
     data_connection_id: &DataConnectionId,
-) -> Result<DataConnectionStatus, new_error::Error> {
+) -> Result<DataConnectionStatus, error::Error> {
     let base_url = super::base_url();
     api::status(base_url, data_connection_id.as_str()).await
 }
@@ -166,7 +165,7 @@ pub async fn status(
 /// ```
 pub async fn event<'a>(
     data_connection_id: &DataConnectionId,
-) -> Result<DataConnectionEventEnum, new_error::Error> {
+) -> Result<DataConnectionEventEnum, error::Error> {
     let base_url = super::base_url();
     let event = api::event(base_url, data_connection_id.as_str()).await?;
     let event = match event {
@@ -206,7 +205,7 @@ pub async fn event<'a>(
 pub async fn listen_events<'a>(
     data_connection_id: DataConnectionId,
     mut event_notifier: mpsc::Sender<DataConnectionEventEnum>,
-) -> Result<(), new_error::Error> {
+) -> Result<(), error::Error> {
     let base_url = super::base_url();
 
     loop {
@@ -218,7 +217,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(new_error::Error::create_local_error("fail to notify an event"));
+                    return Err(error::Error::create_local_error("fail to notify an event"));
                 };
             }
             formats::EventEnum::CLOSE => {
@@ -227,7 +226,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(new_error::Error::create_local_error("fail to notify an event"));
+                    return Err(error::Error::create_local_error("fail to notify an event"));
                 };
                 break;
             }
@@ -242,7 +241,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(new_error::Error::create_local_error("fail to notify an event"));
+                    return Err(error::Error::create_local_error("fail to notify an event"));
                 };
             }
             formats::EventEnum::TIMEOUT => {}

@@ -8,7 +8,6 @@ pub mod error;
 pub(crate) mod helper;
 /// /media api bindings
 pub mod media;
-pub mod new_error;
 /// /peers api bindings
 pub mod peer;
 /// A "prelude" for users of this crate.

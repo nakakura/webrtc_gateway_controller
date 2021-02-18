@@ -4,8 +4,8 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common::api_refactor;
-use crate::new_error;
+use crate::common::api;
+use crate::error;
 use crate::prelude::{PeerId, PeerInfo};
 
 /// It access to the POST /peer endpoint, and return its response.
@@ -22,7 +22,7 @@ pub(crate) async fn create_peer(
     domain: impl Into<String>,
     peer_id: PeerId,
     turn: bool,
-) -> Result<CreatedResponse, new_error::Error> {
+) -> Result<CreatedResponse, error::Error> {
     let peer_options = CreatePeerQuery {
         key: api_key.into(),
         domain: domain.into(),
@@ -32,7 +32,7 @@ pub(crate) async fn create_peer(
     let api_url = format!("{}/peers", base_url);
     let api_call = || Client::new().post(&api_url).json(&peer_options).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<CreatedResponse>().map_err(Into::into);
-    api_refactor::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
+    api::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// It access to the GET /peer/{peer_id}/event?token={token} endpoint, and return its response.
@@ -45,7 +45,7 @@ pub(crate) async fn create_peer(
 /// this function returns error
 /// Also, if server returns json which command_type is not "PEERS_EVENTS", it returns error.
 /// http://35.200.46.204/#/1.peers/peer_event
-pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventEnum, new_error::Error> {
+pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventEnum, error::Error> {
     let api_url = format!(
         "{}/peers/{}/events?token={}",
         base_url,
@@ -62,10 +62,10 @@ pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventE
             .send()
     }.map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
-    match api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+    match api::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
-            new_error::Error::LocalError(message) if message == "recv RequestTimeout" => {
+            error::Error::LocalError(message) if message == "recv RequestTimeout" => {
                 Ok(EventEnum::TIMEOUT)
             }
             e => Err(e),
@@ -78,7 +78,7 @@ pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventE
 /// If any error happens, it returns 400, 403, 404, 405, 406, 408.
 /// When it returns 400, it also send a json message.
 /// http://35.200.46.204/#/1.peers/peer_destroy
-pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), new_error::Error> {
+pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<(), error::Error> {
     let api_url = format!(
         "{}/peers/{}?token={}",
         base_url,
@@ -87,7 +87,7 @@ pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<
     );
     let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_refactor::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Status function access to the GET /peers/{peer_id}/status endpoint to get status of WebRTC Gateway
@@ -97,7 +97,7 @@ pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<
 pub(crate) async fn status(
     base_url: &str,
     peer_info: &PeerInfo,
-) -> Result<PeerStatusMessage, new_error::Error> {
+) -> Result<PeerStatusMessage, error::Error> {
     let api_url = format!(
         "{}/peers/{}/status?token={}",
         base_url,
@@ -106,7 +106,7 @@ pub(crate) async fn status(
     );
     let api_call = || Client::new().get(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<PeerStatusMessage>().map_err(Into::into);
-    api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 #[cfg(test)]
@@ -114,7 +114,6 @@ mod test_create_peer {
     use mockito::mock;
 
     use crate::error;
-    use crate::new_error;
     use crate::prelude::*;
 
     fn create_params() -> (PeerId, Token) {
@@ -177,7 +176,7 @@ mod test_create_peer {
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await;
         assert!(result.is_err());
-        if let Err(new_error::Error::ReqwestError(_e)) = result {
+        if let Err(error::Error::ReqwestError(_e)) = result {
         } else {
             unreachable!();
         }
@@ -216,7 +215,7 @@ mod test_create_peer {
         let url = mockito::server_url();
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -244,7 +243,7 @@ mod test_create_peer {
         let url = mockito::server_url();
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -271,7 +270,7 @@ mod test_create_peer {
         let url = mockito::server_url();
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -298,7 +297,7 @@ mod test_create_peer {
         let url = mockito::server_url();
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -325,7 +324,7 @@ mod test_create_peer {
         let url = mockito::server_url();
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -345,7 +344,7 @@ mod test_create_peer {
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await;
         assert!(result.is_err());
-        if let Err(new_error::Error::ReqwestError(_e)) = result {
+        if let Err(error::Error::ReqwestError(_e)) = result {
         } else {
             unreachable!();
         }
@@ -357,7 +356,6 @@ mod test_event {
     use mockito::mock;
 
     use crate::error;
-    use crate::new_error;
     use crate::peer::formats::*;
 
     fn create_params() -> PeerInfo {
@@ -636,7 +634,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -664,7 +662,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -692,7 +690,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -720,7 +718,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -748,7 +746,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -787,7 +785,6 @@ mod test_event {
 mod test_delete_peer {
     use mockito::mock;
 
-    use crate::error;
     use crate::peer::api::*;
     use crate::peer::formats::*;
 
@@ -864,7 +861,7 @@ mod test_delete_peer {
         let url = mockito::server_url();
         let task = super::delete_peer(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -896,7 +893,7 @@ mod test_delete_peer {
         let url = mockito::server_url();
         let task = super::delete_peer(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -928,7 +925,7 @@ mod test_delete_peer {
         let url = mockito::server_url();
         let task = super::delete_peer(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -960,7 +957,7 @@ mod test_delete_peer {
         let url = mockito::server_url();
         let task = super::delete_peer(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -992,7 +989,7 @@ mod test_delete_peer {
         let url = mockito::server_url();
         let task = super::delete_peer(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1024,7 +1021,7 @@ mod test_delete_peer {
         let url = mockito::server_url();
         let task = super::delete_peer(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1039,7 +1036,6 @@ mod test_status {
     use mockito::mock;
 
     use crate::error;
-    use crate::new_error;
     use crate::peer::formats::*;
 
     fn create_params() -> PeerInfo {
@@ -1119,7 +1115,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1151,7 +1147,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1183,7 +1179,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1215,7 +1211,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1247,7 +1243,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, &peer_info);
         let result = task.await.err().expect("parse error");
-        if let new_error::Error::LocalError(_e) = result {
+        if let error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }

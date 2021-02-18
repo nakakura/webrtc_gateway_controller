@@ -7,7 +7,6 @@ use futures::*;
 use serde::{Deserialize, Serialize};
 
 use crate::error;
-use crate::new_error;
 use crate::peer::formats::EventEnum;
 pub use formats::{
     CreatePeerQuery, CreatedResponse, PeerCallEvent, PeerCloseEvent, PeerConnectionEvent,
@@ -28,7 +27,7 @@ pub async fn create<'a>(
     domain: impl Into<String>,
     peer_id: PeerId,
     turn: bool,
-) -> Result<PeerInfo, new_error::Error> {
+) -> Result<PeerInfo, error::Error> {
     let base_url = crate::base_url();
     let result = api::create_peer(base_url, api_key, domain, peer_id, turn).await?;
     Ok(result.params)
@@ -39,7 +38,7 @@ pub async fn create<'a>(
 /// It's bindings for GET /peers/{peer_id}/events
 ///
 /// [API](http://35.200.46.204/#/1.peers/peer_event)
-pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, new_error::Error> {
+pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, error::Error> {
     let base_url = crate::base_url();
     let event = api::event(base_url, peer_info).await?;
     Ok(match event {
@@ -64,7 +63,7 @@ pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, new_error:
 pub async fn listen_events<'a>(
     peer_info: &PeerInfo,
     mut event_sender: mpsc::Sender<PeerEventEnum>,
-) -> Result<(), new_error::Error> {
+) -> Result<(), error::Error> {
     let base_url = crate::base_url();
     loop {
         let result = api::event(base_url, peer_info).await?;
@@ -77,14 +76,14 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(new_error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
                 event_sender.close_channel();
                 break;
             }
             EventEnum::OPEN(event) => {
                 if event_sender.send(PeerEventEnum::OPEN(event)).await.is_err() {
-                    return Err(new_error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
             }
             EventEnum::CONNECTION(event) => {
@@ -93,12 +92,12 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(new_error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
             }
             EventEnum::CALL(event) => {
                 if event_sender.send(PeerEventEnum::CALL(event)).await.is_err() {
-                    return Err(new_error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
             }
             EventEnum::ERROR(event) => {
@@ -107,7 +106,7 @@ pub async fn listen_events<'a>(
                     .await
                     .is_err()
                 {
-                    return Err(new_error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
+                    return Err(error::Error::create_local_error("peer_create_and_listen_events send OPEN event, but observer doesn't receive i, but observer doesn't receive it."));
                 };
             }
         }
@@ -120,7 +119,7 @@ pub async fn listen_events<'a>(
 /// It's bindings for DELETE /peers/{peer_id}
 ///
 /// [API](http://35.200.46.204/#/1.peers/peer_destroy)
-pub async fn delete(peer_info: &PeerInfo) -> Result<(), new_error::Error> {
+pub async fn delete(peer_info: &PeerInfo) -> Result<(), error::Error> {
     let base_url = crate::base_url();
     api::delete_peer(base_url, peer_info).await
 }
@@ -130,7 +129,7 @@ pub async fn delete(peer_info: &PeerInfo) -> Result<(), new_error::Error> {
 /// It's bindings for GET /peers/{peer_id}/status
 ///
 /// [API](http://35.200.46.204/#/1.peers/peer_status)
-pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, new_error::Error> {
+pub async fn status(peer_info: &PeerInfo) -> Result<formats::PeerStatusMessage, error::Error> {
     let base_url = crate::base_url();
     api::status(base_url, peer_info).await
 }

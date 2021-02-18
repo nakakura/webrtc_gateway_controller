@@ -11,7 +11,7 @@ pub(crate) async fn api_access<A: Sized, T: Sized, R: Sized>(
     f: impl Fn(reqwest::Response) -> R,
 ) -> Result<T, error::Error>
 where
-    A: Future<Output = Result<reqwest::Response, reqwest::Error>>,
+    A: Future<Output = Result<reqwest::Response, error::Error>>,
     R: Future<Output = Result<T, error::Error>>,
 {
     let res = api_call().await?;
@@ -29,20 +29,22 @@ where
                     .fold("recv message".to_string(), |sum, acc| {
                         format!("{}\n{}", sum, acc.message)
                     });
-                Err(error::Error::create_myerror(&message))
+                Err(error::Error::create_local_error(&message))
             }),
-        reqwest::StatusCode::FORBIDDEN => Err(error::Error::create_myerror("recv Forbidden")),
+        reqwest::StatusCode::FORBIDDEN => {
+            Err(error::Error::create_local_error("recv Forbidden"))
+        }
         reqwest::StatusCode::NOT_FOUND if is_404_captable => {
-            Err(error::Error::create_myerror("recv Not Found"))
+            Err(error::Error::create_local_error("recv Not Found"))
         }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
-            Err(error::Error::create_myerror("recv Method Not Allowed"))
-        }
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => Err(error::Error::create_local_error(
+            "recv Method Not Allowed",
+        )),
         reqwest::StatusCode::NOT_ACCEPTABLE => {
-            Err(error::Error::create_myerror("recv Not Acceptable"))
+            Err(error::Error::create_local_error("recv Not Acceptable"))
         }
         reqwest::StatusCode::REQUEST_TIMEOUT => {
-            Err(error::Error::create_myerror("recv RequestTimeout"))
+            Err(error::Error::create_local_error("recv RequestTimeout"))
         }
         _ => {
             unreachable!();

@@ -6,6 +6,8 @@ use super::formats::*;
 use crate::common::api::api_access;
 use crate::common::formats::{PhantomId, SocketInfo};
 use crate::error;
+use crate::common::api_refactor;
+use crate::new_error;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
 /// If the API returns values with 201 Created, create_data returns the information as CreateMediaResponse
@@ -14,45 +16,45 @@ use crate::error;
 pub(crate) async fn create_media(
     base_url: &str,
     is_video: bool,
-) -> Result<SocketInfo<MediaId>, error::Error> {
+) -> Result<SocketInfo<MediaId>, new_error::Error> {
     let api_url = format!("{}/media", base_url);
     let option = CreateMediaOptions { is_video: is_video };
-    let api_call = || Client::new().post(&api_url).json(&option).send();
+    let api_call = || Client::new().post(&api_url).json(&option).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<SocketInfo<MediaId>>().map_err(Into::into);
-    api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// Fn delete_media access to the DELETE /media endpoint, and return its response.
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/streams_delete
-pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), error::Error> {
+pub(crate) async fn delete_media(base_url: &str, media_id: &str) -> Result<(), new_error::Error> {
     let api_url = format!("{}/media/{}", base_url, media_id);
-    let api_call = || Client::new().delete(&api_url).send();
+    let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
 /// If the API returns values with 201 Created, it returns CreateRtcpResponse
 /// If server returns 400, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_create
-pub(crate) async fn create_rtcp(base_url: &str) -> Result<SocketInfo<RtcpId>, error::Error> {
+pub(crate) async fn create_rtcp(base_url: &str) -> Result<SocketInfo<RtcpId>, new_error::Error> {
     let api_url = format!("{}/media/rtcp", base_url);
-    let api_call = || Client::new().post(&api_url).send();
+    let api_call = || Client::new().post(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<SocketInfo<RtcpId>>().map_err(Into::into);
-    api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
 /// If the API returns values with 204 No Content
 /// If server returns 400, 404, 405, 406, 408, create_media returns error
 /// http://35.200.46.204/#/3.media/media_rtcp_delete
-pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), error::Error> {
+pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), new_error::Error> {
     let api_url = format!("{}/media/rtcp/{}", base_url, rtcp_id);
-    let api_call = || Client::new().delete(&api_url).send();
+    let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Fn create_call access to the POST /media/connections endpoint.
@@ -62,11 +64,11 @@ pub(crate) async fn delete_rtcp(base_url: &str, rtcp_id: &str) -> Result<(), err
 pub(crate) async fn create_call(
     base_url: &str,
     call_params: &CallQuery,
-) -> Result<CallResponse, error::Error> {
+) -> Result<CallResponse, new_error::Error> {
     let api_url = format!("{}/media/connections", base_url);
-    let api_call = || Client::new().post(&api_url).json(call_params).send();
+    let api_call = || Client::new().post(&api_url).json(call_params).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<CallResponse>().map_err(Into::into);
-    api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
 
 /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
@@ -76,11 +78,11 @@ pub(crate) async fn create_call(
 pub(crate) async fn delete_call(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<(), error::Error> {
+) -> Result<(), new_error::Error> {
     let api_url = format!("{}/media/connections/{}", base_url, media_connection_id);
-    let api_call = || Client::new().delete(&api_url).send();
+    let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// Fn answer access to the POST /media/connections/{media_connection_id}/answer endpoint.
@@ -91,14 +93,14 @@ pub(crate) async fn answer(
     base_url: &str,
     media_connection_id: &str,
     params: &AnswerQuery,
-) -> Result<AnswerResponse, error::Error> {
+) -> Result<AnswerResponse, new_error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/answer",
         base_url, media_connection_id
     );
-    let api_call = || Client::new().post(&api_url).json(params).send();
+    let api_call = || Client::new().post(&api_url).json(params).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<AnswerResponse>().map_err(Into::into);
-    api_access(reqwest::StatusCode::ACCEPTED, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::ACCEPTED, true, api_call, parser).await
 }
 
 /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -109,11 +111,11 @@ pub(crate) async fn pli(
     base_url: &str,
     media_connection_id: &str,
     params: &SocketInfo<PhantomId>,
-) -> Result<(), error::Error> {
+) -> Result<(), new_error::Error> {
     let api_url = format!("{}/media/connections/{}/pli", base_url, media_connection_id);
-    let api_call = || Client::new().post(&api_url).json(params).send();
+    let api_call = || Client::new().post(&api_url).json(params).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_access(reqwest::StatusCode::CREATED, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::CREATED, true, api_call, parser).await
 }
 
 /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -123,20 +125,20 @@ pub(crate) async fn pli(
 pub(crate) async fn event(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<EventEnum, error::Error> {
+) -> Result<EventEnum, new_error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/events",
         base_url, media_connection_id
     );
-    let api_call = || Client::new().get(&api_url).send();
+    let api_call = || Client::new().get(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
-    match api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+    match api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
-            error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
+            new_error::Error::LocalError(message) if message == "recv RequestTimeout" => {
                 Ok(EventEnum::TIMEOUT)
             }
-            e => Err(e),
+            e => Err(e.into()),
         },
     }
 }
@@ -148,14 +150,14 @@ pub(crate) async fn event(
 pub(crate) async fn status(
     base_url: &str,
     media_connection_id: &str,
-) -> Result<MediaConnectionStatus, error::Error> {
+) -> Result<MediaConnectionStatus, new_error::Error> {
     let api_url = format!(
         "{}/media/connections/{}/status",
         base_url, media_connection_id
     );
-    let api_call = || Client::new().get(&api_url).send();
+    let api_call = || Client::new().get(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<MediaConnectionStatus>().map_err(Into::into);
-    api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 #[cfg(test)]
@@ -164,6 +166,7 @@ mod test_create_media {
 
     use crate::common::formats::SerializableSocket;
     use crate::error;
+    use crate::new_error;
     use crate::media::formats::*;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
@@ -275,7 +278,7 @@ mod test_create_media {
         let url = mockito::server_url();
         let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -305,7 +308,7 @@ mod test_create_media {
         let url = mockito::server_url();
         let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -335,7 +338,7 @@ mod test_create_media {
         let url = mockito::server_url();
         let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -365,7 +368,7 @@ mod test_create_media {
         let url = mockito::server_url();
         let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -395,7 +398,7 @@ mod test_create_media {
         let url = mockito::server_url();
         let task = super::create_media(&url, true);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -410,6 +413,7 @@ mod test_delete_media {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
     use crate::media::formats::*;
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
@@ -468,7 +472,7 @@ mod test_delete_media {
         let url = mockito::server_url();
         let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -497,7 +501,7 @@ mod test_delete_media {
         let url = mockito::server_url();
         let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -526,7 +530,7 @@ mod test_delete_media {
         let url = mockito::server_url();
         let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -555,7 +559,7 @@ mod test_delete_media {
         let url = mockito::server_url();
         let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -584,7 +588,7 @@ mod test_delete_media {
         let url = mockito::server_url();
         let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -613,7 +617,7 @@ mod test_delete_media {
         let url = mockito::server_url();
         let task = super::delete_media(&url, media_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -629,6 +633,7 @@ mod test_create_rtcp {
 
     use crate::common::formats::SerializableSocket;
     use crate::error;
+    use crate::new_error;
 
     /// Fn create_rtcp access to the POST /media/rtcp endpoint, and return its response.
     /// If the API returns values with 201 Created, it returns CreateRtcpResponse
@@ -688,7 +693,7 @@ mod test_create_rtcp {
         let url = mockito::server_url();
         let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -713,7 +718,7 @@ mod test_create_rtcp {
         let url = mockito::server_url();
         let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -738,7 +743,7 @@ mod test_create_rtcp {
         let url = mockito::server_url();
         let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -763,7 +768,7 @@ mod test_create_rtcp {
         let url = mockito::server_url();
         let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -788,7 +793,7 @@ mod test_create_rtcp {
         let url = mockito::server_url();
         let task = super::create_rtcp(&url);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -803,6 +808,7 @@ mod test_delete_rtcp {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
 
     /// Fn delete_rtcp access to the DELETE /media/rtcp/{rtcp_id} endpoint, and return its response.
     /// If the API returns values with 204 No Content
@@ -860,7 +866,7 @@ mod test_delete_rtcp {
         let url = mockito::server_url();
         let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -889,7 +895,7 @@ mod test_delete_rtcp {
         let url = mockito::server_url();
         let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -918,7 +924,7 @@ mod test_delete_rtcp {
         let url = mockito::server_url();
         let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -947,7 +953,7 @@ mod test_delete_rtcp {
         let url = mockito::server_url();
         let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -976,7 +982,7 @@ mod test_delete_rtcp {
         let url = mockito::server_url();
         let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1005,7 +1011,7 @@ mod test_delete_rtcp {
         let url = mockito::server_url();
         let task = super::delete_rtcp(&url, rtcp_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1020,6 +1026,7 @@ mod test_create_call {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
     use crate::media::formats::CallQuery;
     use crate::prelude::*;
 
@@ -1101,7 +1108,7 @@ mod test_create_call {
 
         let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1130,7 +1137,7 @@ mod test_create_call {
 
         let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1159,7 +1166,7 @@ mod test_create_call {
 
         let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1188,7 +1195,7 @@ mod test_create_call {
 
         let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1217,7 +1224,7 @@ mod test_create_call {
 
         let task = super::create_call(&url, &call_params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1232,6 +1239,7 @@ mod test_delete_call {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
 
     /// Fn delete_call access to the DELETE /media/connections/{media_connection_id} endpoint.
     /// If the API returns values with 204 No Content
@@ -1289,7 +1297,7 @@ mod test_delete_call {
         let url = mockito::server_url();
         let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1318,7 +1326,7 @@ mod test_delete_call {
         let url = mockito::server_url();
         let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1347,7 +1355,7 @@ mod test_delete_call {
         let url = mockito::server_url();
         let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1376,7 +1384,7 @@ mod test_delete_call {
         let url = mockito::server_url();
         let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1404,7 +1412,7 @@ mod test_delete_call {
         let url = mockito::server_url();
         let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1433,7 +1441,7 @@ mod test_delete_call {
         let url = mockito::server_url();
         let task = super::delete_call(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1448,6 +1456,7 @@ mod test_answer {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
     use crate::media::formats::*;
 
     fn create_params() -> AnswerQuery {
@@ -1549,7 +1558,7 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1580,7 +1589,7 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1611,7 +1620,7 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1642,7 +1651,7 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1673,7 +1682,7 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1704,7 +1713,7 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1720,6 +1729,7 @@ mod test_pli {
 
     use crate::common::formats::SerializableSocket;
     use crate::error;
+    use crate::new_error;
     use crate::prelude::*;
 
     fn create_params() -> SocketInfo<PhantomId> {
@@ -1788,7 +1798,7 @@ mod test_pli {
 
         let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1819,7 +1829,7 @@ mod test_pli {
 
         let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1850,7 +1860,7 @@ mod test_pli {
 
         let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1881,7 +1891,7 @@ mod test_pli {
 
         let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1912,7 +1922,7 @@ mod test_pli {
 
         let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1943,7 +1953,7 @@ mod test_pli {
 
         let task = super::pli(&url, media_connection_id, &params);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1958,6 +1968,7 @@ mod test_events {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
     use crate::media::formats::*;
 
     /// Fn events access to the GET /media/connections/{media_connection_id}/events endpoint.
@@ -2101,7 +2112,7 @@ mod test_events {
         let url = mockito::server_url();
         let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2130,7 +2141,7 @@ mod test_events {
         let url = mockito::server_url();
         let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2159,7 +2170,7 @@ mod test_events {
         let url = mockito::server_url();
         let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2188,7 +2199,7 @@ mod test_events {
         let url = mockito::server_url();
         let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2217,7 +2228,7 @@ mod test_events {
         let url = mockito::server_url();
         let task = super::event(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2258,6 +2269,7 @@ mod test_status {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
     /// If the API returns values with 200 Ok, it returns MediaConnectionStatus
@@ -2337,7 +2349,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2366,7 +2378,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2395,7 +2407,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2424,7 +2436,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2453,7 +2465,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -2482,7 +2494,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, media_connection_id);
         let result = task.await.err().expect("event parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }

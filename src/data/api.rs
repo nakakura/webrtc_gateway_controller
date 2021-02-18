@@ -5,30 +5,32 @@ use serde_json::json;
 
 use super::formats::*;
 use crate::common::api::api_access;
+use crate::common::api_refactor;
 use crate::common::formats::SocketInfo;
 use crate::error;
+use crate::new_error;
 
 /// It access to the POST /data endpoint, and return its response.
 /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
 /// If server returns 400, 405, 406, 408, create_data returns error
 /// http://35.200.46.204/#/2.data/data
-pub(crate) async fn create_data(base_url: &str) -> Result<SocketInfo<DataId>, error::Error> {
+pub(crate) async fn create_data(base_url: &str) -> Result<SocketInfo<DataId>, new_error::Error> {
     let api_url = format!("{}/data", base_url);
     let json = json!({});
-    let api_call = || Client::new().post(&api_url).json(&json).send();
+    let api_call = || Client::new().post(&api_url).json(&json).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<SocketInfo<DataId>>().map_err(Into::into);
-    api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
 
 /// This function access to the DELETE /data endpoint.
 /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
 /// It returns 400, 403, 404, 405, 406, 408 to show errors.
 /// http://35.200.46.204/#/2.data/data_delete
-pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), error::Error> {
+pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), new_error::Error> {
     let api_url = format!("{}/data/{}", base_url, data_id);
-    let api_call = || Client::new().delete(&api_url).send();
+    let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// This function access to the POST /data/connections endpoint.
@@ -38,11 +40,11 @@ pub(crate) async fn delete_data(base_url: &str, data_id: &str) -> Result<(), err
 pub(crate) async fn create_data_connection(
     base_url: &str,
     params: &ConnectQuery,
-) -> Result<ConnectionResponse, error::Error> {
+) -> Result<ConnectionResponse, new_error::Error> {
     let api_url = format!("{}/data/connections", base_url);
-    let api_call = || Client::new().post(&api_url).json(params).send();
+    let api_call = || Client::new().post(&api_url).json(params).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<ConnectionResponse>().map_err(Into::into);
-    api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
 
 /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -52,11 +54,11 @@ pub(crate) async fn create_data_connection(
 pub(crate) async fn delete_data_connection(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<(), error::Error> {
+) -> Result<(), new_error::Error> {
     let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
-    let api_call = || Client::new().delete(&api_url).send();
+    let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
-    api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::NO_CONTENT, true, api_call, parser).await
 }
 
 /// This function access to the PUT data/connections/{data_connection_id} endpoint.
@@ -67,16 +69,16 @@ pub(crate) async fn redirect_data_connection(
     base_url: &str,
     data_connection_id: &str,
     redirect_data_params: &RedirectDataParams,
-) -> Result<RedirectDataResponse, error::Error> {
+) -> Result<RedirectDataResponse, new_error::Error> {
     let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
     let api_call = || {
         Client::new()
             .put(&api_url)
             .json(redirect_data_params)
             .send()
-    };
+    }.map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<RedirectDataResponse>().map_err(Into::into);
-    api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -86,14 +88,14 @@ pub(crate) async fn redirect_data_connection(
 pub(crate) async fn status(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<DataConnectionStatus, error::Error> {
+) -> Result<DataConnectionStatus, new_error::Error> {
     let api_url = format!(
         "{}/data/connections/{}/status",
         base_url, data_connection_id
     );
-    let api_call = || Client::new().get(&api_url).send();
+    let api_call = || Client::new().get(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<DataConnectionStatus>().map_err(Into::into);
-    api_access(reqwest::StatusCode::OK, true, api_call, parser).await
+    api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }
 
 /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -104,17 +106,17 @@ pub(crate) async fn status(
 pub(crate) async fn event(
     base_url: &str,
     data_connection_id: &str,
-) -> Result<EventEnum, error::Error> {
+) -> Result<EventEnum, new_error::Error> {
     let api_url = format!(
         "{}/data/connections/{}/events",
         base_url, data_connection_id
     );
-    let api_call = || Client::new().get(&api_url).send();
+    let api_call = || Client::new().get(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
-    match api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
+    match api_refactor::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),
         Err(e) => match e {
-            error::Error::MyError { error: message } if message == "recv RequestTimeout" => {
+            new_error::Error::LocalError(message) if message == "recv RequestTimeout" => {
                 Ok(EventEnum::TIMEOUT)
             }
             e => Err(e),
@@ -129,6 +131,7 @@ mod test_create_data {
     use crate::common::formats::SerializableSocket;
     use crate::data::formats::DataId;
     use crate::error;
+    use crate::new_error;
 
     /// If the API returns values with 201 Created, create_data returns the information as CreateDataResponse
     /// http://35.200.46.204/#/2.data/data
@@ -186,7 +189,7 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -210,7 +213,7 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -234,7 +237,7 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -258,7 +261,7 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -282,7 +285,7 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -298,6 +301,7 @@ mod test_delete_data {
 
     use crate::data::formats::DataId;
     use crate::error;
+    use crate::new_error;
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data_delete
@@ -339,7 +343,7 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -365,7 +369,7 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -391,7 +395,7 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -416,7 +420,7 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -442,7 +446,7 @@ mod test_delete_data {
         let url = mockito::server_url();
         let task = super::delete_data(&url, data_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -458,6 +462,7 @@ mod test_create_data_connection {
 
     use crate::data::formats::*;
     use crate::error;
+    use crate::new_error;
     use crate::prelude::*;
 
     fn create_options() -> ConnectQuery {
@@ -538,7 +543,7 @@ mod test_create_data_connection {
         let url = mockito::server_url();
         let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -565,7 +570,7 @@ mod test_create_data_connection {
         let url = mockito::server_url();
         let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -592,7 +597,7 @@ mod test_create_data_connection {
         let url = mockito::server_url();
         let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -619,7 +624,7 @@ mod test_create_data_connection {
         let url = mockito::server_url();
         let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -646,7 +651,7 @@ mod test_create_data_connection {
         let url = mockito::server_url();
         let task = super::create_data_connection(&url, &query);
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -661,6 +666,7 @@ mod test_delete_data_connection {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
     use crate::prelude::*;
 
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
@@ -718,7 +724,7 @@ mod test_delete_data_connection {
         let url = mockito::server_url();
         let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -745,7 +751,7 @@ mod test_delete_data_connection {
         let url = mockito::server_url();
         let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -772,7 +778,7 @@ mod test_delete_data_connection {
         let url = mockito::server_url();
         let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -799,7 +805,7 @@ mod test_delete_data_connection {
         let url = mockito::server_url();
         let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -826,7 +832,7 @@ mod test_delete_data_connection {
         let url = mockito::server_url();
         let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -853,7 +859,7 @@ mod test_delete_data_connection {
         let url = mockito::server_url();
         let task = super::delete_data_connection(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -872,6 +878,7 @@ mod test_redirect_data_connection {
     use crate::common::formats::SerializableSocket;
     use crate::data::formats::*;
     use crate::error;
+    use crate::new_error;
     use crate::prelude::*;
 
     fn create_param() -> (RedirectDataParams, DataConnectionId) {
@@ -986,7 +993,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1030,7 +1037,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1074,7 +1081,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1118,7 +1125,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1162,7 +1169,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1206,7 +1213,7 @@ mod test_redirect_data_connection {
             &redirect_data_params,
         );
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1221,6 +1228,7 @@ mod test_status {
     use mockito::mock;
 
     use crate::error;
+    use crate::new_error;
     use crate::prelude::*;
 
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
@@ -1289,7 +1297,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1317,7 +1325,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1344,7 +1352,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1372,7 +1380,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1400,7 +1408,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1428,7 +1436,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1444,6 +1452,7 @@ mod test_event {
 
     use crate::data::formats::EventEnum;
     use crate::error;
+    use crate::new_error;
     use crate::prelude::*;
 
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
@@ -1570,7 +1579,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1598,7 +1607,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1626,7 +1635,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1654,7 +1663,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }
@@ -1682,7 +1691,7 @@ mod test_event {
         let url = mockito::server_url();
         let task = super::event(&url, data_connection_id.as_str());
         let result = task.await.err().expect("parse error");
-        if let error::Error::MyError { error: _e } = result {
+        if let new_error::Error::LocalError(_e) = result {
         } else {
             unreachable!();
         }

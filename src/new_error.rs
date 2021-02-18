@@ -8,9 +8,9 @@ pub enum Error {
     #[error("{}", 0)]
     IOError { error: ::std::io::ErrorKind },
     #[error("{}", 0)]
-    Serde { error: serde_json::Error },
+    SerdeError { error: serde_json::Error },
     #[error("{}", 0)]
-    Reqwest(#[from] reqwest::Error),
+    ReqwestError(#[from] reqwest::Error),
     #[error("{}", 0)]
     LocalError(String),
 }

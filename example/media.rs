@@ -86,6 +86,11 @@ fn read_config(path: &'static str) -> Config {
 
 //==================== main ====================
 
+#[tokio::main]
+async fn main(){}
+
+/*
+
 // Main function creates a peer object and start listening peer events and keyboard events.
 // Further processes are triggered by these events.
 #[tokio::main]
@@ -878,3 +883,4 @@ fn print_commands() {
         message
     );
 }
+ */

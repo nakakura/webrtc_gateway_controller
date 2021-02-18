@@ -18,6 +18,10 @@ enum EventEnum {
 struct PeerFoldParameters((Option<PeerInfo>, Vec<mpsc::Sender<String>>));
 
 #[tokio::main]
+async fn main(){}
+
+/*
+#[tokio::main]
 async fn main() {
     env_logger::init();
 
@@ -95,3 +99,4 @@ async fn on_peer_key_events(
         _ => Ok(PeerFoldParameters((peer_info, vec))),
     }
 }
+*/

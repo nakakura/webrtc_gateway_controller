@@ -1,28 +1,17 @@
-use futures::channel::mpsc;
-use futures::*;
+use tokio::sync::mpsc;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use skyway_webrtc_gateway_api::error;
-
-// FIXME
-// Keyboard events should be subscribed from many locations
-// The struct should implement addEventListener and deleteEventListener.
-pub async fn read(mut observer: mpsc::Sender<String>) -> Result<(), error::Error> {
-    /*
-    let stdin = async_std::io::stdin();
-    let mut line = String::new();
+async fn read_stdin(mut tx: mpsc::Sender<String>) -> Result<(), Box<mpsc::error::SendError<String>>> {
+    let mut stdin = tokio::io::stdin();
     loop {
-        let _n = stdin.read_line(&mut line).await.map_err(Into::into)?;
-        let message = line.trim().to_string();
-        println!("{:?}", message);
-        let _ = observer
-            .send(message.clone())
-            .await
-            .expect("terminal error");
-        if message == "exit" {
-            break;
-        }
-        line.clear()
+        let mut buf = vec![0; 1024];
+        let n = match stdin.read(&mut buf).await {
+            Err(_) | Ok(0) => break,
+            Ok(n) => n,
+        };
+        buf.truncate(n);
+        let str = std::str::from_utf8(&buf[0..n]);
+        tx.send(str.unwrap().into()).await.map_err(|e| Box::new(e))?;
     }
-     */
     Ok(())
 }

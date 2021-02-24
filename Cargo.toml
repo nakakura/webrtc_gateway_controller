@@ -27,7 +27,6 @@ thiserror = "1.0.23"
 tokio = { version = "1.2.0", features = ["full"] }
 
 [dev-dependencies]
-async-std = "1.9.0"
 either = "1.6.1"
 mockito = "0.29.0"
 toml = "0.5.8"

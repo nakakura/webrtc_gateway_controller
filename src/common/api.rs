@@ -31,15 +31,13 @@ where
                     });
                 Err(error::Error::create_local_error(&message))
             }),
-        reqwest::StatusCode::FORBIDDEN => {
-            Err(error::Error::create_local_error("recv Forbidden"))
-        }
+        reqwest::StatusCode::FORBIDDEN => Err(error::Error::create_local_error("recv Forbidden")),
         reqwest::StatusCode::NOT_FOUND if is_404_captable => {
             Err(error::Error::create_local_error("recv Not Found"))
         }
-        reqwest::StatusCode::METHOD_NOT_ALLOWED => Err(error::Error::create_local_error(
-            "recv Method Not Allowed",
-        )),
+        reqwest::StatusCode::METHOD_NOT_ALLOWED => {
+            Err(error::Error::create_local_error("recv Method Not Allowed"))
+        }
         reqwest::StatusCode::NOT_ACCEPTABLE => {
             Err(error::Error::create_local_error("recv Not Acceptable"))
         }

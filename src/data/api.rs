@@ -15,7 +15,13 @@ use crate::error;
 pub(crate) async fn create_data(base_url: &str) -> Result<SocketInfo<DataId>, error::Error> {
     let api_url = format!("{}/data", base_url);
     let json = json!({});
-    let api_call = || Client::new().post(&api_url).json(&json).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(&json)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<SocketInfo<DataId>>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
@@ -40,7 +46,13 @@ pub(crate) async fn create_data_connection(
     params: &ConnectQuery,
 ) -> Result<ConnectionResponse, error::Error> {
     let api_url = format!("{}/data/connections", base_url);
-    let api_call = || Client::new().post(&api_url).json(params).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(params)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<ConnectionResponse>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
@@ -70,11 +82,14 @@ pub(crate) async fn redirect_data_connection(
 ) -> Result<RedirectDataResponse, error::Error> {
     let api_url = format!("{}/data/connections/{}", base_url, data_connection_id);
     let api_call = || {
-        Client::new()
-            .put(&api_url)
-            .json(redirect_data_params)
-            .send()
-    }.map_err(Into::into);
+        {
+            Client::new()
+                .put(&api_url)
+                .json(redirect_data_params)
+                .send()
+        }
+        .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<RedirectDataResponse>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::OK, true, api_call, parser).await
 }

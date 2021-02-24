@@ -30,7 +30,13 @@ pub(crate) async fn create_peer(
         turn: turn,
     };
     let api_url = format!("{}/peers", base_url);
-    let api_call = || Client::new().post(&api_url).json(&peer_options).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(&peer_options)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<CreatedResponse>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
@@ -53,14 +59,17 @@ pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventE
         peer_info.token.as_str()
     );
     let api_call = || {
-        Client::new()
-            .get(&api_url)
-            .header(
-                reqwest::header::CONTENT_TYPE,
-                reqwest::header::HeaderValue::from_static("application/json"),
-            )
-            .send()
-    }.map_err(Into::into);
+        {
+            Client::new()
+                .get(&api_url)
+                .header(
+                    reqwest::header::CONTENT_TYPE,
+                    reqwest::header::HeaderValue::from_static("application/json"),
+                )
+                .send()
+        }
+        .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<EventEnum>().map_err(Into::into);
     match api::api_access(reqwest::StatusCode::OK, true, api_call, parser).await {
         Ok(v) => Ok(v),

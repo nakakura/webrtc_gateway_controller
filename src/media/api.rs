@@ -3,8 +3,8 @@ use reqwest;
 use reqwest::Client;
 
 use super::formats::*;
-use crate::common::formats::{PhantomId, SocketInfo};
 use crate::common::api;
+use crate::common::formats::{PhantomId, SocketInfo};
 use crate::error;
 
 /// Fn create_media access to the POST /media endpoint, and return its response.
@@ -17,7 +17,13 @@ pub(crate) async fn create_media(
 ) -> Result<SocketInfo<MediaId>, error::Error> {
     let api_url = format!("{}/media", base_url);
     let option = CreateMediaOptions { is_video: is_video };
-    let api_call = || Client::new().post(&api_url).json(&option).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(&option)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<SocketInfo<MediaId>>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::CREATED, false, api_call, parser).await
 }
@@ -64,7 +70,13 @@ pub(crate) async fn create_call(
     call_params: &CallQuery,
 ) -> Result<CallResponse, error::Error> {
     let api_url = format!("{}/media/connections", base_url);
-    let api_call = || Client::new().post(&api_url).json(call_params).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(call_params)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<CallResponse>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::ACCEPTED, false, api_call, parser).await
 }
@@ -96,7 +108,13 @@ pub(crate) async fn answer(
         "{}/media/connections/{}/answer",
         base_url, media_connection_id
     );
-    let api_call = || Client::new().post(&api_url).json(params).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(params)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |r: reqwest::Response| r.json::<AnswerResponse>().map_err(Into::into);
     api::api_access(reqwest::StatusCode::ACCEPTED, true, api_call, parser).await
 }
@@ -111,7 +129,13 @@ pub(crate) async fn pli(
     params: &SocketInfo<PhantomId>,
 ) -> Result<(), error::Error> {
     let api_url = format!("{}/media/connections/{}/pli", base_url, media_connection_id);
-    let api_call = || Client::new().post(&api_url).json(params).send().map_err(Into::into);
+    let api_call = || {
+        Client::new()
+            .post(&api_url)
+            .json(params)
+            .send()
+            .map_err(Into::into)
+    };
     let parser = |_| future::ok(());
     api::api_access(reqwest::StatusCode::CREATED, true, api_call, parser).await
 }

@@ -1,5 +1,5 @@
 /// Functions in this module are responsible for concealing the raw APIs
-mod api;
+pub(crate) mod api;
 pub(crate) mod formats;
 
 use futures::channel::mpsc;
@@ -38,9 +38,9 @@ pub async fn create<'a>(
 /// It's bindings for GET /peers/{peer_id}/events
 ///
 /// [API](http://35.200.46.204/#/1.peers/peer_event)
-pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, error::Error> {
+pub async fn event<'a>(peer_info: PeerInfo) -> Result<PeerEventEnum, error::Error> {
     let base_url = crate::base_url();
-    let event = api::event(base_url, peer_info).await?;
+    let event = api::event(base_url, &peer_info).await?;
     Ok(match event {
         EventEnum::TIMEOUT => PeerEventEnum::TIMEOUT,
         EventEnum::CLOSE(event) => PeerEventEnum::CLOSE(event),
@@ -61,12 +61,12 @@ pub async fn event<'a>(peer_info: &PeerInfo) -> Result<PeerEventEnum, error::Err
 /// When the API returns TIMEOUT events, this function ignore them and keep listening events.
 /// It keep listening events till receiving CLOSE event or HTTP Error Codes.
 pub async fn listen_events<'a>(
-    peer_info: &PeerInfo,
+    peer_info: PeerInfo,
     mut event_sender: mpsc::Sender<PeerEventEnum>,
 ) -> Result<(), error::Error> {
     let base_url = crate::base_url();
     loop {
-        let result = api::event(base_url, peer_info).await?;
+        let result = api::event(base_url, &peer_info).await?;
 
         match result {
             EventEnum::TIMEOUT => {}

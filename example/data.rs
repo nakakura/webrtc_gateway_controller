@@ -58,7 +58,7 @@ fn read_config(path: &'static str) -> Config {
 //==================== main ====================
 
 #[tokio::main]
-async fn main(){}
+async fn main() {}
 
 /*
 

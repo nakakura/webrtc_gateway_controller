@@ -1,38 +1,30 @@
 mod terminal;
 
-use std::collections::hash_map::Keys;
-use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::io::{BufReader, Read};
+use std::sync::Mutex;
 
-use either;
-use either::Either;
 use futures::channel::mpsc;
-use futures::future::FutureExt;
 use futures::prelude::*;
-use log::{error, info, warn};
+use futures::prelude::*;
+use futures::*;
+use log::{info, warn};
+use once_cell::sync::OnceCell;
 use serde_derive::Deserialize;
-
-use media::*;
-use peer::PeerEventEnum;
-use skyway_webrtc_gateway_api::peer::PeerCallEvent;
+use skyway_webrtc_gateway_api::media::*;
+use skyway_webrtc_gateway_api::peer::*;
 use skyway_webrtc_gateway_api::prelude::*;
 use skyway_webrtc_gateway_api::*;
+
+// Config of media used in call and answer.
+static CONFIG: OnceCell<Mutex<Config>> = OnceCell::new();
 
 //==================== for parsing media.toml ====================
 // It shows config toml formats
 #[derive(Clone, Debug, Deserialize)]
 struct Config {
-    peer: PeerConfig,
-    gateway: SocketConfig,
     media: Vec<MediaConfig>,
-}
-
-// It is internal format for config toml
-#[derive(Clone, Debug, Deserialize)]
-struct PeerConfig {
-    pub peer_id: String,
-    pub domain: String,
 }
 
 // It is internal format for config toml
@@ -44,13 +36,6 @@ struct MediaConfig {
     pub video_params: Option<MediaParamConfig>,
     pub audio_redirect: Option<RedirectSocketConfig>,
     pub audio_params: Option<MediaParamConfig>,
-}
-
-// It is internal format for config toml
-#[derive(Clone, Debug, Deserialize)]
-struct SocketConfig {
-    pub ip: String,
-    pub port: u16,
 }
 
 // It is internal format for config toml
@@ -87,264 +72,156 @@ fn read_config(path: &'static str) -> Config {
 //==================== main ====================
 
 #[tokio::main]
-async fn main() {}
-
-/*
-
-// Main function creates a peer object and start listening peer events and keyboard events.
-// Further processes are triggered by these events.
-#[tokio::main]
 async fn main() {
-    // initialize logger
-    if std::env::var("RUST_LOG").is_err() {
-        std::env::set_var("RUST_LOG", "info");
-        info!("RUST_LOG is not set. So it works as info mode.");
-    }
+    // set log level
+    env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    //load and set parameters
-    let api_key = ::std::env::var("API_KEY").expect("API_KEY is not set in environment variables");
-    let config = read_config("example/media.toml");
-    let domain = config.peer.domain;
-    let peer_id = PeerId::new(config.peer.peer_id);
-    let base_url: String = format!("http://{}:{}", config.gateway.ip, config.gateway.port);
+    // Initialize values for create peer
+    // SkyWay Service API Key
+    let api_key = env::var("API_KEY").expect("API_KEY is not set in environment variables");
+    // a domain already registered with skyway
+    let domain = env::var("DOMAIN").unwrap_or("localhost".into());
+    // Identifier of your peer
+    let peer_id = env::var("PEER_ID").unwrap_or("peer_id".into());
+    let peer_id = PeerId::new(peer_id);
+    // URL to access your WebRTC GW.
+    let base_url = env::var("BASE_URL").unwrap_or("http://localhost:8000".to_string());
+
+    // read config file
+    let media_config = read_config("example/media.toml");
+    CONFIG.set(Mutex::new(media_config)).unwrap();
+
+    // initialize crate
     skyway_webrtc_gateway_api::initialize(base_url);
 
-    //observe keyboard events
-    let (key_notifier, key_observer) = mpsc::channel::<String>(0);
-    let key_fut = terminal::read(key_notifier);
-
-    //create peer and observe peer events
+    // call create peer api
     let create_peer_future = peer::create(api_key, domain, peer_id, true);
+    // When create api is called, the WebRTC GW first creates a PeerObject internally.
+    // Next, it start registering the PeerObject with the SkyWay server.
+    // When WebRTC GW starts the sequence, this crate returns Ok(PeerInfo).
+    // The PeerInfo contains the Peer ID and the token needed to control the PeerObject.
     let peer_info = create_peer_future.await.expect("create peer failed");
-    let (peer_event_notifier, peer_event_observer) = mpsc::channel::<PeerEventEnum>(0);
-    let event_future = peer::listen_events(&peer_info, peer_event_notifier);
+    info!("peer_info is {:?}", peer_info);
 
-    //this program reacts only to user input and peer events.
-    //merge these two event streams, and fold current status
-    let peer_event_stream = futures::stream::select(
-        peer_event_observer.map(|e| Either::Left(e)),
-        key_observer.map(|e| Either::Right(e)),
-    );
-    let fold_fut = peer_event_stream
-        .fold(
-            // before receiving Peer::OPEN event, peer object might not be created.
-            // So None is set for Option<PeerInfo>.
-            PeerFoldState((None, config.media, vec![])),
-            |state, event| async move {
-                match event {
-                    Either::Left(api_events) => on_peer_api_events(state, api_events)
-                        .await
-                        .expect("error in on_peer_api_events"),
-                    Either::Right(key_events) => on_peer_key_events(state, key_events)
-                        .await
-                        .expect("error in on_peer_key_events"),
-                }
-            },
-        )
-        .map(|_| futures::future::ok::<(), error::Error>(()));
+    // The WebRTC GW interacts with SkyWay and notifies the end user of the result as an event.
+    // Generate a future for event monitoring here.
+    let (peer_event_notifier, peer_event_observer) = mpsc::channel::<PeerEventEnum>(10);
+    let event_future = peer::listen_events(peer_info.clone(), peer_event_notifier);
+    tokio::spawn(event_future);
 
-    //execute all the futures
-    let (fold_fut_result, event_fut_result, key_fut_reult) =
-        futures::future::join3(fold_fut, event_future, key_fut).await;
-    info!("All the futures are finished. They stopped with these status\nfold: {:?}\nevent: {:?}\nkey:{:?}", fold_fut_result, event_fut_result, key_fut_reult);
+    // Listen Keyboard Inputs
+    let (keyboard_notifier, keyboard_observer) = tokio::sync::mpsc::channel::<String>(10);
+    let key_observe_fut = terminal::read_stdin(keyboard_notifier);
+    tokio::spawn(key_observe_fut);
+
+    // Routes Keyboard Events
+    let key_events_fut = on_keyboard_events(peer_info.clone(), keyboard_observer);
+
+    // Routes Peer Events
+    let peer_events_fut = on_peer_events(peer_info, peer_event_observer);
+
+    // run futures
+    join!(key_events_fut, peer_events_fut);
 }
 
-//==================== materials for PeerFold ====================
-
-// Wrap user input strings with New-Type pattern
-#[derive(Debug)]
-struct ControlMessage(String);
-
-// This program reacts only with two streams, user control from stdin and peer events.
-// This struct holds previous state to process the events properly.
-#[derive(Debug)]
-struct PeerFoldState(
-    (
-        Option<PeerInfo>,
-        Vec<MediaConfig>,
-        Vec<mpsc::Sender<ControlMessage>>,
-    ),
-);
-
-// PeerFoldState has only setter and getter.
-impl PeerFoldState {
-    pub fn peer_info(&self) -> &Option<PeerInfo> {
-        &(self.0).0
-    }
-
-    pub fn set_peer_info(self, peer_info: Option<PeerInfo>) -> Self {
-        let PeerFoldState((_, redirects, sender)) = self;
-        PeerFoldState((peer_info, redirects, sender))
-    }
-
-    pub fn pop_media_config(&mut self) -> Option<MediaConfig> {
-        ((self.0).1).pop()
-    }
-
-    pub fn control_message_notifier(&mut self) -> &mut Vec<mpsc::Sender<ControlMessage>> {
-        &mut (self.0).2
-    }
-
-    pub fn set_control_message_notifier(&mut self, tx: mpsc::Sender<ControlMessage>) {
-        (&mut (self.0).2).push(tx);
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct MediaSrcSockets {
-    media_socket: SocketInfo<MediaId>,
-    rtcp_socket: SocketInfo<RtcpId>,
-}
-
-//==================== process events for peer ====================
-
-// This function process events from Peer Object
-async fn on_peer_api_events(
-    status: PeerFoldState,
-    event: PeerEventEnum,
-) -> Result<PeerFoldState, error::Error> {
-    // CONNECTION is not needed for this program.
-    let status = match event {
-        PeerEventEnum::OPEN(event) => {
-            // PeerObject notify that it has been successfully created.
-            // Hold PeerInfo for further process.
-            info!(
-                "====================\nPeerObject is created. Its PeerId is {} and Token is {}",
-                event.params.peer_id.as_str(),
-                event.params.token.as_str()
-            );
-            let params = status.set_peer_info(Some(event.params));
-            Ok(params)
-        }
-        PeerEventEnum::CLOSE(event) => {
-            // PeerObject notify that it has already been deleted.
-            // Erase old PeerInfo.
-            info!(
-                "====================\nPeerObject of {} is closed",
-                event.params.peer_id.as_str()
-            );
-            let params = status.set_peer_info(None);
-            Ok(params)
-        }
-        PeerEventEnum::CALL(event) => {
-            info!(
-                "====================\nreceive call request. Its MediaConnectionId is {}",
-                event.call_params.media_connection_id.as_str()
-            );
-            let status = answer(status, event).await?;
-            Ok(status)
-        }
-        PeerEventEnum::ERROR(event) => {
-            error!("error {:?} occurs in on_peer_api_events", event);
-            Ok(status)
-        }
-        _ => Ok(status),
-    };
-    print_commands();
-    status
-}
-
-// This function works according to User Keyboard Input
-async fn on_peer_key_events(
-    mut status: PeerFoldState,
-    message: String,
-) -> Result<PeerFoldState, error::Error> {
-    let status = match message.as_str() {
-        "exit" => {
-            // When an user wants to close this program, it needs to close P2P links and delete Peer Object.
-            // Content Socket will be automaticall released, so it is not necessary to release them manually.
-            // https://github.com/skyway/skyway-webrtc-gateway/blob/master/docs/release_process.md
-            let notifiers = status.control_message_notifier();
-            for notifier in notifiers {
-                let _ = notifier
-                    .send(ControlMessage(String::from("disconnect_all")))
-                    .await;
-            }
-            if let Some(peer_info) = status.peer_info() {
-                let _unit = peer::delete(&peer_info).await?;
-            }
-            let params = status.set_peer_info(None);
-            Ok(params)
-        }
-        "status" => {
-            // Show status of PeerObject and MediaConnection
-            if let Some(ref peer_info) = status.peer_info() {
-                let status = peer::status(peer_info).await?;
-                let mut message = String::from("====================\nShow Status");
-                message = format!(
-                    "{}\nMy PeerId is {} and Token is {}. It is {} now.",
-                    message,
+async fn on_peer_events(peer_info: PeerInfo, mut observer: mpsc::Receiver<PeerEventEnum>) {
+    while let Some(result) = observer.next().await {
+        match result {
+            PeerEventEnum::OPEN(open) => {
+                info!(
+                    "Peer({}) is created. Now you can CALL/CONNECT.\n{:?}",
                     peer_info.peer_id.as_str(),
-                    peer_info.token.as_str(),
-                    if !status.disconnected {
-                        "connected to Server."
-                    } else {
-                        "not connected to Server."
-                    }
+                    open
                 );
-                info!("{}", message);
             }
-            let notifiers = status.control_message_notifier();
-            for notifier in notifiers {
-                let _ = notifier.send(ControlMessage(String::from("status"))).await;
+            PeerEventEnum::CALL(call) => {
+                info!(
+                    "Peer({}) received call as {:?}",
+                    peer_info.peer_id.as_str(),
+                    call
+                );
+                let config = &mut *CONFIG.get().unwrap().lock().unwrap();
+                let val = config.media.pop().unwrap();
+                tokio::spawn(answer(val, call));
             }
-            Ok(status)
-        }
-        message if message.starts_with("pli ") => {
-            // Send a Pli Packet
-            // This function expects "pli MEDIA_CONNECTION_ID".
-            let notifiers = status.control_message_notifier();
-            for notifier in notifiers {
-                let _ = notifier.send(ControlMessage(String::from(message))).await;
+            PeerEventEnum::CLOSE(_close) => {
+                info!("Peer({}) is deleted", peer_info.peer_id.as_str());
+                break;
             }
-            Ok(status)
-        }
-        message if message.starts_with("disconnect ") => {
-            // Disconnect P2P link
-            // This function expects "connect MEDIA_CONNECTION_ID".
-            let notifiers = status.control_message_notifier();
-            for notifier in notifiers {
-                let _ = notifier.send(ControlMessage(String::from(message))).await;
-            }
-            Ok(status)
-        }
-        message if message.starts_with("call ") => {
-            // Establish P2P datachannel to an neighbour.
-            // This function expects "connect TARGET_ID".
-            let mut args = message.split_whitespace();
-            let _ = args.next();
-            if let Some(target_id) = args.next() {
-                let target_id = PeerId::new(target_id);
-                Ok(call(status, target_id).await.expect("error at line 163"))
-            } else {
-                warn!("input \"call TARGET_PEER_ID\"");
-                Ok(status)
+            _ => {
+                info!(
+                    "Peer({}) notifies an Event \n{:?}",
+                    peer_info.peer_id.as_str(),
+                    result
+                );
             }
         }
-        _ => Ok(status),
-    };
-    print_commands();
-    status
+    }
 }
 
-//==================== call and answer to establish media connection ====================
-// start establishing MediaConnection to an neighbour
-async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldState, error::Error> {
-    // To show which peer object needs to establish P2P link, it will be sent to WebRTC Gateway.
-    let peer_info = params
-        .peer_info()
-        .clone()
-        .expect("peer has not been created");
+async fn on_keyboard_events(
+    peer_info: PeerInfo,
+    mut observer: tokio::sync::mpsc::Receiver<String>,
+) {
+    println!(
+        r#"print COMMAND
+    exit
+    status
+    call TARGET_ID
+    "#
+    );
+    while let Some(message) = observer.recv().await {
+        match message.as_str() {
+            "exit" => {
+                info!("start closing Peer({})", peer_info.peer_id.as_str());
+                // when a PeerObject is closed, MediaConnections associated with it will be automatically closed.
+                // So it's not necessary to close MediaConnections here.
+                let _ = peer::delete(&peer_info).await;
+                break;
+            }
+            "status" => {
+                let peer_status = peer::status(&peer_info).await;
+                info!(
+                    "Peer({})'s status is \n{:?}",
+                    peer_info.peer_id.as_str(),
+                    peer_status
+                );
+            }
+            x if x.starts_with("call") => {
+                let params: Vec<&str> = x.split(' ').collect();
+                if params.len() < 2 {
+                    warn!("input \"call TARGET_ID\"");
+                    continue;
+                }
 
-    let media_params = params.pop_media_config();
-    if media_params.is_none() {
-        info!("Call request with no media and no redirect is ignored");
-        return Ok(params);
+                let config = &mut *CONFIG.get().unwrap().lock().unwrap();
+                let val = config.media.pop().unwrap();
+                tokio::spawn(call(peer_info.clone(), val, PeerId(params[1].into())));
+            }
+            _ => {
+                info!("please type valid commands.");
+            }
+        }
+
+        println!(
+            r#"print COMMAND
+    exit
+    status
+    call TARGET_ID
+    "#
+        );
     }
-    let media_config = media_params.unwrap();
-    // In creating constraints process, source sockets of media and rtcp are opened.
-    // It is necessary to store the sockets' information.
+}
+
+// make a call to neighbour
+async fn call(
+    peer_info: PeerInfo,
+    media_config: MediaConfig,
+    target_id: PeerId,
+) -> Result<(), error::Error> {
+    // Open video and audio port to feed media.
+    // Also, create constraints parameter
     let (video_src_socket, audio_src_socket, constraints) =
         create_media_connect_options(&media_config).await?;
     let redirect_params = create_redirect(media_config);
@@ -360,115 +237,128 @@ async fn call(mut params: PeerFoldState, target_id: PeerId) -> Result<PeerFoldSt
     // call to neighbour
     let media_connection_id = media::call(&call_params).await?.params.media_connection_id;
 
-    // This channel is for redirecting keyboard inputs from PeerFold future to MediaFold future
-    let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
-
-    // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) =
-        mpsc::channel::<media::MediaConnectionEventEnum>(0);
-    let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
+    // Listen media connection events
+    let (event_notifier, mut event_observer) = mpsc::channel::<media::MediaConnectionEventEnum>(0);
+    let event_listen_fut = media::listen_events(media_connection_id.clone(), event_notifier);
     tokio::spawn(event_listen_fut);
 
-    // MediaConnection process will work according to MediaConnection events and keyboard inputs
-    let stream = futures::stream::select(
-        mc_event_observer.map(|event| Either::Left(event)),
-        control_message_observer.map(|event| Either::Right(event)),
-    );
-    // Create initial state of fold future of media events
-    let mut state = MediaConnectionState::default();
-    state.insert_media_connection_id(
-        media_connection_id,
-        (video_src_socket, audio_src_socket, Some(redirect_params)),
-    );
-    let fold_fut = stream.fold(state, |state, event| async move {
-        match event {
-            Either::Left(event) => on_media_api_events(state, event)
-                .await
-                .expect("error in on_media_and_api_events"),
-            Either::Right(event) => on_media_key_events(state, event)
-                .await
-                .expect("error in on_media_key_events"),
+    while let Some(media_event) = event_observer.next().await {
+        match media_event {
+            MediaConnectionEventEnum::READY(ready) => {
+                info!(
+                    "MediaConnection({}) is ready {:?}",
+                    media_connection_id.as_str(),
+                    ready
+                );
+                video_src_socket.clone().map(|sock| {
+                    info!("Now you can send video with {:?}", sock);
+                });
+                audio_src_socket.clone().map(|sock| {
+                    info!("Now you can send audio with {:?}", sock);
+                });
+            }
+            MediaConnectionEventEnum::STREAM(stream) => {
+                info!(
+                    "MediaConnection({}) recv stream {:?}",
+                    media_connection_id.as_str(),
+                    stream
+                );
+            }
+            MediaConnectionEventEnum::CLOSE(close) => {
+                info!(
+                    "MediaConnection({}) has closed {:?}",
+                    media_connection_id.as_str(),
+                    close
+                );
+            }
+            MediaConnectionEventEnum::ERROR(error) => {
+                info!(
+                    "MediaConnection({}) gets error {:?}",
+                    media_connection_id.as_str(),
+                    error
+                );
+            }
         }
-    });
-    tokio::spawn(fold_fut);
+    }
 
-    // hold keybord events notifier
-    params.set_control_message_notifier(control_message_notifier);
-    Ok(params)
+    Ok(())
 }
 
-async fn answer(
-    mut params: PeerFoldState,
-    event: PeerCallEvent,
-) -> Result<PeerFoldState, error::Error> {
-    let media_params = params.pop_media_config();
-    if media_params.is_none() {
-        info!("Call request with no media and no redirect is ignored");
-        return Ok(params);
-    }
-    let media_connection_id = event.call_params.media_connection_id;
-    let media_config = media_params.unwrap();
-
-    // In creating constraints process, source sockets of media and rtcp are opened.
-    // It is necessary to store the sockets' information.
+// accept a call from neighbour
+async fn answer(media_config: MediaConfig, call_event: PeerCallEvent) -> Result<(), error::Error> {
+    // Open video and audio port to feed media.
+    // Also, create constraints parameter
     let (video_src_socket, audio_src_socket, constraints) =
         create_media_connect_options(&media_config).await?;
     let redirect_params = create_redirect(media_config);
-
     let answer_params = AnswerQuery {
         constraints: constraints,
         redirect_params: Some(redirect_params.clone()),
     };
 
     // answer to call from neighbour
-    let _answer = media::answer(&media_connection_id, &answer_params).await?;
+    let _answer =
+        media::answer(&call_event.call_params.media_connection_id, &answer_params).await?;
 
-    // This channel is for redirecting keyboard inputs from PeerFold future to MediaFold future
-    let (control_message_notifier, control_message_observer) = mpsc::channel::<ControlMessage>(0);
-
-    // listen MediaConnection events and send them with this channel
-    let (mc_event_notifier, mc_event_observer) =
-        mpsc::channel::<media::MediaConnectionEventEnum>(0);
-    let event_listen_fut = media::listen_events(media_connection_id.clone(), mc_event_notifier);
+    // Listen media connection events
+    let (event_notifier, mut event_observer) = mpsc::channel::<media::MediaConnectionEventEnum>(0);
+    let event_listen_fut = media::listen_events(
+        call_event.call_params.media_connection_id.clone(),
+        event_notifier,
+    );
     tokio::spawn(event_listen_fut);
 
-    // MediaConnection process will work according to MediaConnection events and keyboard inputs
-    let stream = futures::stream::select(
-        mc_event_observer.map(|event| Either::Left(event)),
-        control_message_observer.map(|event| Either::Right(event)),
-    );
-    // Create initial state of fold future of media events
-    let mut state = MediaConnectionState::default();
-    state.insert_media_connection_id(
-        media_connection_id,
-        (video_src_socket, audio_src_socket, Some(redirect_params)),
-    );
-    let fold_fut = stream.fold(state, |state, event| async move {
-        match event {
-            Either::Left(event) => on_media_api_events(state, event)
-                .await
-                .expect("error in on_media_and_api_events"),
-            Either::Right(event) => on_media_key_events(state, event)
-                .await
-                .expect("error in on_media_key_events"),
+    while let Some(media_event) = event_observer.next().await {
+        match media_event {
+            MediaConnectionEventEnum::READY(ready) => {
+                info!(
+                    "MediaConnection({}) is ready {:?}",
+                    call_event.call_params.media_connection_id.as_str(),
+                    ready
+                );
+                video_src_socket.clone().map(|sock| {
+                    info!("Now you can send video with {:?}", sock);
+                });
+                audio_src_socket.clone().map(|sock| {
+                    info!("Now you can send audio with {:?}", sock);
+                });
+            }
+            MediaConnectionEventEnum::STREAM(stream) => {
+                info!(
+                    "MediaConnection({}) recv stream {:?}",
+                    call_event.call_params.media_connection_id.as_str(),
+                    stream
+                );
+            }
+            MediaConnectionEventEnum::CLOSE(close) => {
+                info!(
+                    "MediaConnection({}) has closed {:?}",
+                    call_event.call_params.media_connection_id.as_str(),
+                    close
+                );
+            }
+            MediaConnectionEventEnum::ERROR(error) => {
+                info!(
+                    "MediaConnection({}) gets error {:?}",
+                    call_event.call_params.media_connection_id.as_str(),
+                    error
+                );
+            }
         }
-    });
-    tokio::spawn(fold_fut);
-
-    // hold keybord events notifier
-    params.set_control_message_notifier(control_message_notifier);
-    Ok(params)
+    }
+    Ok(())
 }
 
 //==================== create query for call and answer ====================
 
-// Open some sockets to create constraints object, and return these information for call and answer
+// Open some sockets to create constraints object,
+// and return these information for call and answer
 async fn create_media_connect_options(
     media_params: &MediaConfig,
 ) -> Result<
     (
-        Option<MediaSrcSockets>,
-        Option<MediaSrcSockets>,
+        Option<(SocketInfo<MediaId>, SocketInfo<RtcpId>)>,
+        Option<(SocketInfo<MediaId>, SocketInfo<RtcpId>)>,
         Constraints,
     ),
     error::Error,
@@ -481,10 +371,7 @@ async fn create_media_connect_options(
         let rtcp_src_socket = media::open_rtcp_socket().await?;
         //return tuple of socket information and constraints
         (
-            Some(MediaSrcSockets {
-                media_socket: video_src_socket.clone(),
-                rtcp_socket: rtcp_src_socket.clone(),
-            }),
+            Some((video_src_socket.clone(), rtcp_src_socket.clone())),
             Some((video_src_socket, rtcp_src_socket)).map(|(video_src_socket, rtcp_src_socket)| {
                 let params = media_params.clone().video_params.unwrap();
                 MediaParams {
@@ -511,10 +398,7 @@ async fn create_media_connect_options(
         let rtcp_src_socket = media::open_rtcp_socket().await?;
         //return tuple of socket information and constraints
         (
-            Some(MediaSrcSockets {
-                media_socket: audio_src_socket.clone(),
-                rtcp_socket: rtcp_src_socket.clone(),
-            }),
+            Some((audio_src_socket.clone(), rtcp_src_socket.clone())),
             Some((audio_src_socket, rtcp_src_socket)).map(|(audio_src_socket, rtcp_src_socket)| {
                 let params = media_params
                     .clone()
@@ -581,306 +465,3 @@ fn create_redirect(media_params: MediaConfig) -> RedirectParameters {
     }
     redirect_params
 }
-
-//==================== process events for media ====================
-
-fn create_socket_state_message(
-    value: &(
-        Option<MediaSrcSockets>,
-        Option<MediaSrcSockets>,
-        Option<RedirectParameters>,
-    ),
-) -> String {
-    let mut message = String::from("");
-    if let Some(ref socket_info) = value.0 {
-        message = format!(
-            "{}Its video src socket is {}:{}",
-            message,
-            socket_info.media_socket.ip(),
-            socket_info.media_socket.port()
-        );
-        message = format!(
-            "{}\nAlso, rtcp socket is ready for {}:{}",
-            message,
-            socket_info.rtcp_socket.ip(),
-            socket_info.rtcp_socket.port()
-        );
-    }
-    if let Some(ref socket_info) = value.1 {
-        message = format!(
-            "{}\nIts Audio src socket is {}:{}",
-            message,
-            socket_info.media_socket.ip(),
-            socket_info.media_socket.port()
-        );
-        message = format!(
-            "{}\nAlso, rtcp socket is ready for {}:{}",
-            message,
-            socket_info.rtcp_socket.ip(),
-            socket_info.rtcp_socket.port()
-        );
-    }
-    if let Some(ref redirect) = value.2 {
-        if let Some(ref video_redirect) = redirect.video {
-            message = format!(
-                "{}\nReceived Video is redirect to {}:{}",
-                message,
-                video_redirect.ip(),
-                video_redirect.port()
-            );
-        }
-        if let Some(ref rtcp_redirect) = redirect.video_rtcp {
-            message = format!(
-                "{}\nReceived RTCP for Video is redirect to {}:{}",
-                message,
-                rtcp_redirect.ip(),
-                rtcp_redirect.port()
-            );
-        }
-        if let Some(ref audio_redirect) = redirect.audio {
-            message = format!(
-                "{}\nReceived Audio is redirect to {}:{}",
-                message,
-                audio_redirect.ip(),
-                audio_redirect.port()
-            );
-        }
-        if let Some(ref rtcp_redirect) = redirect.audio_rtcp {
-            message = format!(
-                "{}\nReceived RTCP for Audio is redirect to {}:{}",
-                message,
-                rtcp_redirect.ip(),
-                rtcp_redirect.port()
-            );
-        }
-    }
-
-    message
-}
-
-// This function process MediaConnection events
-async fn on_media_api_events(
-    state: MediaConnectionState,
-    event: media::MediaConnectionEventEnum,
-) -> Result<MediaConnectionState, error::Error> {
-    let status = match event {
-        media::MediaConnectionEventEnum::READY(media_connection_id) => {
-            let mut message = format!(
-                "====================\nMediaConnection {} is ready to send-recv media",
-                media_connection_id.as_str()
-            );
-            let value = state
-                .get(&media_connection_id)
-                .expect("socket info not set");
-            message = format!("{}\n{}", message, create_socket_state_message(value));
-
-            info!("{}", message);
-            Ok(state)
-        }
-        media::MediaConnectionEventEnum::CLOSE(media_connection_id) => {
-            info!(
-                "====================\nMediaConnection {} is closed",
-                media_connection_id.as_str()
-            );
-            Ok(state)
-        }
-        media::MediaConnectionEventEnum::STREAM(media_connection_id) => {
-            let message = format!(
-                "====================\nRecv stream from MediaConnection {}",
-                media_connection_id.as_str()
-            );
-            info!("{}", message);
-            Ok(state)
-        }
-        media::MediaConnectionEventEnum::ERROR((media_connection_id, message)) => {
-            error!(
-                "error {:?} in MediaConnection {}",
-                message,
-                media_connection_id.as_str()
-            );
-            Ok(state)
-        }
-    };
-    print_commands();
-    status
-}
-
-// This function process Keyboard Inputs
-async fn on_media_key_events(
-    mut state: MediaConnectionState,
-    ControlMessage(message): ControlMessage,
-) -> Result<MediaConnectionState, error::Error> {
-    let status = match message.as_str() {
-        "status" => {
-            // prinnts all MediaConnection status
-            for media_connection_id in state.media_connection_id_iter() {
-                let status = media::status(&media_connection_id).await?;
-                let mut message = format!(
-                    "MediaConnection {} is as follows",
-                    media_connection_id.as_str()
-                );
-                message = format!("{}\nis_open: {}", message, status.open);
-                message = format!(
-                    "{}\nneighbour PeerId: {}",
-                    message,
-                    status.remote_id.as_str()
-                );
-                message = format!("{}\nIts ssrc is: {:?}", message, status.ssrc);
-
-                let value = state
-                    .get(&media_connection_id)
-                    .expect("socket info not set");
-                let tmp_message = create_socket_state_message(value);
-                message = format!(
-                    "{}\nIt can redirect media as follows\n {}",
-                    message, tmp_message
-                );
-                info!("{}", message);
-            }
-            Ok(state)
-        }
-        message if message.starts_with("pli ") => {
-            // close P2P link
-            let mut args = message.split_whitespace();
-            let _ = args.next();
-            if let Some(media_connection_id) = args.next() {
-                let media_connection_id = MediaConnectionId::new(media_connection_id);
-                if state.contains(&media_connection_id) {
-                    //FIXME: always send pli for video
-                    if let Some((_, _, Some(redirect))) = state.get(&media_connection_id) {
-                        let socket = redirect.video.clone().unwrap();
-                        let result = media::send_pli(&media_connection_id, &socket).await;
-                        if result.is_ok() {
-                            info!("====================\npli send OK");
-                        } else {
-                            info!("====================\npli send Error {:?}", result.err());
-                        }
-                    } else {
-                        warn!(
-                            "{:?} is not a valid Media Connection Id",
-                            media_connection_id
-                        );
-                    }
-                } else {
-                    warn!(
-                        "{:?} is not a valid Media Connection Id",
-                        media_connection_id
-                    );
-                }
-            } else {
-                warn!("input \"pli MEDIA_CONNECTION_ID\"");
-            }
-            Ok(state)
-        }
-        message if message.starts_with("disconnect ") => {
-            // close P2P link
-            let mut args = message.split_whitespace();
-            let _ = args.next();
-            if let Some(media_connection_id) = args.next() {
-                let media_connection_id = MediaConnectionId::new(media_connection_id);
-                if state.contains(&media_connection_id) {
-                    let _ = media::disconnect(&media_connection_id).await?;
-                    state.remove_media_connection_id(&media_connection_id);
-                } else {
-                    warn!(
-                        "{:?} is not a valid Media Connection Id",
-                        media_connection_id
-                    );
-                }
-            } else {
-                warn!("input \"disconnect MEDIA_CONNECTION_ID\"");
-            }
-            Ok(state)
-        }
-        "disconnect_all" => {
-            for media_connection_id in state.clone().media_connection_id_iter() {
-                let _ = media::disconnect(media_connection_id).await?;
-                state.remove_media_connection_id(media_connection_id);
-            }
-
-            Ok(state)
-        }
-        _ => Ok::<_, error::Error>(state),
-    };
-    print_commands();
-    status
-}
-
-// Process for MediaConnection reacts to fold stream of MediaConnection events and UserInput streams.
-// This struct shows the previous state.
-#[derive(Clone, Default)]
-struct MediaConnectionState(
-    HashMap<
-        MediaConnectionId,
-        (
-            // video src sockets
-            Option<MediaSrcSockets>,
-            // audio src sockets
-            Option<MediaSrcSockets>,
-            // redirect information
-            Option<RedirectParameters>,
-        ),
-    >,
-);
-
-// This struct has only setter and getter.
-impl MediaConnectionState {
-    pub fn media_connection_id_iter(
-        &self,
-    ) -> Keys<
-        MediaConnectionId,
-        (
-            Option<MediaSrcSockets>,
-            Option<MediaSrcSockets>,
-            Option<RedirectParameters>,
-        ),
-    > {
-        self.0.keys()
-    }
-
-    pub fn insert_media_connection_id(
-        &mut self,
-        media_connection_id: MediaConnectionId,
-        value: (
-            Option<MediaSrcSockets>,
-            Option<MediaSrcSockets>,
-            Option<RedirectParameters>,
-        ),
-    ) {
-        let _ = self.0.insert(media_connection_id, value);
-    }
-
-    pub fn remove_media_connection_id(&mut self, media_connection_id: &MediaConnectionId) {
-        let _ = self.0.remove(&media_connection_id);
-    }
-
-    pub fn contains(&self, media_connection_id: &MediaConnectionId) -> bool {
-        self.0.contains_key(media_connection_id)
-    }
-
-    pub fn get(
-        &self,
-        media_connection_id: &MediaConnectionId,
-    ) -> Option<&(
-        Option<MediaSrcSockets>,
-        Option<MediaSrcSockets>,
-        Option<RedirectParameters>,
-    )> {
-        self.0.get(media_connection_id)
-    }
-}
-
-//==================== helper ====================
-
-fn print_commands() {
-    let message = "exit\n\
-    call PEER_ID\n\
-    status\n\
-    disconnect MEDIA_CONNECTION_ID";
-
-    println!(
-        "====================\ninput following commands\n{}\n====================",
-        message
-    );
-}
- */

@@ -29,6 +29,7 @@ tokio = { version = "1.2.0", features = ["full"] }
 [dev-dependencies]
 either = "1.6.1"
 mockito = "0.29.0"
+once_cell = "*"
 toml = "0.5.8"
 
 [[example]]

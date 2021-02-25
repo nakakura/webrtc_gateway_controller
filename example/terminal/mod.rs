@@ -1,6 +1,7 @@
 use tokio::io::AsyncReadExt;
 use tokio::sync::mpsc;
 
+#[allow(dead_code)]
 pub async fn read_stdin(
     tx: mpsc::Sender<String>,
 ) -> Result<(), Box<mpsc::error::SendError<String>>> {

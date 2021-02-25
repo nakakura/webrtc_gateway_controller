@@ -23,16 +23,7 @@ use skyway_webrtc_gateway_api::*;
 // It shows config toml formats
 #[derive(Debug, Deserialize)]
 struct Config {
-    peer: PeerConfig,
-    gateway: SocketConfig,
     redirects: Vec<SocketConfig>,
-}
-
-// It is internal format for config toml
-#[derive(Debug, Deserialize)]
-struct PeerConfig {
-    peer_id: String,
-    domain: String,
 }
 
 // It is internal format for config toml

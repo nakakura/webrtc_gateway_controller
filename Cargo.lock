@@ -1099,6 +1099,7 @@ dependencies = [
  "futures",
  "log",
  "mockito",
+ "once_cell",
  "reqwest",
  "serde",
  "serde_derive",

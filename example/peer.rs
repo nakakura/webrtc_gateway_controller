@@ -6,8 +6,7 @@ use futures::channel::mpsc;
 use futures::prelude::*;
 use futures::*;
 use log::info;
-
-use peer::PeerEventEnum;
+use skyway_webrtc_gateway_api::peer::PeerEventEnum;
 use skyway_webrtc_gateway_api::prelude::*;
 use skyway_webrtc_gateway_api::*;
 

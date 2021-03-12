@@ -24,6 +24,7 @@ pub enum MediaConnectionEventEnum {
     STREAM(MediaConnectionId),
     CLOSE(MediaConnectionId),
     ERROR((MediaConnectionId, String)),
+    TIMEOUT,
 }
 
 /// Have WebRTC Gateway open a socket for feeding media.
@@ -229,6 +230,45 @@ pub async fn send_pli(
 ) -> Result<(), error::Error> {
     let base_url = super::base_url();
     api::pli(base_url, media_connection_id.as_str(), params).await
+}
+
+/// Request an event of MediaConnection
+///
+/// This function try to fetch an event message from WebRTC GW.
+/// It returns events or TIMEOUT message
+///
+/// [API](http://35.200.46.204/#/3.media/media_connection_event)
+///
+/// # Examples
+/// ```
+/// use futures::channel::mpsc;
+/// use futures::future::{self, *};
+/// use futures::stream::*;
+/// use futures::*;
+///
+/// use skyway_webrtc_gateway_api::media::{MediaConnectionEventEnum, event};
+/// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
+///
+/// async fn example() {
+///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let event = event(&media_connection_id).await;
+/// }
+/// ```
+pub async fn event<'a>(
+    media_connection_id: &MediaConnectionId,
+) -> Result<MediaConnectionEventEnum, error::Error> {
+    use crate::media::formats::EventEnum;
+
+    let base_url = super::base_url();
+    Ok(match api::event(base_url, media_connection_id.as_str()).await? {
+        EventEnum::CLOSE => MediaConnectionEventEnum::CLOSE(media_connection_id.clone()),
+        EventEnum::READY => MediaConnectionEventEnum::READY(media_connection_id.clone()),
+        EventEnum::STREAM => MediaConnectionEventEnum::STREAM(media_connection_id.clone()),
+        EventEnum::TIMEOUT => MediaConnectionEventEnum::TIMEOUT,
+        EventEnum::ERROR {error_message} => {
+            MediaConnectionEventEnum::ERROR((media_connection_id.clone(), error_message))
+        }
+    })
 }
 
 /// Request status of MediaConnection

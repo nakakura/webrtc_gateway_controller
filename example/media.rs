@@ -277,6 +277,9 @@ async fn call(
                     error
                 );
             }
+            MediaConnectionEventEnum::TIMEOUT => {
+                info!("API Timeout");
+            }
         }
     }
 
@@ -343,6 +346,7 @@ async fn answer(media_config: MediaConfig, call_event: PeerCallEvent) -> Result<
                     error
                 );
             }
+            MediaConnectionEventEnum::TIMEOUT => {}
         }
     }
     Ok(())

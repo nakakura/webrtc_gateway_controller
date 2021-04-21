@@ -132,7 +132,7 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
             IP,
             PORT,
             ID,
-        };
+        }
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>

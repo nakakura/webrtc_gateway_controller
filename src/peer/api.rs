@@ -55,8 +55,8 @@ pub(crate) async fn event(base_url: &str, peer_info: &PeerInfo) -> Result<EventE
     let api_url = format!(
         "{}/peers/{}/events?token={}",
         base_url,
-        peer_info.peer_id.as_str(),
-        peer_info.token.as_str()
+        peer_info.peer_id().as_str(),
+        peer_info.token().as_str()
     );
     let api_call = || {
         {
@@ -91,8 +91,8 @@ pub(crate) async fn delete_peer(base_url: &str, peer_info: &PeerInfo) -> Result<
     let api_url = format!(
         "{}/peers/{}?token={}",
         base_url,
-        peer_info.peer_id.as_str(),
-        peer_info.token.as_str()
+        peer_info.peer_id().as_str(),
+        peer_info.token().as_str()
     );
     let api_call = || Client::new().delete(&api_url).send().map_err(Into::into);
     let parser = |_| future::ok(());
@@ -110,8 +110,8 @@ pub(crate) async fn status(
     let api_url = format!(
         "{}/peers/{}/status?token={}",
         base_url,
-        peer_info.peer_id.as_str(),
-        peer_info.token.as_str()
+        peer_info.peer_id().as_str(),
+        peer_info.token().as_str()
     );
     let api_call = || Client::new().get(&api_url).send().map_err(Into::into);
     let parser = |r: reqwest::Response| r.json::<PeerStatusMessage>().map_err(Into::into);
@@ -158,8 +158,8 @@ mod test_create_peer {
         let task = super::create_peer(&url, "api_key", "domain", peer_id.clone(), false);
         let result = task.await.expect("CreatedResponse parse error");
         assert_eq!(result.command_type, "PEERS_CREATE".to_string());
-        assert_eq!(result.params.peer_id, peer_id);
-        assert_eq!(result.params.token, token);
+        assert_eq!(result.params.peer_id(), peer_id);
+        assert_eq!(result.params.token(), token);
 
         // server called
         httpserver.assert();
@@ -368,12 +368,7 @@ mod test_event {
     use crate::peer::formats::*;
 
     fn create_params() -> PeerInfo {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
-        PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        }
+        PeerInfo::try_create("hoge", "pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap()
     }
 
     /// PeerEvent API returns 200 and events
@@ -384,7 +379,7 @@ mod test_event {
         let peer_info = create_params();
 
         // set up server mock
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::OK.as_u16() as usize)
             .with_header("content-type", "application/json")
@@ -405,8 +400,8 @@ mod test_event {
         let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::OPEN(response) = result {
-            assert_eq!(response.params.peer_id, peer_info.peer_id);
-            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(response.params.peer_id(), peer_info.peer_id());
+            assert_eq!(response.params.token(), peer_info.token());
         } else {
             unreachable!();
         }
@@ -422,7 +417,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::OK.as_u16() as usize)
@@ -447,8 +442,8 @@ mod test_event {
         let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::CONNECTION(response) = result {
-            assert_eq!(response.params.peer_id, peer_info.peer_id);
-            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(response.params.peer_id(), peer_info.peer_id());
+            assert_eq!(response.params.token(), peer_info.token());
             assert_eq!(
                 response.data_params.data_connection_id.as_str(),
                 "da-102127d9-30de-413b-93f7-41a33e39d82b"
@@ -468,7 +463,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::OK.as_u16() as usize)
@@ -492,8 +487,8 @@ mod test_event {
         let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::CALL(response) = result {
-            assert_eq!(response.params.peer_id, peer_info.peer_id);
-            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(response.params.peer_id(), peer_info.peer_id());
+            assert_eq!(response.params.token(), peer_info.token());
             assert_eq!(
                 response.call_params.media_connection_id.as_str(),
                 "mc-102127d9-30de-413b-93f7-41a33e39d82b"
@@ -513,7 +508,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::OK.as_u16() as usize)
@@ -534,8 +529,8 @@ mod test_event {
         let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::CLOSE(response) = result {
-            assert_eq!(response.params.peer_id, peer_info.peer_id);
-            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(response.params.peer_id(), peer_info.peer_id());
+            assert_eq!(response.params.token(), peer_info.token());
         } else {
             unreachable!();
         }
@@ -551,7 +546,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::OK.as_u16() as usize)
@@ -573,8 +568,8 @@ mod test_event {
         let task = super::event(&url, &peer_info);
         let result = task.await.expect("event parse error");
         if let EventEnum::ERROR(response) = result {
-            assert_eq!(response.params.peer_id, peer_info.peer_id);
-            assert_eq!(response.params.token, peer_info.token);
+            assert_eq!(response.params.peer_id(), peer_info.peer_id());
+            assert_eq!(response.params.token(), peer_info.token());
         } else {
             unreachable!();
         }
@@ -590,7 +585,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::OK.as_u16() as usize)
@@ -619,7 +614,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
@@ -659,7 +654,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
@@ -687,7 +682,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
@@ -715,7 +710,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
@@ -743,7 +738,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
@@ -771,7 +766,7 @@ mod test_event {
         // set up parameters
         let peer_info = create_params();
 
-        let path = format!("/peers/hoge/events?token={}", peer_info.token.as_str());
+        let path = format!("/peers/hoge/events?token={}", peer_info.token().as_str());
         // set up server mock
         let httpserver = mock("GET", path.as_str())
             .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
@@ -798,12 +793,7 @@ mod test_delete_peer {
     use crate::peer::formats::*;
 
     fn create_params() -> PeerInfo {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
-        PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        }
+        PeerInfo::try_create("hoge", "pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap()
     }
 
     /// A WebRTC Gateway returns 204, if it succeeds to delete a Peer Objec
@@ -815,8 +805,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -844,8 +834,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -888,8 +878,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -920,8 +910,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -952,8 +942,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -984,8 +974,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -1016,8 +1006,8 @@ mod test_delete_peer {
 
         let path = format!(
             "/peers/{}?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("DELETE", path.as_str())
@@ -1048,12 +1038,7 @@ mod test_status {
     use crate::peer::formats::*;
 
     fn create_params() -> PeerInfo {
-        let peer_id = PeerId::new("hoge");
-        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
-        PeerInfo {
-            peer_id: peer_id.clone(),
-            token: token.clone(),
-        }
+        PeerInfo::try_create("hoge", "pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap()
     }
 
     /// Status API returns json with 200 OK
@@ -1065,8 +1050,8 @@ mod test_status {
 
         let path = format!(
             "/peers/{}/status?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
@@ -1084,7 +1069,7 @@ mod test_status {
         let url = mockito::server_url();
         let task = super::status(&url, &peer_info);
         let status: PeerStatusMessage = task.await.expect("parse error");
-        assert_eq!(status.peer_id, peer_info.peer_id);
+        assert_eq!(status.peer_id, peer_info.peer_id());
         assert_eq!(status.disconnected, false);
 
         // server called
@@ -1100,8 +1085,8 @@ mod test_status {
 
         let path = format!(
             "/peers/{}/status?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
@@ -1142,8 +1127,8 @@ mod test_status {
 
         let path = format!(
             "/peers/{}/status?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
@@ -1174,8 +1159,8 @@ mod test_status {
 
         let path = format!(
             "/peers/{}/status?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
@@ -1206,8 +1191,8 @@ mod test_status {
 
         let path = format!(
             "/peers/{}/status?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())
@@ -1238,8 +1223,8 @@ mod test_status {
 
         let path = format!(
             "/peers/{}/status?token={}",
-            peer_info.peer_id.as_str(),
-            peer_info.token.as_str()
+            peer_info.peer_id().as_str(),
+            peer_info.token().as_str()
         );
         // set up server mock
         let httpserver = mock("GET", path.as_str())

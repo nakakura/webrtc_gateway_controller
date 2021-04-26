@@ -189,8 +189,28 @@ mod deserialize_token {
 /// Pair of PeerId and Token.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct PeerInfo {
-    pub peer_id: PeerId,
-    pub token: Token,
+    peer_id: PeerId,
+    token: Token,
+}
+
+impl PeerInfo {
+    pub fn try_create(
+        peer_id: impl Into<String>,
+        token: impl Into<String>,
+    ) -> Result<Self, error::Error> {
+        Ok(PeerInfo {
+            peer_id: PeerId::new(peer_id),
+            token: Token::try_create(token)?,
+        })
+    }
+
+    pub fn peer_id(&self) -> PeerId {
+        return self.peer_id.clone();
+    }
+
+    pub fn token(&self) -> Token {
+        return self.token.clone();
+    }
 }
 
 /// Query for POST /peers.

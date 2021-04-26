@@ -130,14 +130,14 @@ async fn on_peer_events(peer_info: PeerInfo, mut observer: mpsc::Receiver<PeerEv
             PeerEventEnum::OPEN(open) => {
                 info!(
                     "Peer({}) is created. Now you can CALL/CONNECT.\n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     open
                 );
             }
             PeerEventEnum::CALL(call) => {
                 info!(
                     "Peer({}) received call as {:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     call
                 );
                 let config = &mut *CONFIG.get().unwrap().lock().unwrap();
@@ -145,13 +145,13 @@ async fn on_peer_events(peer_info: PeerInfo, mut observer: mpsc::Receiver<PeerEv
                 tokio::spawn(answer(val, call));
             }
             PeerEventEnum::CLOSE(_close) => {
-                info!("Peer({}) is deleted", peer_info.peer_id.as_str());
+                info!("Peer({}) is deleted", peer_info.peer_id().as_str());
                 break;
             }
             _ => {
                 info!(
                     "Peer({}) notifies an Event \n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     result
                 );
             }
@@ -173,7 +173,7 @@ async fn on_keyboard_events(
     while let Some(message) = observer.recv().await {
         match message.as_str() {
             "exit" => {
-                info!("start closing Peer({})", peer_info.peer_id.as_str());
+                info!("start closing Peer({})", peer_info.peer_id().as_str());
                 // when a PeerObject is closed, MediaConnections associated with it will be automatically closed.
                 // So it's not necessary to close MediaConnections here.
                 let _ = peer::delete(&peer_info).await;
@@ -183,7 +183,7 @@ async fn on_keyboard_events(
                 let peer_status = peer::status(&peer_info).await;
                 info!(
                     "Peer({})'s status is \n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     peer_status
                 );
             }
@@ -226,8 +226,8 @@ async fn call(
     let redirect_params = create_redirect(media_config);
 
     let call_params = CallQuery {
-        peer_id: peer_info.peer_id,
-        token: peer_info.token,
+        peer_id: peer_info.peer_id(),
+        token: peer_info.token(),
         target_id: target_id,
         constraints: Some(constraints),
         redirect_params: Some(redirect_params.clone()),

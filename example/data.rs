@@ -109,14 +109,14 @@ async fn on_peer_events(peer_info: PeerInfo, mut observer: mpsc::Receiver<PeerEv
             PeerEventEnum::OPEN(open) => {
                 info!(
                     "Peer({}) is created. Now you can CALL/CONNECT.\n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     open
                 );
             }
             PeerEventEnum::CONNECTION(connection) => {
                 info!(
                     "Peer({}) received connection as {:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     connection
                 );
                 let config = &mut *CONFIG.get().unwrap().lock().unwrap();
@@ -124,13 +124,13 @@ async fn on_peer_events(peer_info: PeerInfo, mut observer: mpsc::Receiver<PeerEv
                 tokio::spawn(redirect(val, connection));
             }
             PeerEventEnum::CLOSE(_close) => {
-                info!("Peer({}) is deleted", peer_info.peer_id.as_str());
+                info!("Peer({}) is deleted", peer_info.peer_id().as_str());
                 break;
             }
             _ => {
                 info!(
                     "Peer({}) notifies an Event \n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     result
                 );
             }
@@ -152,7 +152,7 @@ async fn on_keyboard_events(
     while let Some(message) = observer.recv().await {
         match message.as_str() {
             "exit" => {
-                info!("start closing Peer({})", peer_info.peer_id.as_str());
+                info!("start closing Peer({})", peer_info.peer_id().as_str());
                 // when a PeerObject is closed, MediaConnections associated with it will be automatically closed.
                 // So it's not necessary to close MediaConnections here.
                 let _ = peer::delete(&peer_info).await;
@@ -162,7 +162,7 @@ async fn on_keyboard_events(
                 let peer_status = peer::status(&peer_info).await;
                 info!(
                     "Peer({})'s status is \n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     peer_status
                 );
             }
@@ -206,8 +206,8 @@ async fn connection(
             .expect("invalid data port");
     // set up query and access to connect API.
     let query = data::ConnectQuery {
-        peer_id: peer_info.peer_id,
-        token: peer_info.token,
+        peer_id: peer_info.peer_id(),
+        token: peer_info.token(),
         options: None,
         target_id: target_id,
         params: Some(DataIdWrapper {

@@ -69,18 +69,18 @@ async fn on_peer_events(peer_info: PeerInfo, mut observer: mpsc::Receiver<PeerEv
             PeerEventEnum::OPEN(open) => {
                 info!(
                     "Peer({}) is created. Now you can CALL/CONNECT.\n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     open
                 );
             }
             PeerEventEnum::CLOSE(_close) => {
-                info!("Peer({}) is deleted", peer_info.peer_id.as_str());
+                info!("Peer({}) is deleted", peer_info.peer_id().as_str());
                 break;
             }
             _ => {
                 info!(
                     "Peer({}) notifies an Event \n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     result
                 );
             }
@@ -95,7 +95,7 @@ async fn on_keyboard_events(
     while let Some(message) = observer.recv().await {
         match message.as_str() {
             "exit" => {
-                info!("start closing Peer({})", peer_info.peer_id.as_str());
+                info!("start closing Peer({})", peer_info.peer_id().as_str());
                 let _ = peer::delete(&peer_info).await;
                 break;
             }
@@ -103,7 +103,7 @@ async fn on_keyboard_events(
                 let status = peer::status(&peer_info).await;
                 info!(
                     "Peer({})'s status is \n{:?}",
-                    peer_info.peer_id.as_str(),
+                    peer_info.peer_id().as_str(),
                     status
                 );
             }

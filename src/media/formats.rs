@@ -200,16 +200,85 @@ impl<'de> Deserialize<'de> for RtcpId {
 }
 
 /// Identifier for MediaConnection
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
-pub struct MediaConnectionId(pub String);
+#[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct MediaConnectionId(String);
 
 impl MediaConnectionId {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
-    pub fn new(media_connection_id: impl Into<String>) -> Self {
-        MediaConnectionId(media_connection_id.into())
+    pub fn try_create(media_connection_id: impl Into<String>) -> Result<Self, error::Error>
+    where
+        Self: Sized,
+    {
+        // peer token's prefix is composed of a UUID and a prefix "pt-".
+        let media_connection_id = media_connection_id.into();
+        if !media_connection_id.starts_with("mc-") {
+            return Err(error::Error::create_local_error(
+                "media_connection_id\'s prefix is \"rc-\"",
+            ));
+        }
+        if media_connection_id.len() != 39 {
+            // It's length is 39(UUID: 36 + prefix: 3).
+            return Err(error::Error::create_local_error(
+                "token str's length should be 39",
+            ));
+        }
+        if !media_connection_id.is_ascii() {
+            return Err(error::Error::create_local_error(
+                "token str should be ascii",
+            ));
+        }
+
+        Ok(MediaConnectionId(media_connection_id))
+    }
+}
+
+struct MediaConnectionIdVisitor;
+
+impl<'de> Visitor<'de> for MediaConnectionIdVisitor {
+    type Value = MediaConnectionId;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a 39 length str")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let media_connection_id = MediaConnectionId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = media_connection_id {
+            return Err(E::custom(format!("fail to deserialize MediaId: {}", err)));
+        } else if let Err(_) = media_connection_id {
+            return Err(E::custom(format!("fail to deserialize MediaId")));
+        }
+
+        Ok(media_connection_id.unwrap())
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let media_connection_id = MediaConnectionId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = media_connection_id {
+            return Err(E::custom(format!("fail to deserialize MediaId: {}", err)));
+        } else if let Err(_) = media_connection_id {
+            return Err(E::custom(format!("fail to deserialize MediaId")));
+        }
+
+        Ok(media_connection_id.unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for MediaConnectionId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(MediaConnectionIdVisitor)
     }
 }
 

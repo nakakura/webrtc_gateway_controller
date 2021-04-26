@@ -123,7 +123,7 @@ pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
 /// use skyway_webrtc_gateway_api::prelude::{PeerId, MediaConnectionId, Token};
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let query = CallQuery {
 ///         peer_id: PeerId::new("peer_id"),
 ///         token: Token::try_create("token").unwrap(),
@@ -159,7 +159,7 @@ pub async fn call(call_params: &CallQuery) -> Result<CallResponse, error::Error>
 /// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let query = AnswerQuery {
 ///         constraints: Constraints {
 ///             video: true,
@@ -195,7 +195,7 @@ pub async fn answer(
 /// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let result = disconnect(&media_connection_id).await;
 /// }
 /// ```
@@ -219,7 +219,7 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 /// use skyway_webrtc_gateway_api::prelude::{MediaConnectionId, PhantomId, SerializableSocket, SocketInfo, SerializableId};
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let socket = SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 8000).unwrap();
 ///     let result = send_pli(&media_connection_id, &socket).await;
 /// }
@@ -250,7 +250,7 @@ pub async fn send_pli(
 /// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let event = event(&media_connection_id).await;
 /// }
 /// ```
@@ -292,7 +292,7 @@ pub async fn event<'a>(
 /// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let (mc_event_notifier, mc_event_observer) = mpsc::channel::<MediaConnectionEventEnum>(0);
 ///     let mc_event_observer = mc_event_observer.for_each(|event| async move {
 ///     // Do something
@@ -373,7 +373,7 @@ pub async fn listen_events<'a>(
 /// use skyway_webrtc_gateway_api::prelude::MediaConnectionId;
 ///
 /// async fn example() {
-///     let media_connection_id = MediaConnectionId::new("mc-example");
+///     let media_connection_id = MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 ///     let result = status(&media_connection_id).await;
 /// }
 /// ```

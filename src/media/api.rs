@@ -657,6 +657,7 @@ mod test_delete_media {
 mod test_create_rtcp {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::common::formats::SerializableSocket;
     use crate::error;
 

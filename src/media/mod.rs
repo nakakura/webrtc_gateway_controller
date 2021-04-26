@@ -99,10 +99,10 @@ pub async fn open_rtcp_socket() -> Result<SocketInfo<RtcpId>, error::Error> {
 /// # Examples
 /// ```
 /// use skyway_webrtc_gateway_api::media::delete_rtcp;
-/// use skyway_webrtc_gateway_api::prelude::RtcpId;
+/// use skyway_webrtc_gateway_api::prelude::{RtcpId, SerializableId};
 ///
 /// async fn example() {
-///     let rtcp_id = RtcpId::new("rc-example");
+///     let rtcp_id = RtcpId::try_create("rc-970f2e5d-4da0-43e7-92b6-796678c104ad").unwrap();
 ///     let result = delete_rtcp(&rtcp_id).await;
 /// }
 /// ```

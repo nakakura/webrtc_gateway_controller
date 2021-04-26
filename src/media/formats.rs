@@ -102,16 +102,6 @@ impl<'de> Deserialize<'de> for MediaId {
 #[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct RtcpId(String);
 
-impl RtcpId {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-
-    pub fn new(rtcp_id: impl Into<String>) -> Self {
-        RtcpId(rtcp_id.into())
-    }
-}
-
 impl SerializableId for RtcpId {
     fn try_create(rtcp_id: impl Into<String>) -> Result<Self, error::Error>
     where

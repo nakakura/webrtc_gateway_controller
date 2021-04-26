@@ -186,6 +186,7 @@ pub(crate) async fn status(
 mod test_create_media {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::common::formats::SerializableSocket;
     use crate::error;
     use crate::media::formats::*;
@@ -219,7 +220,7 @@ mod test_create_media {
         let result = task.await.expect("event parse error");
         assert_eq!(
             result.get_id().unwrap(),
-            MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216")
+            MediaId::try_create("vi-4d053831-5dc2-461b-a358-d062d6115216").unwrap()
         );
         assert_eq!(result.port(), 10001);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
@@ -257,7 +258,7 @@ mod test_create_media {
         let result = task.await.expect("event parse error");
         assert_eq!(
             result.get_id().unwrap(),
-            MediaId::new("au-4d053831-5dc2-461b-a358-d062d6115216")
+            MediaId::try_create("au-4d053831-5dc2-461b-a358-d062d6115216").unwrap()
         );
         assert_eq!(result.port(), 10001);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
@@ -433,8 +434,13 @@ mod test_create_media {
 mod test_delete_media {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::error;
     use crate::media::formats::*;
+
+    fn create_media_id() -> MediaId {
+        MediaId::try_create("vi-61769866-f16b-470c-9e8a-e1f8afc87096").unwrap()
+    }
 
     /// Fn create_media access to the DELETE /media endpoint, and return its response.
     /// If the API returns values with 204 No Content
@@ -442,7 +448,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_204() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -468,7 +474,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_400() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -507,7 +513,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_403() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -536,7 +542,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_404() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -565,7 +571,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_405() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -594,7 +600,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_406() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -623,7 +629,7 @@ mod test_delete_media {
     #[tokio::test]
     async fn recv_408() {
         // set up parameters
-        let media_id = MediaId::new("vi-4d053831-5dc2-461b-a358-d062d6115216");
+        let media_id = create_media_id();
         let path = format!("/media/{}", media_id.as_str());
 
         // set up server mock
@@ -665,7 +671,7 @@ mod test_create_rtcp {
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
-                    "rtcp_id": "rc-test",
+                    "rtcp_id": "rc-970f2e5d-4da0-43e7-92b6-796678c104ad",
                     "port": 10003,
                     "ip_v4": "127.0.0.1"
                 }"#,
@@ -676,7 +682,10 @@ mod test_create_rtcp {
         let url = mockito::server_url();
         let task = super::create_rtcp(&url);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.get_id().unwrap().as_str(), "rc-test");
+        assert_eq!(
+            result.get_id().unwrap().as_str(),
+            "rc-970f2e5d-4da0-43e7-92b6-796678c104ad"
+        );
         assert_eq!(result.port(), 10003);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
 
@@ -1471,6 +1480,7 @@ mod test_delete_call {
 mod test_answer {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::error;
     use crate::media::formats::*;
 
@@ -1478,7 +1488,7 @@ mod test_answer {
         let video_params = MediaParams {
             band_width: 1500,
             codec: String::from("H264"),
-            media_id: MediaId::new("test"),
+            media_id: MediaId::try_create("vi-61769866-f16b-470c-9e8a-e1f8afc87096").unwrap(),
             rtcp_id: None,
             payload_type: None,
             sampling_rate: None,
@@ -1519,9 +1529,9 @@ mod test_answer {
                     "command_type": "MEDIA_CONNECTION_ANSWER",
                     "params": {
                         "video_port": 10011,
-                        "video_id": "vi-test",
+                        "video_id": "vi-61769866-f16b-470c-9e8a-e1f8afc87096",
                         "audio_port": 10021,
-                        "audio_id": "au-test"
+                        "audio_id": "au-8f8e8955-460e-4f3a-9440-1c851af328b5"
                     }
                 }"#,
             )
@@ -1532,8 +1542,14 @@ mod test_answer {
 
         let task = super::answer(&url, media_connection_id, &params);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.params.video_id, Some(MediaId::new("vi-test")));
-        assert_eq!(result.params.audio_id, Some(MediaId::new("au-test")));
+        assert_eq!(
+            result.params.video_id,
+            Some(MediaId::try_create("vi-61769866-f16b-470c-9e8a-e1f8afc87096").unwrap())
+        );
+        assert_eq!(
+            result.params.audio_id,
+            Some(MediaId::try_create("au-8f8e8955-460e-4f3a-9440-1c851af328b5").unwrap())
+        );
 
         // server called
         httpserver.assert();
@@ -1747,7 +1763,7 @@ mod test_pli {
     use crate::prelude::*;
 
     fn create_params() -> SocketInfo<PhantomId> {
-        SocketInfo::<PhantomId>::new(None, "127.0.0.1:10001".parse().unwrap())
+        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 10001).unwrap()
     }
 
     /// Fn pli access to the POST /media/connections/{media_connection_id}/pli endpoint.
@@ -2281,6 +2297,7 @@ mod test_events {
 mod test_status {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::error;
 
     /// Fn status access to the GET /media/connections/{media_connection_id}/status endpoint.
@@ -2302,11 +2319,11 @@ mod test_status {
                 "open": true,
                 "remote_id": "media_caller",
                 "ssrc": [{
-                    "media_id": "au-test",
+                    "media_id": "au-8f8e8955-460e-4f3a-9440-1c851af328b5",
                     "ssrc": 2
                 },
                 {
-                    "media_id": "vi-test",
+                    "media_id": "vi-61769866-f16b-470c-9e8a-e1f8afc87096",
                     "ssrc": 3
                 }]
             }"#,
@@ -2320,9 +2337,15 @@ mod test_status {
         let ssrc = result.ssrc.clone().unwrap();
         assert_eq!(result.open, true);
         assert_eq!(ssrc.len(), 2);
-        assert_eq!(ssrc[0].media_id.as_str(), "au-test");
+        assert_eq!(
+            ssrc[0].media_id.as_str(),
+            "au-8f8e8955-460e-4f3a-9440-1c851af328b5"
+        );
         assert_eq!(ssrc[0].ssrc, 2);
-        assert_eq!(ssrc[1].media_id.as_str(), "vi-test");
+        assert_eq!(
+            ssrc[1].media_id.as_str(),
+            "vi-61769866-f16b-470c-9e8a-e1f8afc87096"
+        );
         assert_eq!(ssrc[1].ssrc, 3);
 
         // server called

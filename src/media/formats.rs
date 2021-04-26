@@ -1,28 +1,41 @@
-use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::common::formats::{PhantomId, SerializableId, SocketInfo};
+use crate::error;
 use crate::prelude::{PeerId, Token};
 
 /// Identifier for source socket of media
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
-pub struct MediaId(pub String);
-
-impl MediaId {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-
-    pub fn new(media_id: impl Into<String>) -> Self {
-        MediaId(media_id.into())
-    }
-}
+#[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct MediaId(String);
 
 impl SerializableId for MediaId {
-    fn try_create(id: Option<String>) -> Option<Self>
+    fn try_create(media_id: impl Into<String>) -> Result<Self, error::Error>
     where
         Self: Sized,
     {
-        id.map(|id| MediaId(id))
+        // peer token's prefix is composed of a UUID and a prefix "pt-".
+        let media_id = media_id.into();
+        if !(media_id.starts_with("vi-") || media_id.starts_with("au-")) {
+            return Err(error::Error::create_local_error(
+                "media_id\'s prefix is \"vi-\" or \"au-\"",
+            ));
+        }
+        if media_id.len() != 39 {
+            // It's length is 39(UUID: 36 + prefix: 3).
+            return Err(error::Error::create_local_error(
+                "token str's length should be 39",
+            ));
+        }
+        if !media_id.is_ascii() {
+            return Err(error::Error::create_local_error(
+                "token str should be ascii",
+            ));
+        }
+
+        Ok(MediaId(media_id))
     }
 
     fn as_str(&self) -> &str {
@@ -38,9 +51,56 @@ impl SerializableId for MediaId {
     }
 }
 
+struct MediaIdVisitor;
+
+impl<'de> Visitor<'de> for MediaIdVisitor {
+    type Value = MediaId;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a 39 length str")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let media_id = MediaId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = media_id {
+            return Err(E::custom(format!("fail to deserialize MediaId: {}", err)));
+        } else if let Err(_) = media_id {
+            return Err(E::custom(format!("fail to deserialize MediaId")));
+        }
+
+        Ok(media_id.unwrap())
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let media_id = MediaId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = media_id {
+            return Err(E::custom(format!("fail to deserialize MediaId: {}", err)));
+        } else if let Err(_) = media_id {
+            return Err(E::custom(format!("fail to deserialize MediaId")));
+        }
+
+        Ok(media_id.unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for MediaId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(MediaIdVisitor)
+    }
+}
+
 /// Identifier for source socket of rtcp
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
-pub struct RtcpId(pub String);
+#[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct RtcpId(String);
 
 impl RtcpId {
     pub fn as_str(&self) -> &str {
@@ -53,11 +113,30 @@ impl RtcpId {
 }
 
 impl SerializableId for RtcpId {
-    fn try_create(id: Option<String>) -> Option<Self>
+    fn try_create(rtcp_id: impl Into<String>) -> Result<Self, error::Error>
     where
         Self: Sized,
     {
-        id.map(|id| RtcpId(id))
+        // peer token's prefix is composed of a UUID and a prefix "pt-".
+        let rtcp_id = rtcp_id.into();
+        if !rtcp_id.starts_with("rc-") {
+            return Err(error::Error::create_local_error(
+                "rtcp_id\'s prefix is \"rc-\"",
+            ));
+        }
+        if rtcp_id.len() != 39 {
+            // It's length is 39(UUID: 36 + prefix: 3).
+            return Err(error::Error::create_local_error(
+                "token str's length should be 39",
+            ));
+        }
+        if !rtcp_id.is_ascii() {
+            return Err(error::Error::create_local_error(
+                "token str should be ascii",
+            ));
+        }
+
+        Ok(RtcpId(rtcp_id))
     }
 
     fn as_str(&self) -> &str {
@@ -70,6 +149,53 @@ impl SerializableId for RtcpId {
 
     fn key(&self) -> &'static str {
         "rtcp_id"
+    }
+}
+
+struct RtcpIdVisitor;
+
+impl<'de> Visitor<'de> for RtcpIdVisitor {
+    type Value = RtcpId;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a 39 length str")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let media_id = RtcpId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = media_id {
+            return Err(E::custom(format!("fail to deserialize RtcpId: {}", err)));
+        } else if let Err(_) = media_id {
+            return Err(E::custom(format!("fail to deserialize RtcpId")));
+        }
+
+        Ok(media_id.unwrap())
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let media_id = RtcpId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = media_id {
+            return Err(E::custom(format!("fail to deserialize RtcpId: {}", err)));
+        } else if let Err(_) = media_id {
+            return Err(E::custom(format!("fail to deserialize RtcpId")));
+        }
+
+        Ok(media_id.unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for RtcpId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(RtcpIdVisitor)
     }
 }
 

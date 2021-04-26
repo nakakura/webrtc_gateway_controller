@@ -141,6 +141,7 @@ pub(crate) async fn event(
 mod test_create_data {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::common::formats::SerializableSocket;
     use crate::data::formats::DataId;
     use crate::error;
@@ -155,7 +156,7 @@ mod test_create_data {
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
-                    "data_id": "da-test",
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211",
                     "port": 50000,
                     "ip_v4": "127.0.0.1"
                 }"#,
@@ -166,7 +167,10 @@ mod test_create_data {
         let url = mockito::server_url();
         let task = super::create_data(&url);
         let result = task.await.expect("event parse error");
-        assert_eq!(result.get_id(), Some(DataId::new("da-test")));
+        assert_eq!(
+            result.get_id(),
+            Some(DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap())
+        );
         assert_eq!(result.port(), 50000);
         assert_eq!(result.ip().to_string(), String::from("127.0.0.1"));
 
@@ -311,17 +315,22 @@ mod test_create_data {
 mod test_delete_data {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::data::formats::DataId;
     use crate::error;
+
+    fn create_data_id() -> DataId {
+        DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap()
+    }
 
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Data Object.
     /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_204() {
-        let data_id = DataId::new("da-test");
+        let data_id = create_data_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/da-test")
+        let httpserver = mock("DELETE", "/data/da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
             .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -341,10 +350,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_403() {
-        let data_id = DataId::new("da-test");
+        let data_id = create_data_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/da-test")
+        let httpserver = mock("DELETE", "/data/da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
             .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -367,10 +376,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_404() {
-        let data_id = DataId::new("da-test");
+        let data_id = create_data_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/da-test")
+        let httpserver = mock("DELETE", "/data/da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
             .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -393,10 +402,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_405() {
-        let data_id = DataId::new("da-test");
+        let data_id = create_data_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/da-test")
+        let httpserver = mock("DELETE", "/data/da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
             .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -418,10 +427,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_406() {
-        let data_id = DataId::new("da-test");
+        let data_id = create_data_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/da-test")
+        let httpserver = mock("DELETE", "/data/da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
             .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -444,10 +453,10 @@ mod test_delete_data {
     /// http://35.200.46.204/#/2.data/data_delete
     #[tokio::test]
     async fn recv_408() {
-        let data_id = DataId::new("da-test");
+        let data_id = create_data_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/da-test")
+        let httpserver = mock("DELETE", "/data/da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
             .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
             .with_header("content-type", "application/json")
             .with_body(r#"{}"#)
@@ -471,6 +480,7 @@ mod test_delete_data {
 mod test_create_data_connection {
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::data::formats::*;
     use crate::error;
     use crate::prelude::*;
@@ -479,7 +489,7 @@ mod test_create_data_connection {
         let peer_id = PeerId::new("peer_id");
         let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
         let target_id = PeerId::new("target_id");
-        let data_id = DataId::new("da-test");
+        let data_id = DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap();
         let data_id = DataIdWrapper { data_id: data_id };
         let query = ConnectQuery {
             peer_id: peer_id,
@@ -880,23 +890,21 @@ mod test_delete_data_connection {
 
 #[cfg(test)]
 mod test_redirect_data_connection {
-    use std::net::{IpAddr, SocketAddr};
-
     use mockito::mock;
 
+    use crate::common::formats::SerializableId;
     use crate::common::formats::SerializableSocket;
     use crate::data::formats::*;
     use crate::error;
     use crate::prelude::*;
 
     fn create_param() -> (RedirectDataParams, DataConnectionId) {
-        let data_id = DataId::new("da-test");
+        let data_id = DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap();
         let data_connection_id = DataConnectionId::new("dc-test");
         let ip_v4 = "127.0.0.1";
         let port = 10001u16;
         let data_id_obj = DataIdWrapper { data_id: data_id };
-        let addr: IpAddr = ip_v4.parse().unwrap();
-        let params = SocketInfo::<PhantomId>::new(None, SocketAddr::new(addr, port));
+        let params = SocketInfo::<PhantomId>::try_create(None, ip_v4, port).unwrap();
 
         (
             RedirectDataParams {
@@ -920,7 +928,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",
@@ -949,7 +957,7 @@ mod test_redirect_data_connection {
         let result = task.await.expect("parse error");
         assert_eq!(
             result.data_id,
-            DataId::new("da-50a32bab-b3d9-4913-8e20-f79c90a6a211")
+            DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap()
         );
 
         // server called
@@ -969,7 +977,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",
@@ -1023,7 +1031,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",
@@ -1067,7 +1075,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",
@@ -1111,7 +1119,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",
@@ -1155,7 +1163,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",
@@ -1199,7 +1207,7 @@ mod test_redirect_data_connection {
             .match_body(mockito::Matcher::JsonString(
                 r#"{
                 "feed_params": {
-                    "data_id": "da-test"
+                    "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
                 "redirect_params": {
                     "ip_v4": "127.0.0.1",

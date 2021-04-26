@@ -13,7 +13,7 @@ pub trait SerializableId: Clone {
     /// Try to create an instance of SerializableId with String parameter.
     ///
     /// It returns None, if id is None.
-    fn try_create(id: Option<String>) -> Option<Self>
+    fn try_create(id: impl Into<String>) -> Result<Self, error::Error>
     where
         Self: Sized;
     /// Get internal str of the Id.
@@ -28,8 +28,6 @@ pub trait SerializableId: Clone {
 ///
 /// It also has some getter functions.
 pub trait SerializableSocket<T> {
-    /// Create an instance of SerializableSocket
-    fn new(id: Option<String>, socket: SocketAddr) -> Self;
     /// Create an instance of SerializableSocket.
     ///
     /// # Failures
@@ -59,17 +57,19 @@ pub struct SocketInfo<T: SerializableId> {
 }
 
 impl<T: SerializableId> SerializableSocket<T> for SocketInfo<T> {
-    fn new(id: Option<String>, socket: SocketAddr) -> Self {
-        Self {
-            id: T::try_create(id),
-            socket: socket,
-        }
-    }
-
     fn try_create(id: Option<String>, ip: &str, port: u16) -> Result<Self, error::Error> {
         let ip: IpAddr = ip.parse()?;
         let socket = SocketAddr::new(ip, port);
-        Ok(Self::new(id, socket))
+        match id {
+            Some(id) => Ok(Self {
+                id: Some(T::try_create(id)?),
+                socket: socket,
+            }),
+            None => Ok(Self {
+                id: None,
+                socket: socket,
+            }),
+        }
     }
 
     fn get_id(&self) -> Option<T> {
@@ -205,10 +205,14 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
                     }
                 }
                 let ip = ip.ok_or_else(|| de::Error::missing_field("ip_v4 or ip_v6"))?;
-                let ip: IpAddr = ip.parse().expect("ip field parse error");
                 let port = port.ok_or_else(|| de::Error::missing_field("port"))?;
-                let socket = SocketAddr::new(ip, port);
-                Ok(SocketInfo::<T>::new(id, socket))
+                let socket_info = SocketInfo::<T>::try_create(id, &ip, port);
+                if let Err(_err) = socket_info {
+                    use serde::de::Error;
+                    return Err(V::Error::custom(format!("fail to deserialize socket")));
+                }
+
+                Ok(socket_info.unwrap())
             }
         }
 
@@ -226,11 +230,11 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
 pub struct PhantomId(String);
 
 impl SerializableId for PhantomId {
-    fn try_create(_id: Option<String>) -> Option<Self>
+    fn try_create(id: impl Into<String>) -> Result<Self, error::Error>
     where
         Self: Sized,
     {
-        None
+        Ok(PhantomId(id.into()))
     }
 
     fn as_str(&self) -> &str {
@@ -248,14 +252,11 @@ impl SerializableId for PhantomId {
 
 #[cfg(test)]
 mod test_socket_info {
-    use std::net::SocketAddr;
-
     use super::*;
 
     #[test]
     fn v4() {
-        let original_addr: SocketAddr = "127.0.0.1:8000".parse().unwrap();
-        let socket_info = SocketInfo::<PhantomId>::new(None, original_addr);
+        let socket_info = SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 8000).unwrap();
         let json = serde_json::to_string(&socket_info).expect("serialize failed");
         let decoded_socket_info: SocketInfo<PhantomId> =
             serde_json::from_str(&json).expect("deserialize failed");
@@ -264,8 +265,9 @@ mod test_socket_info {
 
     #[test]
     fn v6() {
-        let original_addr: SocketAddr = "[2001:DB8:0:0:8:800:200C:417A]:8000".parse().unwrap();
-        let socket_info = SocketInfo::<PhantomId>::new(None, original_addr);
+        let socket_info =
+            SocketInfo::<PhantomId>::try_create(None, "2001:DB8:0:0:8:800:200C:417A", 8000)
+                .unwrap();
         let json = serde_json::to_string(&socket_info).expect("serialize failed");
         let decoded_socket_info: SocketInfo<PhantomId> =
             serde_json::from_str(&json).expect("deserialize failed");

@@ -4,7 +4,7 @@ pub(crate) mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::common::formats::{PhantomId, SocketInfo};
+use crate::common::formats::{PhantomId, SerializableId, SocketInfo};
 use crate::error;
 
 pub use formats::{
@@ -59,10 +59,10 @@ pub async fn open_media_socket(is_video: bool) -> Result<SocketInfo<MediaId>, er
 /// # Examples
 /// ```
 /// use skyway_webrtc_gateway_api::media::delete_media;
-/// use skyway_webrtc_gateway_api::prelude::MediaId;
+/// use skyway_webrtc_gateway_api::prelude::{MediaId, SerializableId};
 ///
 /// async fn example() {
-///     let media_id = MediaId::new("vi-example");
+///     let media_id = MediaId::try_create("vi-4d053831-5dc2-461b-a358-d062d6115216").unwrap();
 ///     let result = delete_media(&media_id).await;
 /// }
 /// ```
@@ -216,11 +216,11 @@ pub async fn disconnect(media_connection_id: &MediaConnectionId) -> Result<(), e
 /// # Examples
 /// ```
 /// use skyway_webrtc_gateway_api::media::send_pli;
-/// use skyway_webrtc_gateway_api::prelude::{MediaConnectionId, PhantomId, SerializableSocket, SocketInfo};
+/// use skyway_webrtc_gateway_api::prelude::{MediaConnectionId, PhantomId, SerializableSocket, SocketInfo, SerializableId};
 ///
 /// async fn example() {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
-///     let socket = SocketInfo::<PhantomId>::new(None, "127.0.0.1:8000".parse().unwrap());
+///     let socket = SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 8000).unwrap();
 ///     let result = send_pli(&media_connection_id, &socket).await;
 /// }
 /// ```

@@ -7,7 +7,7 @@ use futures::*;
 use crate::data::formats::*;
 use crate::error;
 
-use crate::common::formats::SocketInfo;
+use crate::common::formats::{SerializableId, SocketInfo};
 
 pub use formats::{
     ConnectQuery, ConnectionQueryOption, DataConnectionId, DataConnectionIdWrapper,
@@ -47,10 +47,10 @@ pub async fn open_data_socket() -> Result<SocketInfo<DataId>, error::Error> {
 /// # Examples
 /// ```
 /// use skyway_webrtc_gateway_api::data::close_data_socket;
-/// use skyway_webrtc_gateway_api::prelude::DataId;
+/// use skyway_webrtc_gateway_api::prelude::{DataId, SerializableId};
 ///
 /// async fn example() {
-///     let data_id = DataId::new("da-example");
+///     let data_id = DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap();
 ///     let result = close_data_socket(&data_id).await;
 /// }
 /// ```
@@ -104,15 +104,15 @@ pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), err
 ///
 /// # Example
 /// ```
-/// use skyway_webrtc_gateway_api::prelude::{DataId, DataConnectionId, PhantomId, SocketInfo, SerializableSocket};
+/// use skyway_webrtc_gateway_api::prelude::{DataId, DataConnectionId, PhantomId, SocketInfo, SerializableSocket, SerializableId};
 /// use skyway_webrtc_gateway_api::data::{DataIdWrapper, RedirectDataParams, redirect};
 ///
 /// async fn example() {
 ///     let data_connection_id = DataConnectionId::new("dc-example");
 ///     let feed_params = Some(DataIdWrapper {
-///         data_id: DataId::new("da-example")
+///         data_id: DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap()
 ///     });
-///     let redirect_params = SocketInfo::<PhantomId>::new(None, "127.0.0.1:8000".parse().unwrap());
+///     let redirect_params = SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 8000).unwrap();
 ///     let redirect_params = RedirectDataParams {
 ///         feed_params: feed_params,
 ///         redirect_params: Some(redirect_params)

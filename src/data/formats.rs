@@ -1,6 +1,10 @@
-use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::common::formats::{PhantomId, SerializableId, SocketInfo};
+use crate::error;
 use crate::prelude::{PeerId, Token};
 
 /// Query for POST /data/connections
@@ -81,25 +85,34 @@ pub struct DcInit {
 }
 
 /// Identifier for source socket of data
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
-pub struct DataId(pub String);
-
-impl DataId {
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-
-    pub fn new(data_id: impl Into<String>) -> Self {
-        DataId(data_id.into())
-    }
-}
+#[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct DataId(String);
 
 impl SerializableId for DataId {
-    fn try_create(id: Option<String>) -> Option<Self>
+    fn try_create(data_id: impl Into<String>) -> Result<Self, error::Error>
     where
         Self: Sized,
     {
-        id.map(|id| DataId(id))
+        // peer token's prefix is composed of a UUID and a prefix "pt-".
+        let data_id = data_id.into();
+        if !data_id.starts_with("da-") {
+            return Err(error::Error::create_local_error(
+                "token str\'s prefix is \"da-\"",
+            ));
+        }
+        if data_id.len() != 39 {
+            // It's length is 39(UUID: 36 + prefix: 3).
+            return Err(error::Error::create_local_error(
+                "token str's length should be 39",
+            ));
+        }
+        if !data_id.is_ascii() {
+            return Err(error::Error::create_local_error(
+                "token str should be ascii",
+            ));
+        }
+
+        Ok(DataId(data_id))
     }
 
     fn as_str(&self) -> &str {
@@ -112,6 +125,53 @@ impl SerializableId for DataId {
 
     fn key(&self) -> &'static str {
         "data_id"
+    }
+}
+
+struct DataVisitor;
+
+impl<'de> Visitor<'de> for DataVisitor {
+    type Value = DataId;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a 39 length str")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let data_id = DataId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = data_id {
+            return Err(E::custom(format!("fail to deserialize DataId: {}", err)));
+        } else if let Err(_) = data_id {
+            return Err(E::custom(format!("fail to deserialize DataId")));
+        }
+
+        Ok(data_id.unwrap())
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let data_id = DataId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = data_id {
+            return Err(E::custom(format!("fail to deserialize Token: {}", err)));
+        } else if let Err(_) = data_id {
+            return Err(E::custom(format!("fail to deserialize Token")));
+        }
+
+        Ok(data_id.unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for DataId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(DataVisitor)
     }
 }
 

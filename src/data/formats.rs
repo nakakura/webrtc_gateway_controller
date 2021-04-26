@@ -182,16 +182,85 @@ pub struct DataIdWrapper {
 }
 
 /// Identifier for DataConnection
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
-pub struct DataConnectionId(pub String);
+#[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct DataConnectionId(String);
 
 impl DataConnectionId {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
-    pub fn new(data_connection_id: impl Into<String>) -> Self {
-        DataConnectionId(data_connection_id.into())
+    pub fn try_create(data_connection_id: impl Into<String>) -> Result<Self, error::Error>
+    where
+        Self: Sized,
+    {
+        // peer token's prefix is composed of a UUID and a prefix "pt-".
+        let data_connection_id = data_connection_id.into();
+        if !data_connection_id.starts_with("dc-") {
+            return Err(error::Error::create_local_error(
+                "data_connection_id\'s prefix is \"dc-\"",
+            ));
+        }
+        if data_connection_id.len() != 39 {
+            // It's length is 39(UUID: 36 + prefix: 3).
+            return Err(error::Error::create_local_error(
+                "token str's length should be 39",
+            ));
+        }
+        if !data_connection_id.is_ascii() {
+            return Err(error::Error::create_local_error(
+                "token str should be ascii",
+            ));
+        }
+
+        Ok(DataConnectionId(data_connection_id))
+    }
+}
+
+struct DataConnectionIdVisitor;
+
+impl<'de> Visitor<'de> for DataConnectionIdVisitor {
+    type Value = DataConnectionId;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a 39 length str")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let data_connection_id = DataConnectionId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = data_connection_id {
+            return Err(E::custom(format!("fail to deserialize DataId: {}", err)));
+        } else if let Err(_) = data_connection_id {
+            return Err(E::custom(format!("fail to deserialize DataId")));
+        }
+
+        Ok(data_connection_id.unwrap())
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let data_connection_id = DataConnectionId::try_create(value);
+        if let Err(error::Error::LocalError(err)) = data_connection_id {
+            return Err(E::custom(format!("fail to deserialize Token: {}", err)));
+        } else if let Err(_) = data_connection_id {
+            return Err(E::custom(format!("fail to deserialize Token")));
+        }
+
+        Ok(data_connection_id.unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for DataConnectionId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(DataConnectionIdVisitor)
     }
 }
 

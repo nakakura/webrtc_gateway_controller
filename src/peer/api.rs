@@ -430,7 +430,7 @@ mod test_event {
                         "token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"
                     },
                     "data_params": {
-                        "data_connection_id": "da-102127d9-30de-413b-93f7-41a33e39d82b"
+                        "data_connection_id": "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c"
                     }
                   }"#,
             )
@@ -446,7 +446,7 @@ mod test_event {
             assert_eq!(response.params.token(), peer_info.token());
             assert_eq!(
                 response.data_params.data_connection_id.as_str(),
-                "da-102127d9-30de-413b-93f7-41a33e39d82b"
+                "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c"
             );
         } else {
             unreachable!();

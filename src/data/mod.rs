@@ -89,7 +89,7 @@ pub async fn connect(query: ConnectQuery) -> Result<DataConnectionId, error::Err
 /// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
 ///
 /// async fn example() {
-///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let data_connection_id = DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap();
 ///     let result = disconnect(&data_connection_id).await;
 /// }
 /// ```
@@ -108,7 +108,7 @@ pub async fn disconnect(data_connection_id: &DataConnectionId) -> Result<(), err
 /// use skyway_webrtc_gateway_api::data::{DataIdWrapper, RedirectDataParams, redirect};
 ///
 /// async fn example() {
-///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let data_connection_id = DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap();
 ///     let feed_params = Some(DataIdWrapper {
 ///         data_id: DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap()
 ///     });
@@ -136,7 +136,7 @@ pub async fn redirect(
 /// use skyway_webrtc_gateway_api::data::status;
 ///
 /// async fn example() {
-///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let data_connection_id = DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap();
 ///     let result = status(&data_connection_id).await;
 /// }
 /// ```
@@ -159,7 +159,7 @@ pub async fn status(
 /// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
 ///
 /// async fn example() {
-///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let data_connection_id = DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap();
 ///     let event_result = event(&data_connection_id).await;
 /// }
 /// ```
@@ -193,7 +193,7 @@ pub async fn event<'a>(
 /// use skyway_webrtc_gateway_api::prelude::DataConnectionId;
 ///
 /// async fn example() {
-///     let data_connection_id = DataConnectionId::new("dc-example");
+///     let data_connection_id = DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap();
 ///     let (dc_event_notifier, dc_event_observer) = mpsc::channel::<DataConnectionEventEnum>(0);
 ///     let dc_event_observer = dc_event_observer.for_each(|event| async move {
 ///     // Do something

@@ -517,7 +517,7 @@ mod test_create_data_connection {
                 r#"{
                     "command_type": "PEERS_CONNECT",
                     "params": {
-                        "data_connection_id": "dc-test"
+                        "data_connection_id": "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c"
                     }
                 }"#,
             )
@@ -527,7 +527,10 @@ mod test_create_data_connection {
         let url = mockito::server_url();
         let task = super::create_data_connection(&url, &query);
         let result = task.await.expect("parse error");
-        assert_eq!(result.params.data_connection_id.as_str(), "dc-test");
+        assert_eq!(
+            result.params.data_connection_id.as_str(),
+            "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c"
+        );
 
         // server called
         httpserver.assert();
@@ -688,20 +691,27 @@ mod test_delete_data_connection {
     use crate::error;
     use crate::prelude::*;
 
+    fn create_data_connection_id() -> DataConnectionId {
+        DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap()
+    }
+
     /// This function access to the DELETE /data/connections/{data_connection_id} endpoint.
     /// The API returns 204 No Content, when a WebRTC Gateway succeed to delete a Peer Object
     /// It returns 400, 403, 404, 405, 406, 408 to show errors.
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_204() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::NO_CONTENT.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -718,14 +728,17 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_400() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                     "command_type": "DATA_CONNECTION_DELETE",
                     "params": {
                         "errors": [
@@ -736,8 +749,8 @@ mod test_delete_data_connection {
                         ]
                     }
                 }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -757,14 +770,17 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_403() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -784,14 +800,17 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_404() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -811,14 +830,17 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_405() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -838,14 +860,17 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_406() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -865,14 +890,17 @@ mod test_delete_data_connection {
     /// http://35.200.46.204/#/2.data/data_connection_close
     #[tokio::test]
     async fn recv_408() {
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("DELETE", "/data/connections/dc-test")
-            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "DELETE",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -900,7 +928,8 @@ mod test_redirect_data_connection {
 
     fn create_param() -> (RedirectDataParams, DataConnectionId) {
         let data_id = DataId::try_create("da-50a32bab-b3d9-4913-8e20-f79c90a6a211").unwrap();
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id =
+            DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap();
         let ip_v4 = "127.0.0.1";
         let port = 10001u16;
         let data_id_obj = DataIdWrapper { data_id: data_id };
@@ -924,9 +953,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -935,17 +967,17 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::OK.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "command_type": "DATA_CONNECTION_PUT",
                 "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -973,9 +1005,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -984,12 +1019,12 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "command_type": "DATA_CONNECTION_DELETE",
                 "params": {
                     "errors": [{
@@ -998,8 +1033,8 @@ mod test_redirect_data_connection {
                     }]
                 }
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1027,9 +1062,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -1038,12 +1076,12 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1071,9 +1109,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -1082,12 +1123,12 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1115,9 +1156,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -1126,12 +1170,12 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1159,9 +1203,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -1170,12 +1217,12 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1203,9 +1250,12 @@ mod test_redirect_data_connection {
         let (redirect_data_params, data_connection_id) = create_param();
 
         // set up server mock
-        let httpserver = mock("PUT", "/data/connections/dc-test")
-            .match_body(mockito::Matcher::JsonString(
-                r#"{
+        let httpserver = mock(
+            "PUT",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+        )
+        .match_body(mockito::Matcher::JsonString(
+            r#"{
                 "feed_params": {
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211"
                 },
@@ -1214,12 +1264,12 @@ mod test_redirect_data_connection {
                     "port": 10001
                 }
             }"#
-                .into(),
-            ))
-            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+            .into(),
+        ))
+        .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1246,20 +1296,27 @@ mod test_status {
     use crate::error;
     use crate::prelude::*;
 
+    fn create_data_connection_id() -> DataConnectionId {
+        DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap()
+    }
+
     /// This function access to the GET /data/connections/{data_connection_id}/status endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
     /// http://35.200.46.204/#/2.data/status
     #[tokio::test]
     async fn recv_200() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::OK.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "buffersize": 0,
                 "label": "c_3q8ymsw7n9c4s0ibzx8jymygb9",
                 "metadata": "",
@@ -1269,8 +1326,8 @@ mod test_status {
                 "serialization": "BINARY",
                 "type": "DATA"
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1289,14 +1346,17 @@ mod test_status {
     #[tokio::test]
     async fn recv_400() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "command_type": "DATA_CONNECTION_STATUS",
                 "params": {
                     "errors": [{
@@ -1305,8 +1365,8 @@ mod test_status {
                     }]
                 }
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1327,14 +1387,17 @@ mod test_status {
     #[tokio::test]
     async fn recv_403() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1354,14 +1417,17 @@ mod test_status {
     #[tokio::test]
     async fn recv_404() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1382,14 +1448,17 @@ mod test_status {
     #[tokio::test]
     async fn recv_405() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1410,14 +1479,17 @@ mod test_status {
     #[tokio::test]
     async fn recv_406() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1438,14 +1510,17 @@ mod test_status {
     #[tokio::test]
     async fn recv_408() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/status")
-            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/status",
+        )
+        .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1469,24 +1544,31 @@ mod test_event {
     use crate::error;
     use crate::prelude::*;
 
+    fn create_data_connection_id() -> DataConnectionId {
+        DataConnectionId::try_create("dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c").unwrap()
+    }
+
     /// This function access to the GET /data/connections/{data_connection_id}/events endpoint.
     /// The API returns 200 Ok, when a WebRTC Gateway succeed to display dataconnection's status.
     /// http://35.200.46.204/#/2.data/events
     #[tokio::test]
     async fn recv_200_open() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::OK.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "event": "OPEN"
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1504,18 +1586,21 @@ mod test_event {
     #[tokio::test]
     async fn recv_200_close() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::OK.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "event": "CLOSE"
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1533,19 +1618,22 @@ mod test_event {
     #[tokio::test]
     async fn recv_200_error() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::OK.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::OK.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                 "event": "ERROR",
                 "error_message": "error"
             }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1568,14 +1656,17 @@ mod test_event {
     #[tokio::test]
     async fn recv_400() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(
-                r#"{
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::BAD_REQUEST.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(
+            r#"{
                     "command_type": "DATA_CONNECTION_EVENTS",
                     "params": {
                         "errors": [
@@ -1586,8 +1677,8 @@ mod test_event {
                         ]
                     }
                 }"#,
-            )
-            .create();
+        )
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1608,14 +1699,17 @@ mod test_event {
     #[tokio::test]
     async fn recv_403() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::FORBIDDEN.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1636,14 +1730,17 @@ mod test_event {
     #[tokio::test]
     async fn recv_404() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::NOT_FOUND.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1664,14 +1761,17 @@ mod test_event {
     #[tokio::test]
     async fn recv_405() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::METHOD_NOT_ALLOWED.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1692,14 +1792,17 @@ mod test_event {
     #[tokio::test]
     async fn recv_406() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::NOT_ACCEPTABLE.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();
@@ -1720,14 +1823,17 @@ mod test_event {
     #[tokio::test]
     async fn recv_408() {
         // set up params
-        let data_connection_id = DataConnectionId::new("dc-test");
+        let data_connection_id = create_data_connection_id();
 
         // set up server mock
-        let httpserver = mock("GET", "/data/connections/dc-test/events")
-            .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{}"#)
-            .create();
+        let httpserver = mock(
+            "GET",
+            "/data/connections/dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c/events",
+        )
+        .with_status(reqwest::StatusCode::REQUEST_TIMEOUT.as_u16() as usize)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{}"#)
+        .create();
 
         // call api
         let url = mockito::server_url();

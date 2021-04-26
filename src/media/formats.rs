@@ -206,8 +206,7 @@ impl MediaConnectionId {
         let media_connection_id = media_connection_id.into();
         if !media_connection_id.starts_with("mc-") {
             return Err(error::Error::create_local_error(
-                // FIXME: mc
-                "media_connection_id\'s prefix is \"rc-\"",
+                "media_connection_id\'s prefix is \"mc-\"",
             ));
         }
         if media_connection_id.len() != 39 {

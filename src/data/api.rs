@@ -477,7 +477,7 @@ mod test_create_data_connection {
 
     fn create_options() -> ConnectQuery {
         let peer_id = PeerId::new("peer_id");
-        let token = Token::new("test-token");
+        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
         let target_id = PeerId::new("target_id");
         let data_id = DataId::new("da-test");
         let data_id = DataIdWrapper { data_id: data_id };

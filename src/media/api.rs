@@ -1050,7 +1050,7 @@ mod test_create_call {
     fn create_params() -> CallQuery {
         CallQuery {
             peer_id: PeerId::new("peer_id"),
-            token: Token::new("pt-test"),
+            token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
             target_id: PeerId::new("target_id"),
             constraints: None,
             redirect_params: None,

@@ -126,7 +126,7 @@ pub async fn delete_rtcp(rtcp_id: &RtcpId) -> Result<(), error::Error> {
 ///     let media_connection_id = MediaConnectionId::new("mc-example");
 ///     let query = CallQuery {
 ///         peer_id: PeerId::new("peer_id"),
-///         token: Token::new("token"),
+///         token: Token::try_create("token").unwrap(),
 ///         target_id: PeerId::new("target_id"),
 ///         constraints: Some(Constraints {
 ///             video: true,
@@ -260,15 +260,17 @@ pub async fn event<'a>(
     use crate::media::formats::EventEnum;
 
     let base_url = super::base_url();
-    Ok(match api::event(base_url, media_connection_id.as_str()).await? {
-        EventEnum::CLOSE => MediaConnectionEventEnum::CLOSE(media_connection_id.clone()),
-        EventEnum::READY => MediaConnectionEventEnum::READY(media_connection_id.clone()),
-        EventEnum::STREAM => MediaConnectionEventEnum::STREAM(media_connection_id.clone()),
-        EventEnum::TIMEOUT => MediaConnectionEventEnum::TIMEOUT,
-        EventEnum::ERROR {error_message} => {
-            MediaConnectionEventEnum::ERROR((media_connection_id.clone(), error_message))
-        }
-    })
+    Ok(
+        match api::event(base_url, media_connection_id.as_str()).await? {
+            EventEnum::CLOSE => MediaConnectionEventEnum::CLOSE(media_connection_id.clone()),
+            EventEnum::READY => MediaConnectionEventEnum::READY(media_connection_id.clone()),
+            EventEnum::STREAM => MediaConnectionEventEnum::STREAM(media_connection_id.clone()),
+            EventEnum::TIMEOUT => MediaConnectionEventEnum::TIMEOUT,
+            EventEnum::ERROR { error_message } => {
+                MediaConnectionEventEnum::ERROR((media_connection_id.clone(), error_message))
+            }
+        },
+    )
 }
 
 /// Request status of MediaConnection

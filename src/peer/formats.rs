@@ -1,6 +1,10 @@
-use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::data::DataConnectionIdWrapper;
+use crate::error;
 use crate::media::MediaConnectionIdWrapper;
 
 /// Identifier for PeerObject.
@@ -19,19 +23,166 @@ impl PeerId {
     }
 }
 
-/// Token to avoid misuse of Peer.
+/// Token to avoid mesuse of Peer.
 ///
 /// It is used with PeerId.
-#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
-pub struct Token(pub String);
+#[derive(Serialize, Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
+pub struct Token(String);
 
 impl Token {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
-    pub fn new(token: impl Into<String>) -> Self {
-        Token(token.into())
+    pub fn try_create(token: impl Into<String>) -> Result<Self, error::Error> {
+        // peer token's prefix is composed of a UUID and a prefix "pt-".
+        let token_string = token.into();
+        if !token_string.starts_with("pt-") {
+            return Err(error::Error::create_local_error(
+                "token str\'s prefix is \"pt-\"",
+            ));
+        }
+        if token_string.len() != 39 {
+            // It's length is 39(UUID: 36 + prefix: 3).
+            return Err(error::Error::create_local_error(
+                "token str's length should be 39",
+            ));
+        }
+        if !token_string.is_ascii() {
+            return Err(error::Error::create_local_error(
+                "token str should be ascii",
+            ));
+        }
+
+        Ok(Token(token_string))
+    }
+}
+
+#[test]
+fn create_token_success() {
+    let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
+    assert_eq!(token.as_str(), "pt-9749250e-d157-4f80-9ee2-359ce8524308");
+}
+
+#[test]
+fn create_token_not_start_with_pt() {
+    // peer token's prefix is "pt-"
+    let token = Token::try_create("vi-9749250e-d157-4f80-9ee2-359ce8524308");
+    if let Err(error::Error::LocalError(err)) = token {
+        assert_eq!(err.as_str(), "token str\'s prefix is \"pt-\"");
+    } else {
+        unreachable!();
+    }
+}
+
+#[test]
+fn create_token_not_sufficient_length() {
+    // this test is executed with 38 chars
+    let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce852430");
+    if let Err(error::Error::LocalError(err)) = token {
+        assert_eq!(err.as_str(), "token str\'s length should be 39");
+    } else {
+        unreachable!();
+    }
+}
+
+#[test]
+fn create_token_too_long() {
+    // this test is executed with 40 chars
+    let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce85243080");
+    if let Err(error::Error::LocalError(err)) = token {
+        assert_eq!(err.as_str(), "token str\'s length should be 39");
+    } else {
+        unreachable!();
+    }
+}
+
+#[test]
+fn create_token_not_ascii_str() {
+    let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524あ");
+    if let Err(error::Error::LocalError(err)) = token {
+        assert_eq!(err.as_str(), "token str should be ascii");
+    } else {
+        unreachable!();
+    }
+}
+
+struct TokenVisitor;
+
+impl<'de> Visitor<'de> for TokenVisitor {
+    type Value = Token;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a 39 length str")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let token = Token::try_create(value);
+        if let Err(error::Error::LocalError(err)) = token {
+            return Err(E::custom(format!("fail to deserialize Token: {}", err)));
+        } else if let Err(_) = token {
+            return Err(E::custom(format!("fail to deserialize Token")));
+        }
+
+        Ok(token.unwrap())
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let token = Token::try_create(value);
+        if let Err(error::Error::LocalError(err)) = token {
+            return Err(E::custom(format!("fail to deserialize Token: {}", err)));
+        } else if let Err(_) = token {
+            return Err(E::custom(format!("fail to deserialize Token")));
+        }
+
+        Ok(token.unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for Token {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_identifier(TokenVisitor)
+    }
+}
+
+#[cfg(test)]
+mod deserialize_token {
+    use super::*;
+
+    #[derive(Deserialize)]
+    struct TokenWrapper {
+        pub token: Token,
+    }
+
+    #[test]
+    fn deserialize_ok() {
+        // this test is executed with 38 chars
+        let wrapper = serde_json::from_str::<TokenWrapper>(
+            r#"{"token": "pt-9749250e-d157-4f80-9ee2-359ce8524308"}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            wrapper.token.as_str(),
+            "pt-9749250e-d157-4f80-9ee2-359ce8524308"
+        );
+    }
+
+    #[test]
+    fn deserialize_err() {
+        // this test is executed with 38 chars
+        let result = serde_json::from_str::<TokenWrapper>(
+            r#"{"token": "pt-9749250e-d157-4f80-9ee2-359ce852430"}"#,
+        );
+        assert!(result.is_err());
     }
 }
 

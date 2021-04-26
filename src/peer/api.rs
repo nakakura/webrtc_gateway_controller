@@ -127,7 +127,7 @@ mod test_create_peer {
 
     fn create_params() -> (PeerId, Token) {
         let peer_id = PeerId::new("hoge");
-        let token = Token::new("pt-9749250e-d157-4f80-9ee2-359ce8524308");
+        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
         (peer_id, token)
     }
 
@@ -369,7 +369,7 @@ mod test_event {
 
     fn create_params() -> PeerInfo {
         let peer_id = PeerId::new("hoge");
-        let token = Token::new("pt-9749250e-d157-4f80-9ee2-359ce8524308");
+        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
         PeerInfo {
             peer_id: peer_id.clone(),
             token: token.clone(),
@@ -799,7 +799,7 @@ mod test_delete_peer {
 
     fn create_params() -> PeerInfo {
         let peer_id = PeerId::new("hoge");
-        let token = Token::new("pt-9749250e-d157-4f80-9ee2-359ce8524308");
+        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
         PeerInfo {
             peer_id: peer_id.clone(),
             token: token.clone(),
@@ -1049,7 +1049,7 @@ mod test_status {
 
     fn create_params() -> PeerInfo {
         let peer_id = PeerId::new("hoge");
-        let token = Token::new("pt-9749250e-d157-4f80-9ee2-359ce8524308");
+        let token = Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap();
         PeerInfo {
             peer_id: peer_id.clone(),
             token: token.clone(),

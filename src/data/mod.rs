@@ -68,7 +68,7 @@ pub async fn close_data_socket(data_id: &DataId) -> Result<(), error::Error> {
 ///
 /// let query = ConnectQuery {
 ///     peer_id: PeerId::new("peer_id"),
-///     token: Token::new("test-token"),
+///     token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
 ///     options: None,
 ///     target_id: PeerId::new("target_id"),
 ///     params: None,

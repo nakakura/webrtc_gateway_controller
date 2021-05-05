@@ -194,6 +194,10 @@ pub struct PeerInfo {
 }
 
 impl PeerInfo {
+    pub fn new(peer_id: PeerId, token: Token) -> Self {
+        Self { peer_id, token }
+    }
+
     pub fn try_create(
         peer_id: impl Into<String>,
         token: impl Into<String>,

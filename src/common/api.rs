@@ -45,7 +45,12 @@ where
             Err(error::Error::create_local_error("recv RequestTimeout"))
         }
         _ => {
-            unreachable!();
+            let message = format!(
+                "recv invalid response: url: {} code: {}",
+                res.url(),
+                res.status()
+            );
+            Err(error::Error::create_local_error(&message))
         }
     }
 }

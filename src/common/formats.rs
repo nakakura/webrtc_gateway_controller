@@ -50,7 +50,7 @@ pub trait SerializableSocket<T> {
 /// There are several field which has some kind of id and SocketAddr.
 ///
 /// This struct covers all of them.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Eq, Ord, Hash)]
 pub struct SocketInfo<T: SerializableId> {
     id: Option<T>,
     socket: SocketAddr,

@@ -4,14 +4,12 @@ pub(crate) mod formats;
 use futures::channel::mpsc;
 use futures::*;
 
-use crate::data::formats::*;
-use crate::error;
-
 use crate::common::formats::{SerializableId, SocketInfo};
+use crate::error;
 
 pub use formats::{
     ConnectQuery, ConnectionQueryOption, DataConnectionId, DataConnectionIdWrapper,
-    DataConnectionStatus, DataId, DataIdWrapper, DcInit, RedirectDataParams,
+    DataConnectionStatus, DataId, DataIdWrapper, DcInit, RedirectDataParams, RedirectDataResponse,
 };
 
 /// Shows DataConnection events.

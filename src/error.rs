@@ -178,6 +178,15 @@ mod serialize_error {
     }
 }
 
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match (serde_json::to_string(self), serde_json::to_string(other)) {
+            (Ok(a), Ok(b)) => a == b,
+            _ => false,
+        }
+    }
+}
+
 /// Error response from some APIs.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 pub(crate) struct ErrorResponse {

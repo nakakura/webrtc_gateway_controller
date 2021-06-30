@@ -3,6 +3,7 @@ pub(crate) mod formats;
 
 use futures::channel::mpsc;
 use futures::*;
+use serde::{Deserialize, Serialize};
 
 use crate::common::formats::{SerializableId, SocketInfo};
 use crate::error;
@@ -17,7 +18,7 @@ pub use formats::{
 /// It's response from GET /data/connections/{data_connection_id}/events
 ///
 /// [API](http://35.200.46.204/#/2.data/data_connection_events)
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, PartialOrd)]
 pub enum DataConnectionEventEnum {
     OPEN(DataConnectionId),
     CLOSE(DataConnectionId),

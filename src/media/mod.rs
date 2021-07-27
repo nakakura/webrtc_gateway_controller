@@ -3,6 +3,7 @@ pub(crate) mod formats;
 
 use futures::channel::mpsc;
 use futures::*;
+use serde::{Deserialize, Serialize};
 
 use crate::common::formats::{PhantomId, SerializableId, SocketInfo};
 use crate::error;
@@ -18,7 +19,7 @@ pub use formats::{
 /// It's response from GET /media/connections/{media_connection_id}/events
 ///
 /// [API](http://35.200.46.204/#/3.media/media_connection_event)
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub enum MediaConnectionEventEnum {
     READY(MediaConnectionId),
     STREAM(MediaConnectionId),

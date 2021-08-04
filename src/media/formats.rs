@@ -290,9 +290,11 @@ pub struct CallQuery {
     pub target_id: PeerId,
     /// Parameters for MediaConnection
     /// It contains source socket. If the field is None, this MediaConnection works as RecvOnly.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub constraints: Option<Constraints>,
     /// Shows destiation socket to which received data is redirected
     /// If this field is not set, DataConnection works as SendOnly.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_params: Option<RedirectParameters>,
 }
 
@@ -303,16 +305,21 @@ pub struct Constraints {
     /// Shows whether this connection sends video or not
     pub video: bool,
     /// Shows whether this connection receives video or not
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub videoReceiveEnabled: Option<bool>,
     /// Shows whether this connection sends audio or not
     pub audio: bool,
     /// Shows whether this connection receives audio or not
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub audioReceiveEnabled: Option<bool>,
     /// Parameters for sending video
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub video_params: Option<MediaParams>,
     /// Parameters for sending audio
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub audio_params: Option<MediaParams>,
     /// metadata sent to a neighbour.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<String>,
 }
 
@@ -326,10 +333,13 @@ pub struct MediaParams {
     /// Identify which media should be redirected
     pub media_id: MediaId,
     /// Identify which rtcp should be redirected
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rtcp_id: Option<RtcpId>,
     /// Payload type which caller side want to use. It will be used in SDP.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payload_type: Option<u16>,
     /// Sampling rate which media uses
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sampling_rate: Option<usize>,
 }
 
@@ -337,12 +347,16 @@ pub struct MediaParams {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectParameters {
     /// video is redirected to this socket
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub video: Option<SocketInfo<PhantomId>>,
     /// video rtcp is redirected to this socket
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub video_rtcp: Option<SocketInfo<PhantomId>>,
     /// audio is redirected to this socket
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub audio: Option<SocketInfo<PhantomId>>,
     /// audio rtcp is redirected to this socket
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub audio_rtcp: Option<SocketInfo<PhantomId>>,
 }
 
@@ -374,6 +388,7 @@ pub struct AnswerQuery {
     pub constraints: Constraints,
     /// Shows destiation socket to which received data is redirected
     /// If this field is not set, DataConnection works as SendOnly.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_params: Option<RedirectParameters>,
 }
 
@@ -391,7 +406,9 @@ pub struct AnswerResponse {
 /// Shows media_ids used in this MediaConnection
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct AnswerResponseParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub video_id: Option<MediaId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub audio_id: Option<MediaId>,
 }
 
@@ -418,6 +435,7 @@ pub struct MediaConnectionStatus {
     /// Shows neighbour id
     pub remote_id: PeerId,
     /// Shows ssrc(Synchrozination Source) information
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ssrc: Option<Vec<SsrcPair>>,
 }
 

@@ -20,14 +20,17 @@ pub struct ConnectQuery {
     /// to show that this program has permission to control PeerObject
     pub token: Token,
     /// parameters for DataChannel
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub options: Option<ConnectionQueryOption>,
     /// connect to the neighbour which has this PeerId
     pub target_id: PeerId,
     /// Shows source Data Object which feeds data redirected to nighbour.
     /// If this field is not set, DataConnection works as RecvOnly.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub params: Option<DataIdWrapper>,
     /// Shows destiation socket to which received data is redirected
     /// If this field is not set, DataConnection works as SendOnly.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_params: Option<SocketInfo<PhantomId>>,
 }
 
@@ -38,10 +41,13 @@ pub struct ConnectQuery {
 #[allow(non_snake_case)]
 pub struct ConnectionQueryOption {
     /// Metadata associated with the connection, passed in by whoever initiated the connection.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<String>,
     /// Can be BINARY (default), BINARY_UTF8, JSON, or NONE.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub serialization: Option<String>,
     /// Detail option for DataConnection
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub dcInit: Option<DcInit>,
 }
 
@@ -291,8 +297,10 @@ pub struct DataConnectionIdWrapper {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RedirectDataParams {
     /// Data source for the DataConnection
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub feed_params: Option<DataIdWrapper>,
     /// Data destination for the DataConnection. A WebRTC Gateway will redirect received data to this socket.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_params: Option<SocketInfo<PhantomId>>,
 }
 

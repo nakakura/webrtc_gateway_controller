@@ -10,7 +10,7 @@ use crate::error;
 use crate::peer::formats::EventEnum;
 pub use formats::{
     CreatePeerQuery, CreatedResponse, PeerCallEvent, PeerCloseEvent, PeerConnectionEvent,
-    PeerErrorEvent, PeerId, PeerInfo, PeerOpenEvent, PeerStatusMessage,
+    PeerErrorEvent, PeerId, PeerInfo, PeerOpenEvent, PeerStatusMessage, Token,
 };
 
 /// Request to create Peer.

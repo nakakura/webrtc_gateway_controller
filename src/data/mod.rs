@@ -13,15 +13,16 @@ pub use formats::{
     DataConnectionStatus, DataId, DataIdWrapper, DcInit, RedirectDataParams, RedirectDataResponse,
 };
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
 /// Shows DataConnection events.
 ///
 /// It's response from GET /data/connections/{data_connection_id}/events
 ///
 /// [API](http://35.200.46.204/#/2.data/data_connection_events)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, PartialOrd)]
+#[serde(tag = "event")]
 pub enum DataConnectionEventEnum {
-    OPEN(DataConnectionId),
-    CLOSE(DataConnectionId),
+    OPEN(DataConnectionIdWrapper),
+    CLOSE(DataConnectionIdWrapper),
     ERROR((DataConnectionId, String)),
     TIMEOUT,
 }
@@ -168,8 +169,12 @@ pub async fn event<'a>(
     let base_url = super::base_url();
     let event = api::event(base_url, data_connection_id.as_str()).await?;
     let event = match event {
-        formats::EventEnum::OPEN => DataConnectionEventEnum::OPEN(data_connection_id.clone()),
-        formats::EventEnum::CLOSE => DataConnectionEventEnum::CLOSE(data_connection_id.clone()),
+        formats::EventEnum::OPEN => DataConnectionEventEnum::OPEN(DataConnectionIdWrapper {
+            data_connection_id: data_connection_id.clone(),
+        }),
+        formats::EventEnum::CLOSE => DataConnectionEventEnum::CLOSE(DataConnectionIdWrapper {
+            data_connection_id: data_connection_id.clone(),
+        }),
         formats::EventEnum::ERROR {
             error_message: message,
         } => DataConnectionEventEnum::ERROR((data_connection_id.clone(), message)),
@@ -212,7 +217,9 @@ pub async fn listen_events<'a>(
         match result {
             formats::EventEnum::OPEN => {
                 if event_notifier
-                    .send(DataConnectionEventEnum::OPEN(data_connection_id.clone()))
+                    .send(DataConnectionEventEnum::OPEN(DataConnectionIdWrapper {
+                        data_connection_id: data_connection_id.clone(),
+                    }))
                     .await
                     .is_err()
                 {
@@ -221,7 +228,9 @@ pub async fn listen_events<'a>(
             }
             formats::EventEnum::CLOSE => {
                 if event_notifier
-                    .send(DataConnectionEventEnum::CLOSE(data_connection_id.clone()))
+                    .send(DataConnectionEventEnum::CLOSE(DataConnectionIdWrapper {
+                        data_connection_id: data_connection_id.clone(),
+                    }))
                     .await
                     .is_err()
                 {

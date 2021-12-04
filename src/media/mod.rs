@@ -19,11 +19,12 @@ pub use formats::{
 /// It's response from GET /media/connections/{media_connection_id}/events
 ///
 /// [API](http://35.200.46.204/#/3.media/media_connection_event)
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+#[serde(tag = "event")]
 pub enum MediaConnectionEventEnum {
-    READY(MediaConnectionId),
-    STREAM(MediaConnectionId),
-    CLOSE(MediaConnectionId),
+    READY(MediaConnectionIdWrapper),
+    STREAM(MediaConnectionIdWrapper),
+    CLOSE(MediaConnectionIdWrapper),
     ERROR((MediaConnectionId, String)),
     TIMEOUT,
 }
@@ -263,9 +264,15 @@ pub async fn event<'a>(
     let base_url = super::base_url();
     Ok(
         match api::event(base_url, media_connection_id.as_str()).await? {
-            EventEnum::CLOSE => MediaConnectionEventEnum::CLOSE(media_connection_id.clone()),
-            EventEnum::READY => MediaConnectionEventEnum::READY(media_connection_id.clone()),
-            EventEnum::STREAM => MediaConnectionEventEnum::STREAM(media_connection_id.clone()),
+            EventEnum::CLOSE => MediaConnectionEventEnum::CLOSE(MediaConnectionIdWrapper {
+                media_connection_id: media_connection_id.clone(),
+            }),
+            EventEnum::READY => MediaConnectionEventEnum::READY(MediaConnectionIdWrapper {
+                media_connection_id: media_connection_id.clone(),
+            }),
+            EventEnum::STREAM => MediaConnectionEventEnum::STREAM(MediaConnectionIdWrapper {
+                media_connection_id: media_connection_id.clone(),
+            }),
             EventEnum::TIMEOUT => MediaConnectionEventEnum::TIMEOUT,
             EventEnum::ERROR { error_message } => {
                 MediaConnectionEventEnum::ERROR((media_connection_id.clone(), error_message))
@@ -313,7 +320,9 @@ pub async fn listen_events<'a>(
         match result {
             formats::EventEnum::READY => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::READY(media_connection_id.clone()))
+                    .send(MediaConnectionEventEnum::READY(MediaConnectionIdWrapper {
+                        media_connection_id: media_connection_id.clone(),
+                    }))
                     .await
                     .is_err()
                 {
@@ -322,7 +331,9 @@ pub async fn listen_events<'a>(
             }
             formats::EventEnum::CLOSE => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::CLOSE(media_connection_id.clone()))
+                    .send(MediaConnectionEventEnum::CLOSE(MediaConnectionIdWrapper {
+                        media_connection_id: media_connection_id.clone(),
+                    }))
                     .await
                     .is_err()
                 {
@@ -332,9 +343,9 @@ pub async fn listen_events<'a>(
             }
             formats::EventEnum::STREAM => {
                 if event_notifier
-                    .send(MediaConnectionEventEnum::STREAM(
-                        media_connection_id.clone(),
-                    ))
+                    .send(MediaConnectionEventEnum::STREAM(MediaConnectionIdWrapper {
+                        media_connection_id: media_connection_id.clone(),
+                    }))
                     .await
                     .is_err()
                 {

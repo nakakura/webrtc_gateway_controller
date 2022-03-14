@@ -1,8 +1,9 @@
 use std::fmt;
 use std::net::{IpAddr, SocketAddr};
 
-use serde::de::{self, Deserialize, Deserializer, MapAccess, Visitor};
-use serde::ser::{Serialize, SerializeStruct, Serializer};
+use serde::de::{self, Deserializer, MapAccess, Visitor};
+use serde::ser::{SerializeStruct, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::error;
 
@@ -226,7 +227,7 @@ impl<'de, X: SerializableId> Deserialize<'de> for SocketInfo<X> {
 /// There are many similar structs holding SocketAddr and a kind of ID.
 /// PhantomId is for a struct which doesn't have id field.
 /// It will be set as a generics parameter of `SocketInfo`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct PhantomId(String);
 
 impl SerializableId for PhantomId {

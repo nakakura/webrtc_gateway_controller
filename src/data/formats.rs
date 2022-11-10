@@ -21,7 +21,7 @@ pub struct ConnectQuery {
     pub token: Token,
     /// parameters for DataChannel
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub options: Option<ConnectionQueryOption>,
+    pub options: Option<ConnectQueryOption>,
     /// connect to the neighbour which has this PeerId
     pub target_id: PeerId,
     /// Shows source Data Object which feeds data redirected to nighbour.
@@ -39,7 +39,7 @@ pub struct ConnectQuery {
 /// Shows DataConnection parameters in SkyWay layer
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[allow(non_snake_case)]
-pub struct ConnectionQueryOption {
+pub struct ConnectQueryOption {
     /// Metadata associated with the connection, passed in by whoever initiated the connection.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<String>,

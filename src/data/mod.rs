@@ -9,7 +9,7 @@ use crate::common::formats::{SerializableId, SocketInfo};
 use crate::error;
 
 pub use formats::{
-    ConnectQuery, ConnectionQueryOption, DataConnectionId, DataConnectionIdWrapper,
+    ConnectQuery, ConnectQueryOption, DataConnectionId, DataConnectionIdWrapper,
     DataConnectionStatus, DataId, DataIdWrapper, DcInit, RedirectDataParams, RedirectDataResponse,
 };
 

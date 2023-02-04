@@ -24,7 +24,7 @@ serde = { version = "1.0.147", features = ["derive"] }
 serde_derive = "1.0.147"
 serde_json = "1.0.87"
 thiserror = "1.0.37"
-tokio = { version = "1.21.2", features = ["full"] }
+tokio = { version = "1.24.2", features = ["full"] }
 
 [dev-dependencies]
 either = "1.8.0"
